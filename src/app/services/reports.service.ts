@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
-import { Observable, from } from 'rxjs';
+import { Observable, from, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { SupabaseService } from './supabase.service';
+import { OfflineSyncService } from './offline-sync.service';
 import { Report, ReportItem } from '../models/interfaces';
 
 @Injectable({
@@ -8,7 +10,10 @@ import { Report, ReportItem } from '../models/interfaces';
 })
 export class ReportsService {
 
-  constructor(private supabase: SupabaseService) { }
+  constructor(
+    private supabase: SupabaseService,
+    private offlineSync: OfflineSyncService
+  ) { }
 
   // Obtener todos los informes
   getAllReports(): Observable<Report[]> {
@@ -124,6 +129,20 @@ export class ReportsService {
           }
           return data;
         })
+    ).pipe(
+      catchError((error) => {
+        // Si hay error de conexión, encolar para sincronización offline
+        console.log('Connection error, queuing report for offline sync');
+        this.offlineSync.createReportOffline(report);
+        // Retornar un reporte temporal con ID generado
+        const tempReport: Report = {
+          ...report,
+          id: this.offlineSync.generateId(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        } as Report;
+        return of(tempReport);
+      })
     );
   }
 
@@ -144,6 +163,22 @@ export class ReportsService {
           }
           return data || [];
         })
+    ).pipe(
+      catchError((error) => {
+        // Si hay error de conexión, encolar cada item para sincronización offline
+        console.log('Connection error, queuing report items for offline sync');
+        reportItems.forEach(item => {
+          this.offlineSync.createReportItemOffline(item);
+        });
+        // Retornar items temporales con IDs generados
+        const tempItems: ReportItem[] = reportItems.map(item => ({
+          ...item,
+          id: this.offlineSync.generateId(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        } as ReportItem));
+        return of(tempItems);
+      })
     );
   }
 
@@ -166,6 +201,15 @@ export class ReportsService {
           }
           return data;
         })
+    ).pipe(
+      catchError((error) => {
+        // Si hay error de conexión, encolar para sincronización offline
+        console.log('Connection error, queuing report update for offline sync');
+        this.offlineSync.updateReportOffline(id, updates);
+        // Retornar el reporte con las actualizaciones aplicadas localmente
+        const updatedReport = { ...updates, id, updated_at: new Date().toISOString() } as Report;
+        return of(updatedReport);
+      })
     );
   }
 

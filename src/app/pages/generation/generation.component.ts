@@ -10,7 +10,11 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatChipsModule } from '@angular/material/chips';
-import { Subject, takeUntil } from 'rxjs';
+import { MatSelectModule } from '@angular/material/select';
+import { MatOptionModule } from '@angular/material/core';
+import { MatDialog } from '@angular/material/dialog';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 import { ReportsService } from '../../services/reports.service';
 import { ExportService } from '../../services/export.service';
@@ -28,7 +32,9 @@ import { Report, Project, SelectedItem } from '../../models/interfaces';
         MatProgressSpinnerModule,
         MatSnackBarModule,
         MatDividerModule,
-        MatChipsModule
+        MatChipsModule,
+        MatSelectModule,
+        MatOptionModule
     ],
     templateUrl: './generation.component.html',
     styleUrls: ['./generation.component.scss']
@@ -42,20 +48,23 @@ export class GenerationComponent implements OnInit, OnDestroy {
   isGenerating = false;
   isExporting = false;
   
+
+  
   displayedColumns: string[] = ['codigo', 'descripcion', 'unidad', 'anterior', 'actual', 'acumulado'];
   
   constructor(
     private router: Router,
+    private snackBar: MatSnackBar,
+    private dialog: MatDialog,
     private reportsService: ReportsService,
-    private exportService: ExportService,
-    private snackBar: MatSnackBar
+    private exportService: ExportService
   ) {}
   
   ngOnInit(): void {
     this.loadDataFromStorage();
     this.generateReportPreview();
   }
-  
+
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
@@ -272,4 +281,6 @@ export class GenerationComponent implements OnInit, OnDestroy {
   goHome(): void {
     this.router.navigate(['/']);
   }
+
+
 }

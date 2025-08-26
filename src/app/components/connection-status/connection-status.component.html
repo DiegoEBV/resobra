@@ -1,0 +1,74 @@
+<div class="connection-status" [ngClass]="{
+  'online': syncStatus.isOnline,
+  'offline': !syncStatus.isOnline,
+  'syncing': syncStatus.isSyncing
+}">
+  <!-- Indicador principal -->
+  <div class="status-indicator" (click)="toggleDetails()">
+    <mat-icon [color]="getStatusColor()" class="status-icon">{{ getStatusIcon() }}</mat-icon>
+    <span class="status-text">{{ getStatusText() }}</span>
+    
+    <!-- Badge de operaciones pendientes -->
+    <span 
+      *ngIf="syncStatus.pendingOperations > 0" 
+      class="pending-badge"
+      matTooltip="{{ syncStatus.pendingOperations }} operaciones pendientes">
+      {{ syncStatus.pendingOperations }}
+    </span>
+    
+    <!-- Icono de expandir/colapsar -->
+    <mat-icon class="expand-icon" [class.expanded]="showDetails">expand_more</mat-icon>
+  </div>
+  
+  <!-- Panel de detalles expandible -->
+  <div class="details-panel" [class.show]="showDetails">
+    <div class="details-content">
+      <!-- Estado de conexión -->
+      <div class="detail-item">
+        <mat-icon>{{ syncStatus.isOnline ? 'wifi' : 'wifi_off' }}</mat-icon>
+        <span>Estado: {{ syncStatus.isOnline ? 'Conectado' : 'Desconectado' }}</span>
+      </div>
+      
+      <!-- Estado de sincronización -->
+      <div class="detail-item" *ngIf="syncStatus.isSyncing">
+        <mat-icon class="spinning">sync</mat-icon>
+        <span>Sincronizando datos...</span>
+      </div>
+      
+      <!-- Operaciones pendientes -->
+      <div class="detail-item" *ngIf="syncStatus.pendingOperations > 0">
+        <mat-icon>pending_actions</mat-icon>
+        <span>{{ syncStatus.pendingOperations }} operaciones pendientes</span>
+      </div>
+      
+      <!-- Errores de sincronización -->
+      <div class="detail-item error" *ngIf="syncStatus.syncErrors.length > 0">
+        <mat-icon>error</mat-icon>
+        <span>{{ syncStatus.syncErrors.length }} errores de sincronización</span>
+      </div>
+      
+      <!-- Acciones -->
+      <div class="actions" *ngIf="syncStatus.isOnline || syncStatus.pendingOperations > 0">
+        <button 
+          mat-stroked-button 
+          color="primary" 
+          (click)="forcSync()"
+          [disabled]="!syncStatus.isOnline || syncStatus.isSyncing"
+          *ngIf="syncStatus.pendingOperations > 0">
+          <mat-icon>sync</mat-icon>
+          Sincronizar ahora
+        </button>
+        
+        <button 
+          mat-stroked-button 
+          color="warn" 
+          (click)="clearPendingOperations()"
+          [disabled]="syncStatus.isSyncing"
+          *ngIf="syncStatus.pendingOperations > 0">
+          <mat-icon>clear_all</mat-icon>
+          Limpiar cola
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -232,27 +232,60 @@
     width: 100%;
     height: auto;
     order: 2;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1001;
+    background: var(--sidebar-color);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
     
     .sidebar-nav {
       display: flex;
       overflow-x: auto;
-      padding: 12px 16px;
+      padding: 8px 16px;
+      scrollbar-width: none; // Firefox
+      -ms-overflow-style: none; // IE/Edge
+      
+      &::-webkit-scrollbar {
+        display: none; // Chrome/Safari
+      }
       
       .nav-item {
-        min-width: 120px;
+        min-width: 80px;
         margin-right: 8px;
         margin-bottom: 0;
         flex-direction: column;
-        gap: 8px;
-        padding: 12px;
+        gap: 4px;
+        padding: 8px 4px;
         text-align: center;
+        border-radius: 8px;
+        transition: all 0.2s ease;
         
         span {
-          font-size: 0.8rem;
+          font-size: 0.7rem;
+          font-weight: 500;
+          line-height: 1.2;
         }
         
         mat-icon {
           font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+        
+        &:hover {
+          transform: none; // Desactiva el transform en móvil
+          background: rgba(255, 255, 255, 0.1);
+        }
+        
+        &.active {
+          background: rgba(255, 255, 255, 0.15);
+          
+          &::before {
+            display: none; // Oculta la barra lateral en móvil
+          }
         }
       }
     }
@@ -265,6 +298,7 @@
   
   .main-content {
     order: 1;
+    padding-bottom: 80px; // Espacio para la barra de navegación inferior
   }
   
   .main-header {
@@ -283,11 +317,13 @@
     .header-right .create-btn {
       width: 100%;
       justify-content: center;
+      min-height: 44px; // Mejora accesibilidad táctil
     }
   }
   
   .page-content {
     padding: 20px;
+    padding-bottom: 100px; // Espacio adicional para la navegación inferior
   }
 }
 

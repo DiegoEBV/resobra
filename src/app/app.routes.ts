@@ -25,6 +25,7 @@ export const routes: Routes = [
     component: AdminItemsComponent,
     title: 'Sistema de Informes - Administración de Partidas'
   },
+
   {
     path: '**',
     redirectTo: '',
