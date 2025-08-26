@@ -4,7 +4,8 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build",
+    "build": "ng build --configuration github-pages",
+    "deploy": "npx angular-cli-ghpages --dir=dist/sistema-informes-obra/browser",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "serve:ssr:sistema-informes-obra": "node dist/sistema-informes-obra/server/server.mjs"
@@ -40,6 +41,7 @@
     "@types/file-saver": "^2.0.7",
     "@types/jasmine": "~5.1.0",
     "@types/node": "^18.18.0",
+    "angular-cli-ghpages": "^2.0.3",
     "autoprefixer": "^10.4.21",
     "jasmine-core": "~5.1.0",
     "karma": "~6.4.0",
