@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1756241602332,
+  "timestamp": 1756243498747,
   "index": "/resobra/index.html",
   "assetGroups": [
     {
@@ -12,20 +12,20 @@
       },
       "urls": [
         "/resobra/chunk-47BTRKO7.js",
-        "/resobra/chunk-EGOF3Q66.js",
         "/resobra/chunk-FK6H3RFT.js",
-        "/resobra/chunk-IZDRGQAF.js",
         "/resobra/chunk-NPJLHOA5.js",
         "/resobra/chunk-ODN5LVDJ.js",
+        "/resobra/chunk-Q76TYKVI.js",
+        "/resobra/chunk-RZA2GKRY.js",
         "/resobra/chunk-SOQBCYLK.js",
         "/resobra/chunk-SW6XZSZV.js",
         "/resobra/chunk-X5YLR3NI.js",
         "/resobra/favicon.ico",
         "/resobra/index.html",
-        "/resobra/main-FJWS7K3P.js",
+        "/resobra/main-O5JAJY5H.js",
         "/resobra/manifest.webmanifest",
         "/resobra/polyfills-B6TNHZQ6.js",
-        "/resobra/styles-WSJ5FD6E.css"
+        "/resobra/styles-PEDWYHEE.css"
       ],
       "patterns": []
     },
@@ -76,20 +76,20 @@
     "/resobra/assets/icons/icon.svg": "66eeeeddfc8810e563065ce34561c56019e3017b",
     "/resobra/assets/placeholder-image.svg": "329bc231e3046f0a8452192ce4d433534068c47e",
     "/resobra/chunk-47BTRKO7.js": "c531d4f2d431cfed09f0c2de7a96f04a695e9479",
-    "/resobra/chunk-EGOF3Q66.js": "4efdecbb18636b72f484f1bc1a4460725c53a00e",
     "/resobra/chunk-FK6H3RFT.js": "3c538698719f1cf34410542b8c702bc484e025ee",
-    "/resobra/chunk-IZDRGQAF.js": "76beacbc059c0e83963366edebc74470e155436a",
     "/resobra/chunk-NPJLHOA5.js": "e6cc472015493735250808a2cef022b775c0c716",
     "/resobra/chunk-ODN5LVDJ.js": "626a459409709868c6f2a3483b3f521d513887da",
+    "/resobra/chunk-Q76TYKVI.js": "db09621e6dd9dac94616006dc9c305f3510ace26",
+    "/resobra/chunk-RZA2GKRY.js": "1066c6942fad026e9e018c6a5b19168a8bd0aa15",
     "/resobra/chunk-SOQBCYLK.js": "dd1c3139fbaf4d199ba4ce7d9cfbff5af35988b7",
     "/resobra/chunk-SW6XZSZV.js": "2cdfa36114f742769b3153e6a8c1b9b3cb4a9909",
     "/resobra/chunk-X5YLR3NI.js": "57e1ca8dfddc6905958dc157e5f8bac6fb329f8f",
     "/resobra/favicon.ico": "9c39f434fe1261f68c5e3eefdf734630d99c5670",
-    "/resobra/index.html": "a823f63d13fbedf74a1323f6308cde1d93e64785",
-    "/resobra/main-FJWS7K3P.js": "b71497d931d99fd4e4cda58807e414c91424fd8d",
+    "/resobra/index.html": "a7dbaa93a8566ce7184b8d5dbc480e0b7dc6a74c",
+    "/resobra/main-O5JAJY5H.js": "a227dabfcf77e87244ad33fb7c13bc5375737e17",
     "/resobra/manifest.webmanifest": "ce8934d03af568a58a47626712652dc2a9dc404d",
     "/resobra/polyfills-B6TNHZQ6.js": "bf76ac291d7f51c1139b7edcf86b359a30c08c64",
-    "/resobra/styles-WSJ5FD6E.css": "b2f68dab5ab468c8f1be0ec03b08582359e9d68c"
+    "/resobra/styles-PEDWYHEE.css": "29d617b1c443799a95fcb085f6e63df150104a3d"
   },
   "navigationUrls": [
     {
