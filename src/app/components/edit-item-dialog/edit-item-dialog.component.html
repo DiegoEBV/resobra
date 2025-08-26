@@ -1,0 +1,110 @@
+<h2 mat-dialog-title>
+  <mat-icon>edit</mat-icon>
+  Editar Partida
+</h2>
+
+<mat-dialog-content class="dialog-content">
+  <form class="edit-form">
+    <!-- Nombre de la partida -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Nombre de la partida</mat-label>
+      <input 
+        matInput 
+        [(ngModel)]="editedItem.item.name" 
+        name="name"
+        required
+      >
+    </mat-form-field>
+
+    <!-- Descripción -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Descripción</mat-label>
+      <textarea 
+        matInput 
+        [(ngModel)]="editedItem.item.description" 
+        name="description"
+        rows="3"
+        placeholder="Descripción detallada de la partida"
+      ></textarea>
+    </mat-form-field>
+
+    <!-- Unidad -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Unidad</mat-label>
+      <input 
+        matInput 
+        [(ngModel)]="editedItem.item.unit" 
+        name="unit"
+        placeholder="Ej: m², m³, kg, etc."
+      >
+    </mat-form-field>
+
+    <!-- Materiales -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Materiales</mat-label>
+      <textarea 
+        matInput 
+        [(ngModel)]="editedItem.item.materials" 
+        name="materials"
+        rows="2"
+        placeholder="Lista de materiales necesarios"
+      ></textarea>
+    </mat-form-field>
+
+    <!-- Especialidad -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Especialidad</mat-label>
+      <mat-select [(ngModel)]="editedItem.item.specialty" name="specialty">
+        <mat-option *ngFor="let specialty of specialties" [value]="specialty.value">
+          {{ specialty.label }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Cantidades -->
+    <div class="quantities-row">
+      <mat-form-field appearance="outline" class="quantity-field">
+        <mat-label>Cantidad Anterior</mat-label>
+        <input 
+          matInput 
+          type="number" 
+          min="0" 
+          step="0.01"
+          [(ngModel)]="editedItem.previousQuantity" 
+          name="previousQuantity"
+        >
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="quantity-field">
+        <mat-label>Cantidad Actual</mat-label>
+        <input 
+          matInput 
+          type="number" 
+          min="0" 
+          step="0.01"
+          [(ngModel)]="editedItem.currentQuantity" 
+          name="currentQuantity"
+        >
+      </mat-form-field>
+    </div>
+
+    <!-- Cantidad acumulada (solo lectura) -->
+    <div class="accumulated-info">
+      <strong>Cantidad Acumulada: </strong>
+      <span class="accumulated-value">
+        {{ (editedItem.previousQuantity || 0) + (editedItem.currentQuantity || 0) | number:'1.2-2' }}
+      </span>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">
+    <mat-icon>cancel</mat-icon>
+    Cancelar
+  </button>
+  <button mat-raised-button color="primary" (click)="onSave()">
+    <mat-icon>save</mat-icon>
+    Guardar Cambios
+  </button>
+</mat-dialog-actions>

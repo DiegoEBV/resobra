@@ -1,0 +1,64 @@
+<div class="add-item-modal">
+  <h2 mat-dialog-title class="modal-title">
+    <mat-icon>add_circle</mat-icon>
+    Agregar Nueva Partida
+  </h2>
+
+  <mat-dialog-content class="modal-content">
+    <form [formGroup]="itemForm" class="item-form">
+      <!-- Nombre -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Nombre *</mat-label>
+        <input matInput formControlName="name" placeholder="Ingrese el nombre de la partida">
+        <mat-error *ngIf="itemForm.get('name')?.invalid && itemForm.get('name')?.touched">
+          {{ getErrorMessage('name') }}
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Descripción -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Descripción</mat-label>
+        <textarea matInput formControlName="description" rows="3" placeholder="Descripción detallada de la partida"></textarea>
+      </mat-form-field>
+
+      <!-- Unidad -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Unidad *</mat-label>
+        <input matInput formControlName="unit" placeholder="ej: m², kg, unidad">
+        <mat-error *ngIf="itemForm.get('unit')?.invalid && itemForm.get('unit')?.touched">
+          {{ getErrorMessage('unit') }}
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Materiales -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Materiales</mat-label>
+        <textarea matInput formControlName="materials" rows="2" placeholder="Lista de materiales necesarios"></textarea>
+      </mat-form-field>
+
+      <!-- Especialidad -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Especialidad *</mat-label>
+        <mat-select formControlName="specialty">
+          <mat-option *ngFor="let specialty of specialties" [value]="specialty">
+            {{ getSpecialtyDisplayName(specialty) }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="itemForm.get('specialty')?.invalid && itemForm.get('specialty')?.touched">
+          {{ getErrorMessage('specialty') }}
+        </mat-error>
+      </mat-form-field>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="modal-actions">
+    <button mat-button (click)="onCancel()" [disabled]="isLoading">
+      Cancelar
+    </button>
+    <button mat-raised-button color="primary" (click)="onSave()" [disabled]="isLoading">
+      <mat-icon *ngIf="isLoading">hourglass_empty</mat-icon>
+      <mat-icon *ngIf="!isLoading">save</mat-icon>
+      {{ isLoading ? 'Guardando...' : 'Guardar' }}
+    </button>
+  </mat-dialog-actions>
+</div>

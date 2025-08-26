@@ -1,0 +1,43 @@
+<div class="app-container">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <mat-icon class="logo-icon">business</mat-icon>
+        <span class="logo-text">{{ title }}</span>
+      </div>
+    </div>
+    
+    <nav class="sidebar-nav">
+      <a routerLink="/" class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+        <mat-icon>dashboard</mat-icon>
+        <span>Crear Reportes</span>
+      </a>
+      <a routerLink="/admin-items" class="nav-item" routerLinkActive="active">
+        <mat-icon>settings</mat-icon>
+        <span>Partidas</span>
+      </a>
+    </nav>
+    
+    
+  </aside>
+
+  <!-- Main Content Area -->
+  <div class="main-content">
+    <!-- Header -->
+    <header class="main-header">
+      <div class="header-content">
+        <div class="header-left">
+          <h1 class="page-title">¡Hola! Tenemos muchos proyectos 👋</h1>
+          <p class="page-subtitle">{{ getCurrentDate() }}</p>
+        </div>
+        
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <main class="page-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

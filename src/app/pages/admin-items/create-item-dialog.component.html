@@ -1,0 +1,56 @@
+<h2 mat-dialog-title>Crear Nueva Partida</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="itemForm" class="create-item-form">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Código</mat-label>
+      <input matInput formControlName="codigo" placeholder="Ej: ARQ-001">
+      <mat-error *ngIf="itemForm.get('codigo')?.hasError('required')">
+        El código es requerido
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Descripción</mat-label>
+      <textarea matInput formControlName="descripcion" rows="3" placeholder="Descripción de la partida"></textarea>
+      <mat-error *ngIf="itemForm.get('descripcion')?.hasError('required')">
+        La descripción es requerida
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Unidad</mat-label>
+      <input matInput formControlName="unidad" placeholder="Ej: m², ml, und">
+      <mat-error *ngIf="itemForm.get('unidad')?.hasError('required')">
+        La unidad es requerida
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Especialidad</mat-label>
+      <mat-select formControlName="especialidad">
+        <mat-option value="Arquitectura">Arquitectura</mat-option>
+        <mat-option value="Estructura">Estructura</mat-option>
+        <mat-option value="Sanitaria">Sanitaria</mat-option>
+        <mat-option value="Eléctrica">Eléctrica</mat-option>
+        <mat-option value="Mecánica">Mecánica</mat-option>
+        <mat-option value="Comunicaciones">Comunicaciones</mat-option>
+      </mat-select>
+      <mat-error *ngIf="itemForm.get('especialidad')?.hasError('required')">
+        La especialidad es requerida
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Materiales</mat-label>
+      <textarea matInput formControlName="materiales" rows="2" placeholder="Materiales necesarios (opcional)"></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancelar</button>
+  <button mat-raised-button color="primary" (click)="onCreate()" [disabled]="!itemForm.valid">
+    Crear Partida
+  </button>
+</mat-dialog-actions>

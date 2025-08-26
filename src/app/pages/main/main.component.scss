@@ -1,0 +1,301 @@
+// Estilos para el componente main - Corregido para funcionar con Tailwind CSS y Angular Material
+
+// Variables de colores BitePoint
+:host {
+  --bitepoint-teal: #2D9596;
+  --bitepoint-teal-dark: #1F6B6C;
+  --bitepoint-teal-light: #9AD0C2;
+  --bitepoint-teal-50: #F0F9F9;
+  --bitepoint-orange: #F4A261;
+  --civil-orange: #F4A261;
+}
+
+// Sección de búsqueda
+.search-section {
+  margin-bottom: 2rem;
+  
+  .search-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, var(--bitepoint-teal), var(--bitepoint-teal-dark));
+    border-radius: 0.75rem;
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    
+    mat-icon {
+      font-size: 1.5rem;
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+    
+    h3 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: white;
+    }
+  }
+}
+
+// Sección de filtros
+.filter-section {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: #f8fafc;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  
+  .filter-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    
+    mat-icon {
+      color: var(--bitepoint-teal);
+    }
+    
+    h4 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 500;
+      color: #374151;
+    }
+  }
+  
+  .filter-chips-container {
+    mat-chip-set {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+  }
+}
+
+// Contenedor de input de búsqueda
+.search-input-container {
+  margin-bottom: 1.5rem;
+  
+  mat-form-field {
+    width: 100%;
+    
+    .mat-mdc-form-field-focus-overlay {
+      background-color: var(--bitepoint-teal);
+    }
+    
+    .mat-mdc-text-field-wrapper {
+      &.mdc-text-field--focused {
+        .mdc-notched-outline {
+          border-color: var(--bitepoint-teal) !important;
+        }
+      }
+    }
+  }
+}
+
+// Sección de carga
+.loading-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  
+  mat-spinner {
+    ::ng-deep .mat-mdc-progress-spinner circle {
+      stroke: var(--bitepoint-teal);
+    }
+  }
+  
+  p {
+    color: #6b7280;
+    font-weight: 500;
+  }
+}
+
+// Resultados de búsqueda
+.search-results {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  
+  mat-list {
+    padding: 0;
+    
+    mat-list-item {
+      border-bottom: 1px solid #f3f4f6;
+      transition: background-color 0.2s ease;
+      
+      &:hover {
+        background-color: #f8fafc;
+      }
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      mat-icon[matListItemMeta] {
+        color: var(--bitepoint-teal);
+        transition: color 0.2s ease;
+        
+        &:hover {
+          color: var(--bitepoint-teal-dark);
+        }
+      }
+    }
+  }
+}
+
+// Estado vacío
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #6b7280;
+  
+  mat-icon {
+    font-size: 3rem;
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 1rem;
+    color: #d1d5db;
+  }
+  
+  p {
+    margin: 0.5rem 0;
+    
+    &:first-of-type {
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+  }
+}
+
+// Botones de acción
+.actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+  
+  button {
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+    
+    &.mat-mdc-raised-button.mat-primary {
+      background-color: var(--bitepoint-teal) !important;
+      color: white !important;
+      
+      &:hover {
+        background-color: var(--bitepoint-teal-dark) !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(45, 149, 150, 0.3);
+      }
+    }
+  }
+}
+
+// Chips personalizados
+mat-chip-option {
+  &.mdc-evolution-chip--selected {
+    background-color: var(--bitepoint-teal) !important;
+    color: white !important;
+    
+    .mdc-evolution-chip__checkmark {
+      color: white !important;
+    }
+  }
+  
+  &:not(.mdc-evolution-chip--selected) {
+    background-color: var(--bitepoint-teal-50);
+    color: var(--bitepoint-teal);
+    border: 1px solid var(--bitepoint-teal-light);
+    
+    &:hover {
+      background-color: var(--bitepoint-teal-light);
+    }
+  }
+}
+
+// Botones Material personalizados
+.mat-mdc-raised-button {
+  &.mat-primary {
+    background-color: var(--bitepoint-teal) !important;
+    color: white !important;
+    
+    &:hover {
+      background-color: var(--bitepoint-teal-dark) !important;
+    }
+  }
+  
+  &:not(.mat-primary):not(.mat-accent) {
+    background-color: #f3f4f6;
+    color: #374151;
+    
+    &:hover {
+      background-color: #e5e7eb;
+    }
+  }
+}
+
+// Formularios mejorados
+mat-form-field {
+  &.mat-mdc-form-field {
+    .mat-mdc-text-field-wrapper {
+      &.mdc-text-field--focused {
+        .mdc-notched-outline__leading,
+        .mdc-notched-outline__notch,
+        .mdc-notched-outline__trailing {
+          border-color: var(--bitepoint-teal) !important;
+        }
+      }
+    }
+    
+    .mat-mdc-form-field-focus-overlay {
+      background-color: var(--bitepoint-teal);
+    }
+    
+    .mat-mdc-form-field-label {
+      color: #6b7280;
+      
+      &.mdc-floating-label--float-above {
+        color: var(--bitepoint-teal) !important;
+      }
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .search-section {
+    .search-header {
+      padding: 0.75rem;
+      
+      h3 {
+        font-size: 1.1rem;
+      }
+    }
+  }
+  
+  .filter-section {
+    padding: 0.75rem;
+    
+    .filter-chips-container {
+      mat-chip-set {
+        gap: 0.25rem;
+      }
+    }
+  }
+  
+  .actions {
+    button {
+      width: 100%;
+      padding: 1rem;
+    }
+  }
+}

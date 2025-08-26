@@ -1,0 +1,197 @@
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+  <!-- Header -->
+  <div class="text-center mb-12 p-8 bg-gradient-to-r from-bitepoint-teal to-bitepoint-teal-dark rounded-2xl shadow-xl">
+    <h1 class="text-4xl font-bold text-white mb-4 flex items-center justify-center gap-3">
+      <mat-icon class="text-4xl">description</mat-icon>
+      Generación de Informe
+    </h1>
+    <p class="text-xl text-bitepoint-teal-50 font-medium">Vista previa y exportación del informe de obra</p>
+  </div>
+
+  <!-- Información del Proyecto -->
+  <mat-card class="shadow-lg border-0 rounded-xl mb-8" *ngIf="selectedProject">
+    <mat-card-header class="bg-gradient-to-r from-bitepoint-teal-100 to-bitepoint-teal text-white rounded-t-xl p-6">
+      <mat-card-title class="text-2xl font-semibold flex items-center gap-3">
+        <mat-icon>business</mat-icon>
+        Información del Proyecto
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content class="p-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-gradient-to-br from-gray-50 to-gray-100 p-5 rounded-xl border border-gray-200">
+          <span class="text-sm font-semibold text-bitepoint-teal uppercase tracking-wide">Nombre</span>
+          <p class="text-lg font-medium text-gray-900 mt-1">{{ selectedProject.name }}</p>
+        </div>
+        <div class="bg-gradient-to-br from-gray-50 to-gray-100 p-5 rounded-xl border border-gray-200">
+          <span class="text-sm font-semibold text-bitepoint-teal uppercase tracking-wide">Ubicación</span>
+          <p class="text-lg font-medium text-gray-900 mt-1">{{ selectedProject.location }}</p>
+        </div>
+        <div class="bg-gradient-to-br from-gray-50 to-gray-100 p-5 rounded-xl border border-gray-200">
+          <span class="text-sm font-semibold text-bitepoint-teal uppercase tracking-wide">Contratista</span>
+          <p class="text-lg font-medium text-gray-900 mt-1">{{ selectedProject.contractor }}</p>
+        </div>
+        <div class="bg-gradient-to-br from-gray-50 to-gray-100 p-5 rounded-xl border border-gray-200">
+          <span class="text-sm font-semibold text-bitepoint-teal uppercase tracking-wide">Fecha de Inicio</span>
+          <p class="text-lg font-medium text-gray-900 mt-1">{{ selectedProject.start_date | date:'dd/MM/yyyy' }}</p>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Información del Informe -->
+  <mat-card class="shadow-lg border-0 rounded-xl mb-8" *ngIf="reportData">
+    <mat-card-header class="bg-gradient-to-r from-civil-orange to-civil-darkorange text-white rounded-t-xl p-6">
+      <mat-card-title class="text-2xl font-semibold flex items-center gap-3">
+        <mat-icon>assignment</mat-icon>
+        Datos del Informe
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content class="p-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-5 rounded-xl border border-orange-200">
+          <span class="text-sm font-semibold text-civil-orange uppercase tracking-wide">Número</span>
+          <p class="text-2xl font-bold text-gray-900 mt-1">{{ reportData.numero }}</p>
+        </div>
+        <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-5 rounded-xl border border-orange-200">
+          <span class="text-sm font-semibold text-civil-orange uppercase tracking-wide">Fecha</span>
+          <p class="text-lg font-medium text-gray-900 mt-1">{{ reportData.fecha | date:'dd/MM/yyyy HH:mm' }}</p>
+        </div>
+        <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-5 rounded-xl border border-orange-200">
+          <span class="text-sm font-semibold text-civil-orange uppercase tracking-wide">Total de Partidas</span>
+          <p class="text-2xl font-bold text-gray-900 mt-1">{{ reportData.totales.cantidadPartidas }}</p>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Tabla de Partidas -->
+  <mat-card class="shadow-lg border-0 rounded-xl mb-8" *ngIf="reportData?.partidas?.length > 0">
+    <mat-card-header class="bg-gradient-to-r from-civil-green to-civil-darkgreen text-white rounded-t-xl p-6">
+      <mat-card-title class="text-2xl font-semibold flex items-center gap-3">
+        <mat-icon>table_chart</mat-icon>
+        Partidas del Informe
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content class="p-0">
+      <div class="overflow-x-auto">
+        <table mat-table [dataSource]="reportData.partidas" class="w-full">
+          <!-- Código -->
+          <ng-container matColumnDef="codigo">
+            <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-bitepoint-teal-dark font-bold text-sm uppercase tracking-wide p-4 text-left border-b-2 border-gray-200">Código</th>
+            <td mat-cell *matCellDef="let item" class="p-4 text-sm font-medium text-gray-900 border-b border-gray-100">{{ item.codigo }}</td>
+          </ng-container>
+
+          <!-- Descripción -->
+          <ng-container matColumnDef="descripcion">
+            <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-bitepoint-teal-dark font-bold text-sm uppercase tracking-wide p-4 text-left border-b-2 border-gray-200 min-w-80">Descripción</th>
+            <td mat-cell *matCellDef="let item" class="p-4 border-b border-gray-100">
+              <div class="max-w-xs">
+                <span class="text-sm text-gray-900 font-medium leading-relaxed">{{ item.descripcion }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Unidad -->
+          <ng-container matColumnDef="unidad">
+            <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-bitepoint-teal-dark font-bold text-sm uppercase tracking-wide p-4 text-center border-b-2 border-gray-200">Unidad</th>
+            <td mat-cell *matCellDef="let item" class="p-4 text-center border-b border-gray-100">
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-bitepoint-teal-100 text-bitepoint-teal-dark">{{ item.unidad }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Anterior -->
+          <ng-container matColumnDef="anterior">
+            <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-bitepoint-teal-dark font-bold text-sm uppercase tracking-wide p-4 text-right border-b-2 border-gray-200">Anterior</th>
+            <td mat-cell *matCellDef="let item" class="p-4 text-right border-b border-gray-100">
+              <span class="text-sm font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded-lg">{{ item.anterior | number:'1.2-2' }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Actual -->
+          <ng-container matColumnDef="actual">
+            <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-bitepoint-teal-dark font-bold text-sm uppercase tracking-wide p-4 text-right border-b-2 border-gray-200">Actual</th>
+            <td mat-cell *matCellDef="let item" class="p-4 text-right border-b border-gray-100">
+              <span class="text-sm font-semibold text-civil-green bg-green-100 px-3 py-1 rounded-lg">{{ item.actual | number:'1.2-2' }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Acumulado -->
+          <ng-container matColumnDef="acumulado">
+            <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-bitepoint-teal-dark font-bold text-sm uppercase tracking-wide p-4 text-right border-b-2 border-gray-200">Acumulado</th>
+            <td mat-cell *matCellDef="let item" class="p-4 text-right border-b border-gray-100">
+              <span class="text-sm font-bold text-bitepoint-teal-dark bg-bitepoint-teal-100 px-3 py-1 rounded-lg">{{ item.acumulado | number:'1.2-2' }}</span>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns" class="bg-gray-50"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover:bg-gray-50 transition-colors duration-200"></tr>
+        </table>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Totales -->
+  <mat-card class="shadow-lg border-0 rounded-xl mb-8" *ngIf="reportData?.totales">
+    <mat-card-header class="bg-gradient-to-r from-bitepoint-teal-dark to-bitepoint-teal text-white rounded-t-xl p-6">
+      <mat-card-title class="text-2xl font-semibold flex items-center gap-3">
+        <mat-icon>calculate</mat-icon>
+        Resumen de Totales
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content class="p-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-xl border border-gray-200 text-center">
+          <span class="text-sm font-semibold text-gray-600 uppercase tracking-wide block mb-2">Total Anterior</span>
+          <span class="text-3xl font-bold text-gray-800">{{ reportData.totales.totalAnterior | number:'1.2-2' }}</span>
+        </div>
+        <div class="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl border border-green-200 text-center">
+          <span class="text-sm font-semibold text-green-700 uppercase tracking-wide block mb-2">Total Actual</span>
+          <span class="text-3xl font-bold text-green-800">{{ reportData.totales.totalActual | number:'1.2-2' }}</span>
+        </div>
+        <div class="bg-gradient-to-br from-bitepoint-teal-50 to-bitepoint-teal-100 p-6 rounded-xl border border-bitepoint-teal-200 text-center">
+          <span class="text-sm font-semibold text-bitepoint-teal-700 uppercase tracking-wide block mb-2">Total Acumulado</span>
+          <span class="text-4xl font-bold text-bitepoint-teal-900">{{ reportData.totales.totalAcumulado | number:'1.2-2' }}</span>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Acciones -->
+  <div class="flex flex-col lg:flex-row gap-6 justify-between items-center bg-white p-8 rounded-2xl shadow-lg border border-gray-200 mb-8">
+    <div class="flex gap-4">
+      <button mat-raised-button (click)="goBack()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg">
+        <mat-icon class="mr-2">arrow_back</mat-icon>
+        Volver
+      </button>
+    </div>
+
+    <div class="flex flex-col sm:flex-row gap-4">
+      <button mat-raised-button (click)="exportToPDF()" [disabled]="isExporting || !reportData" class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg">
+        <mat-icon class="mr-2">picture_as_pdf</mat-icon>
+        <span *ngIf="!isExporting">Exportar PDF</span>
+        <span *ngIf="isExporting">Exportando...</span>
+      </button>
+      <button mat-raised-button (click)="exportToWord()" [disabled]="isExporting || !reportData" class="bg-gradient-to-r from-bitepoint-teal to-bitepoint-teal-600 hover:from-bitepoint-teal-600 hover:to-bitepoint-teal-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg">
+        <mat-icon class="mr-2">description</mat-icon>
+        <span *ngIf="!isExporting">Exportar Word</span>
+        <span *ngIf="isExporting">Exportando...</span>
+      </button>
+    </div>
+
+    <div>
+      <button mat-raised-button (click)="saveReport()" [disabled]="isGenerating || !reportData" class="bg-gradient-to-r from-civil-green to-civil-darkgreen hover:from-civil-darkgreen hover:to-green-700 text-white px-8 py-3 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 shadow-xl">
+        <mat-icon class="mr-2">save</mat-icon>
+        <span *ngIf="!isGenerating">Guardar Informe</span>
+        <span *ngIf="isGenerating">Guardando...</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" *ngIf="isGenerating || isExporting">
+    <div class="bg-white p-8 rounded-2xl shadow-2xl text-center">
+      <mat-spinner diameter="50" class="mx-auto mb-4"></mat-spinner>
+      <p class="text-lg font-semibold text-gray-700">{{ isGenerating ? 'Guardando informe...' : 'Exportando documento...' }}</p>
+    </div>
+  </div>
+</div>

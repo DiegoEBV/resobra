@@ -1,0 +1,49 @@
+.create-item-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 400px;
+  padding: 16px 0;
+}
+
+.full-width {
+  width: 100%;
+}
+
+mat-dialog-content {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+mat-dialog-actions {
+  padding: 16px 0;
+  gap: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .create-item-form {
+    min-width: 300px;
+  }
+}
+
+/* Form field styling */
+mat-form-field {
+  margin-bottom: 8px;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+/* Button styling */
+button[mat-raised-button] {
+  min-width: 120px;
+}
+
+/* Error styling */
+mat-error {
+  font-size: 12px;
+  margin-top: 4px;
+}

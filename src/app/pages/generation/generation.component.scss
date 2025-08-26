@@ -1,0 +1,405 @@
+// BitePoint Estilos para el componente de generación
+
+.min-h-screen {
+  background-color: var(--background-light);
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  padding: 1.5rem;
+}
+
+// BitePoint Header section
+.text-center.mb-12 {
+  background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-light) 100%);
+  box-shadow: 0 4px 16px rgba(45, 149, 150, 0.15);
+  border-radius: 12px;
+  border: 1px solid var(--primary-teal-light);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  
+  h1 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 2.5rem;
+    color: white;
+    margin-bottom: 1rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    
+    mat-icon {
+      font-size: 2.5rem;
+      width: 2.5rem;
+      height: 2.5rem;
+      margin-right: 0.75rem;
+      color: var(--accent-orange);
+    }
+  }
+  
+  p {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 1.25rem;
+    color: rgba(255, 255, 255, 0.9);
+  }
+}
+
+// BitePoint Material Cards
+mat-card {
+  box-shadow: 0 2px 8px rgba(45, 149, 150, 0.08);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  background: white;
+  margin-bottom: 2rem;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    box-shadow: 0 4px 12px rgba(45, 149, 150, 0.12);
+    transform: translateY(-2px);
+  }
+  
+  mat-card-header {
+    border-radius: 12px 12px 0 0;
+    padding: 1.5rem;
+    
+    &.from-civil-lightblue { background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-light) 100%); }
+    &.from-civil-orange { background: linear-gradient(135deg, var(--accent-orange) 0%, #e76f51 100%); }
+    &.from-civil-green { background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); }
+    &.from-civil-darkblue { background: linear-gradient(135deg, var(--bitepoint-teal) 0%, var(--bitepoint-teal-dark) 100%); }
+    
+    mat-card-title {
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 1.5rem;
+      color: white;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      
+      mat-icon {
+        font-size: 1.5rem;
+        width: 1.5rem;
+        height: 1.5rem;
+        margin-right: 0.75rem;
+        color: var(--accent-orange);
+      }
+    }
+  }
+  
+  mat-card-content {
+    padding: var(--spacing-lg);
+    
+    .grid {
+      gap: var(--spacing-lg);
+      
+      .bg-gradient-to-br {
+        border-radius: var(--radius-lg);
+        box-shadow: var(--elevation-2);
+        padding: var(--spacing-md);
+        border: 1px solid var(--divider-color);
+        transition: var(--transition-normal);
+        
+        &:hover {
+          box-shadow: var(--elevation-4);
+          transform: translateY(-1px);
+        }
+        
+        &.from-gray-50 { background: linear-gradient(135deg, var(--surface-elevated) 0%, var(--surface-hover) 100%); }
+        &.from-orange-50 { background: linear-gradient(135deg, var(--civil-orange-50) 0%, var(--civil-orange-100) 100%); }
+        &.from-green-50 { background: linear-gradient(135deg, var(--success-50) 0%, var(--success-100) 100%); }
+        &.from-blue-50 { background: linear-gradient(135deg, var(--bitepoint-teal-50) 0%, var(--bitepoint-teal-100) 100%); }
+        
+        span {
+          font-family: 'Google Sans', sans-serif;
+          font-weight: 500;
+          font-size: 0.875rem;
+          color: var(--text-secondary);
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+        
+        p {
+          font-family: 'Roboto', sans-serif;
+          font-weight: 500;
+          color: var(--text-primary);
+          margin-top: var(--spacing-sm);
+          
+          &.text-2xl { font-size: 1.875rem; font-weight: 600; }
+          &.text-3xl { font-size: 2.25rem; font-weight: 700; }
+          &.text-4xl { font-size: 2.5rem; font-weight: 700; }
+        }
+      }
+    }
+  }
+}
+
+// Material Table estandarizada
+mat-mdc-table {
+  background: var(--surface-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-2);
+  overflow: hidden;
+  
+  .mat-mdc-header-row {
+    background: linear-gradient(to right, var(--bitepoint-teal), var(--bitepoint-teal-light));
+    
+    .mat-mdc-header-cell {
+      color: white;
+      font-family: 'Google Sans', sans-serif;
+      font-weight: 500;
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: var(--spacing-md);
+      border-bottom: none;
+    }
+  }
+  
+  .mat-mdc-row {
+    border-bottom: 1px solid var(--divider-color);
+    transition: var(--transition-fast);
+    
+    &:hover {
+      background-color: var(--surface-elevated);
+    }
+    
+    .mat-mdc-cell {
+      padding: var(--spacing-md);
+      font-family: 'Roboto', sans-serif;
+      color: var(--text-primary);
+      border-bottom: none;
+      
+      // Embedded spans and badges
+      span {
+        &.badge {
+          display: inline-block;
+          padding: var(--spacing-xs) var(--spacing-sm);
+          border-radius: var(--radius-full);
+          font-size: 0.75rem;
+          font-weight: 500;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          
+          &.bg-blue-100 {
+            background-color: var(--bitepoint-teal-100);
+            color: var(--bitepoint-teal-dark);
+          }
+          
+          &.bg-green-100 {
+            background-color: var(--success-100);
+            color: var(--success-dark);
+          }
+          
+          &.bg-orange-100 {
+            background-color: var(--civil-orange-100);
+            color: var(--civil-orange-dark);
+          }
+        }
+      }
+    }
+  }
+}
+
+// BitePoint Actions section
+.flex.flex-col.lg\:flex-row {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(45, 149, 150, 0.08);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  border: 1px solid var(--border-light);
+  
+  button[mat-raised-button] {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(45, 149, 150, 0.1);
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    text-transform: none;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.2s ease;
+    border: none;
+    
+    &:hover {
+      box-shadow: 0 4px 12px rgba(45, 149, 150, 0.15);
+      transform: translateY(-1px);
+    }
+    
+    &:active { transform: translateY(0); }
+    
+    &.bg-gray-600 {
+      background: linear-gradient(135deg, #6c757d 0%, #495057 100%) !important;
+      color: white !important;
+      &:hover { background: linear-gradient(135deg, #495057 0%, #343a40 100%) !important; }
+    }
+    
+    &.from-red-500 {
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+      color: white !important;
+      &:hover { background: linear-gradient(135deg, #c0392b 0%, #a93226 100%) !important; }
+    }
+    
+    &.from-blue-500 {
+      background: linear-gradient(135deg, var(--bitepoint-teal) 0%, var(--bitepoint-teal-dark) 100%) !important;
+      color: white !important;
+      &:hover { background: linear-gradient(135deg, var(--bitepoint-teal-dark) 0%, var(--bitepoint-teal) 100%) !important; }
+    }
+    
+    &.from-civil-green {
+      background: linear-gradient(135deg, var(--accent-orange) 0%, #e76f51 100%) !important;
+      color: white !important;
+      &:hover { background: linear-gradient(135deg, #e76f51 0%, var(--accent-orange) 100%) !important; }
+    }
+    
+    &[disabled] {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none !important;
+      &:hover { transform: none !important; }
+    }
+    
+    mat-icon {
+      font-size: 1.25rem;
+      width: 1.25rem;
+      height: 1.25rem;
+      margin-right: 0.5rem;
+    }
+  }
+}
+
+// BitePoint Action buttons
+.action-buttons {
+  display: flex;
+  gap: 0.75rem;
+  
+  button {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    
+    &.mat-primary {
+      background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-light) 100%);
+      color: white;
+      
+      &:hover {
+        background: linear-gradient(135deg, #1f7a7b 0%, var(--primary-teal) 100%);
+        box-shadow: 0 2px 8px rgba(45, 149, 150, 0.3);
+        transform: translateY(-1px);
+      }
+      
+      &:disabled {
+        background: #e9ecef;
+        color: #6c757d;
+        cursor: not-allowed;
+      }
+    }
+    
+    &.mat-accent {
+      background: linear-gradient(135deg, var(--accent-orange) 0%, #e76f51 100%);
+      color: white;
+      
+      &:hover {
+        background: linear-gradient(135deg, #e76f51 0%, var(--accent-orange) 100%);
+        box-shadow: 0 2px 8px rgba(244, 162, 97, 0.3);
+        transform: translateY(-1px);
+      }
+    }
+    
+    &.mat-warn {
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+      color: white;
+      
+      &:hover {
+        background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
+        box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+        transform: translateY(-1px);
+      }
+    }
+    
+    &.mat-stroked-button {
+      background: white;
+      border: 1px solid var(--border-light);
+      color: var(--primary-teal);
+      
+      &:hover {
+        background: rgba(45, 149, 150, 0.05);
+        border-color: var(--primary-teal);
+      }
+    }
+  }
+}
+
+// BitePoint Loading overlay
+.fixed.inset-0 {
+  background: rgba(248, 249, 250, 0.95);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  
+  .flex.items-center.justify-center {
+    height: 100%;
+    
+    .flex.flex-col.items-center {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(45, 149, 150, 0.1);
+      border: 1px solid var(--border-light);
+      
+      mat-spinner {
+        margin-bottom: 1rem;
+        
+        ::ng-deep circle {
+          stroke: var(--primary-teal);
+        }
+      }
+      
+      p {
+        color: var(--text-secondary);
+        font-family: 'Inter', sans-serif;
+        font-size: 1rem;
+        margin: 0;
+        text-align: center;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+// BitePoint Responsive adjustments
+@media (max-width: 768px) {
+  .min-h-screen {
+    padding: 1rem;
+  }
+  
+  .text-center.mb-12 {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    
+    h1 {
+      font-size: 1.75rem;
+    }
+  }
+  
+  mat-card {
+    margin-bottom: 1rem;
+    
+    mat-card-header {
+      padding: 1rem;
+    }
+    
+    mat-card-content {
+      padding: 1rem;
+    }
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    
+    button {
+      width: 100%;
+      margin-bottom: 0.5rem;
+    }
+  }
+  
+  .flex.flex-col.lg\:flex-row {
+    padding: 1rem;
+  }
+}

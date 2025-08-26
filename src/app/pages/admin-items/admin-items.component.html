@@ -1,0 +1,164 @@
+<div class="min-h-screen bg-gray-50 p-6">
+  <!-- Header -->
+  <mat-toolbar class="bg-gradient-to-r from-bitepoint-teal to-bitepoint-teal-dark text-white shadow-lg rounded-xl mb-6 px-6">
+    <mat-icon class="text-white mr-3">settings</mat-icon>
+    <span class="text-2xl font-semibold flex-1">Administración de Partidas</span>
+    <button mat-raised-button (click)="openCreateDialog()" class="bg-civil-orange hover:bg-civil-darkorange text-white font-medium px-6 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200">
+      <mat-icon class="mr-2">add</mat-icon>
+      Nueva Partida
+    </button>
+  </mat-toolbar>
+
+  <!-- Search and Filters -->
+  <mat-card class="shadow-lg border-0 rounded-xl mb-6">
+    <mat-card-content class="p-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Buscar partidas</mat-label>
+          <input matInput 
+                 [(ngModel)]="searchTerm" 
+                 (input)="filterItems()"
+                 placeholder="Código, descripción o materiales..."
+                 class="text-lg">
+          <mat-icon matSuffix class="text-bitepoint-teal">search</mat-icon>
+        </mat-form-field>
+        
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Filtrar por especialidad</mat-label>
+          <mat-select [(value)]="selectedSpecialty" (selectionChange)="filterItems()">
+            <mat-option value="all">Todas las especialidades</mat-option>
+            <mat-option *ngFor="let specialty of specialties" [value]="specialty">
+              {{specialty}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="flex flex-col items-center justify-center py-12">
+    <mat-spinner class="mb-4"></mat-spinner>
+    <p class="text-gray-600 text-lg">Cargando partidas...</p>
+  </div>
+
+  <!-- Tabs by Specialty -->
+  <mat-card *ngIf="!isLoading" class="shadow-lg border-0 rounded-xl">
+    <mat-tab-group class="w-full">
+      <mat-tab *ngFor="let specialty of specialties" [label]="specialty">
+        <div class="p-6">
+          <!-- Items Table -->
+          <div class="overflow-x-auto bg-white rounded-lg shadow-sm">
+            <table mat-table [dataSource]="getFilteredItemsBySpecialty(specialty)" class="w-full">
+              <!-- Code Column -->
+              <ng-container matColumnDef="codigo">
+                <th mat-header-cell *matHeaderCellDef class="bg-bitepoint-teal text-white font-semibold py-4 px-6 text-left">Código</th>
+                <td mat-cell *matCellDef="let item" class="py-4 px-6 border-b border-gray-200">
+                  <div *ngIf="editingItem?.id !== item.id; else editCodeTemplate">
+                    <span class="font-medium text-gray-900">{{item.name}}</span>
+                  </div>
+                  <ng-template #editCodeTemplate>
+                    <div [formGroup]="editForm">
+                      <mat-form-field appearance="outline" class="w-full">
+                        <input matInput formControlName="codigo" class="text-sm">
+                      </mat-form-field>
+                    </div>
+                  </ng-template>
+                </td>
+              </ng-container>
+
+              <!-- Description Column -->
+              <ng-container matColumnDef="descripcion">
+                <th mat-header-cell *matHeaderCellDef class="bg-bitepoint-teal text-white font-semibold py-4 px-6 text-left">Descripción</th>
+                <td mat-cell *matCellDef="let item" class="py-4 px-6 border-b border-gray-200">
+                  <div *ngIf="editingItem?.id !== item.id; else editDescriptionTemplate">
+                    <span class="text-gray-700">{{item.description}}</span>
+                  </div>
+                  <ng-template #editDescriptionTemplate>
+                    <div [formGroup]="editForm">
+                      <mat-form-field appearance="outline" class="w-full">
+                        <input matInput formControlName="descripcion" class="text-sm">
+                      </mat-form-field>
+                    </div>
+                  </ng-template>
+                </td>
+              </ng-container>
+
+              <!-- Unit Column -->
+              <ng-container matColumnDef="unidad">
+                <th mat-header-cell *matHeaderCellDef class="bg-bitepoint-teal text-white font-semibold py-4 px-6 text-left">Unidad</th>
+                <td mat-cell *matCellDef="let item" class="py-4 px-6 border-b border-gray-200">
+                  <div *ngIf="editingItem?.id !== item.id; else editUnitTemplate">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-bitepoint-teal-100 text-bitepoint-teal-dark">{{item.unit || 'N/A'}}</span>
+                  </div>
+                  <ng-template #editUnitTemplate>
+                    <div [formGroup]="editForm">
+                      <mat-form-field appearance="outline" class="w-full">
+                        <input matInput formControlName="unidad" class="text-sm">
+                      </mat-form-field>
+                    </div>
+                  </ng-template>
+                </td>
+              </ng-container>
+
+              <!-- Materials Column -->
+              <ng-container matColumnDef="materiales">
+                <th mat-header-cell *matHeaderCellDef class="bg-bitepoint-teal text-white font-semibold py-4 px-6 text-left">Materiales</th>
+                <td mat-cell *matCellDef="let item" class="py-4 px-6 border-b border-gray-200">
+                  <div *ngIf="editingItem?.id !== item.id; else editMaterialsTemplate">
+                    <div class="flex flex-wrap gap-1">
+                      <span *ngFor="let material of item.materials" class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
+                        {{material}}
+                      </span>
+                      <span *ngIf="!item.materials || item.materials.length === 0" class="text-gray-500">N/A</span>
+                    </div>
+                  </div>
+                  <ng-template #editMaterialsTemplate>
+                    <div [formGroup]="editForm">
+                      <mat-form-field appearance="outline" class="w-full">
+                        <textarea matInput formControlName="materiales" rows="2" class="text-sm"></textarea>
+                      </mat-form-field>
+                    </div>
+                  </ng-template>
+                </td>
+              </ng-container>
+
+              <!-- Actions Column -->
+              <ng-container matColumnDef="acciones">
+                <th mat-header-cell *matHeaderCellDef class="bg-bitepoint-teal text-white font-semibold py-4 px-6 text-center">Acciones</th>
+                <td mat-cell *matCellDef="let item" class="py-4 px-6 border-b border-gray-200">
+                  <div *ngIf="editingItem?.id !== item.id" class="flex justify-center space-x-2">
+                    <button mat-icon-button (click)="startEdit(item)" matTooltip="Editar" class="text-bitepoint-teal hover:text-bitepoint-teal-dark hover:bg-bitepoint-teal-50 rounded-lg transition-colors duration-200">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button (click)="deleteItem(item)" matTooltip="Eliminar" class="text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors duration-200">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                  <div *ngIf="editingItem?.id === item.id" class="flex justify-center space-x-2">
+                    <button mat-icon-button (click)="saveEdit()" matTooltip="Guardar" class="text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-colors duration-200">
+                      <mat-icon>save</mat-icon>
+                    </button>
+                    <button mat-icon-button (click)="cancelEdit()" matTooltip="Cancelar" class="text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                      <mat-icon>cancel</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumns" class="bg-bitepoint-teal"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover:bg-gray-50 transition-colors duration-150"></tr>
+            </table>
+
+            <!-- No items message -->
+            <div *ngIf="getFilteredItemsBySpecialty(specialty).length === 0" class="flex flex-col items-center justify-center py-12 text-gray-500">
+              <mat-icon class="text-6xl mb-4 text-gray-400">info</mat-icon>
+              <p class="text-lg font-medium">No hay partidas para esta especialidad</p>
+              <p class="text-sm mt-2">Agrega nuevas partidas usando el botón "Nueva Partida"</p>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </mat-card>
+</div>
