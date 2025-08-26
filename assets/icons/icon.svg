@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#1976d2" rx="64"/>
+  <g fill="white">
+    <!-- Building icon -->
+    <rect x="128" y="160" width="256" height="288" fill="white" stroke="#1976d2" stroke-width="4"/>
+    <rect x="160" y="192" width="32" height="32" fill="#1976d2"/>
+    <rect x="224" y="192" width="32" height="32" fill="#1976d2"/>
+    <rect x="288" y="192" width="32" height="32" fill="#1976d2"/>
+    <rect x="352" y="192" width="32" height="32" fill="#1976d2"/>
+    <rect x="160" y="256" width="32" height="32" fill="#1976d2"/>
+    <rect x="224" y="256" width="32" height="32" fill="#1976d2"/>
+    <rect x="288" y="256" width="32" height="32" fill="#1976d2"/>
+    <rect x="352" y="256" width="32" height="32" fill="#1976d2"/>
+    <rect x="160" y="320" width="32" height="32" fill="#1976d2"/>
+    <rect x="224" y="320" width="32" height="32" fill="#1976d2"/>
+    <rect x="288" y="320" width="32" height="32" fill="#1976d2"/>
+    <rect x="352" y="320" width="32" height="32" fill="#1976d2"/>
+    <!-- Door -->
+    <rect x="240" y="384" width="32" height="64" fill="#1976d2"/>
+    <!-- Title -->
+    <text x="256" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="white">RO</text>
+  </g>
+</svg>
