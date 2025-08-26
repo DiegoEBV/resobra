@@ -74,7 +74,7 @@
               "sourceMap": true
             },
             "github-pages": {
-              "baseHref": "/sistema-informes-obra/",
+              "baseHref": "/resobra/",
               "outputHashing": "all",
               "budgets": [
                 {
