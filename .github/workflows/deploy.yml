@@ -1,0 +1,62 @@
+name: Deploy to GitHub Pages
+
+# Ejecutar el workflow cuando se haga push a la rama main
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+# Configurar permisos para GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Permitir solo un deployment concurrente
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # Job para build y deployment
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    
+    steps:
+    # Checkout del código
+    - name: Checkout
+      uses: actions/checkout@v4
+    
+    # Configurar Node.js
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'npm'
+    
+    # Instalar dependencias
+    - name: Install dependencies
+      run: npm ci
+    
+    # Build del proyecto con configuración GitHub Pages
+    - name: Build project
+      run: npm run build -- --configuration github-pages
+    
+    # Configurar GitHub Pages
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+    
+    # Subir artefactos para GitHub Pages
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: './dist/sistema-informes-obra/browser'
+    
+    # Deploy a GitHub Pages
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
