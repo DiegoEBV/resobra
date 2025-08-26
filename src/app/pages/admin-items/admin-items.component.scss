@@ -43,7 +43,6 @@ mat-toolbar {
     &:hover {
       background: linear-gradient(135deg, #e76f51 0%, var(--accent-orange) 100%) !important;
       box-shadow: 0 4px 16px rgba(244, 162, 97, 0.4);
-      transform: translateY(-2px);
     }
     
     mat-icon {
@@ -63,7 +62,6 @@ mat-card {
   
   &:hover {
     box-shadow: 0 4px 16px rgba(45, 149, 150, 0.1);
-    transform: translateY(-2px);
   }
   
   mat-card-content {
@@ -271,7 +269,6 @@ mat-tab-group {
                 &:hover {
                   background: linear-gradient(135deg, #1f7a7b 0%, var(--primary-teal) 100%);
                   box-shadow: 0 2px 8px rgba(45, 149, 150, 0.3);
-                  transform: translateY(-1px);
                 }
               }
               
@@ -284,7 +281,6 @@ mat-tab-group {
                 &:hover {
                   background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
                   box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
-                  transform: translateY(-1px);
                 }
               }
               
@@ -297,7 +293,6 @@ mat-tab-group {
                 &:hover {
                   background: linear-gradient(135deg, #e76f51 0%, var(--accent-orange) 100%);
                   box-shadow: 0 2px 8px rgba(244, 162, 97, 0.3);
-                  transform: translateY(-1px);
                 }
               }
               

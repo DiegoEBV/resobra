@@ -11,6 +11,60 @@ export class ExportService {
 
   constructor() { }
 
+  // Función utilitaria para dividir texto largo en múltiples líneas para PDF
+  private splitTextForPDF(doc: jsPDF, text: string, maxWidth: number, fontSize: number = 16): string[] {
+    doc.setFontSize(fontSize);
+    const words = text.split(' ');
+    const lines: string[] = [];
+    let currentLine = '';
+
+    for (const word of words) {
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      const textWidth = doc.getTextWidth(testLine);
+      
+      if (textWidth > maxWidth && currentLine) {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = testLine;
+      }
+    }
+    
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+    
+    return lines;
+  }
+
+  // Función utilitaria para dividir texto largo para Word
+  private splitTextForWord(text: string, maxLength: number = 80): string[] {
+    if (text.length <= maxLength) {
+      return [text];
+    }
+
+    const words = text.split(' ');
+    const lines: string[] = [];
+    let currentLine = '';
+
+    for (const word of words) {
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      
+      if (testLine.length > maxLength && currentLine) {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = testLine;
+      }
+    }
+    
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+    
+    return lines;
+  }
+
   // Exportar a PDF
   async exportToPDF(report: Report, reportItems: any[]): Promise<void> {
     console.log('🔍 Export Service - exportToPDF iniciado');
@@ -30,7 +84,18 @@ export class ExportService {
     
     yPosition += 20;
     doc.setFontSize(16);
-    doc.text(report.project?.name || 'Proyecto', pageWidth / 2, yPosition, { align: 'center' });
+    
+    // Dividir el nombre del proyecto en múltiples líneas si es necesario
+    const projectName = report.project?.name || 'Proyecto';
+    const maxWidth = pageWidth - 40; // Margen de 20px a cada lado
+    const projectNameLines = this.splitTextForPDF(doc, projectName, maxWidth, 16);
+    
+    projectNameLines.forEach((line, index) => {
+      doc.text(line, pageWidth / 2, yPosition, { align: 'center' });
+      if (index < projectNameLines.length - 1) {
+        yPosition += 12; // Espaciado entre líneas
+      }
+    });
     
     yPosition += 15;
     doc.setFontSize(12);
@@ -56,7 +121,15 @@ export class ExportService {
     doc.setFont('helvetica', 'normal');
     
     if (report.project?.location) {
-      doc.text(`Ubicación: ${report.project.location}`, 20, yPosition);
+      const locationText = `Ubicación: ${report.project.location}`;
+      const locationLines = this.splitTextForPDF(doc, locationText, pageWidth - 40, 10);
+      
+      locationLines.forEach((line, index) => {
+        doc.text(line, 20, yPosition);
+        if (index < locationLines.length - 1) {
+          yPosition += 8;
+        }
+      });
       yPosition += 8;
     }
     
@@ -177,17 +250,27 @@ export class ExportService {
               alignment: AlignmentType.CENTER,
               spacing: { after: 400 }
             }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: report.project?.name || 'Proyecto',
-                  bold: true,
-                  size: 24
+            // Dividir el nombre del proyecto en múltiples líneas si es necesario
+            ...(() => {
+              const projectName = report.project?.name || 'Proyecto';
+              const projectNameLines = this.splitTextForWord(projectName, 60); // Límite de caracteres por línea
+              
+              return projectNameLines.map((line, index) => 
+                new Paragraph({
+                  children: [
+                    new TextRun({
+                      text: line,
+                      bold: true,
+                      size: 24
+                    })
+                  ],
+                  alignment: AlignmentType.CENTER,
+                  spacing: { 
+                    after: index === projectNameLines.length - 1 ? 300 : 100 
+                  }
                 })
-              ],
-              alignment: AlignmentType.CENTER,
-              spacing: { after: 300 }
-            }),
+              );
+            })(),
             new Paragraph({
               children: [
                 new TextRun({
@@ -221,15 +304,27 @@ export class ExportService {
               spacing: { before: 600, after: 300 }
             }),
             
-            ...(report.project?.location ? [new Paragraph({
-              children: [
-                new TextRun({
-                  text: `Ubicación: ${report.project.location}`,
-                  size: 20
+            // Dividir la ubicación en múltiples líneas si es necesario
+            ...(() => {
+              if (!report.project?.location) return [];
+              
+              const locationText = `Ubicación: ${report.project.location}`;
+              const locationLines = this.splitTextForWord(locationText, 80); // Límite de caracteres por línea
+              
+              return locationLines.map((line, index) => 
+                new Paragraph({
+                  children: [
+                    new TextRun({
+                      text: line,
+                      size: 20
+                    })
+                  ],
+                  spacing: { 
+                    after: index === locationLines.length - 1 ? 200 : 100 
+                  }
                 })
-              ],
-              spacing: { after: 200 }
-            })] : []),
+              );
+            })(),
             
             ...(report.project?.contractor ? [new Paragraph({
               children: [

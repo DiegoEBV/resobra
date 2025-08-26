@@ -75,7 +75,6 @@
       
       &:hover {
         background: linear-gradient(135deg, var(--primary-teal-dark) 0%, var(--primary-teal) 100%);
-        transform: translateY(-1px);
         box-shadow: 0 4px 16px rgba(45, 149, 150, 0.2);
       }
     }
@@ -89,7 +88,6 @@
         background: var(--background-light);
         color: var(--text-dark);
         border-color: var(--primary-teal-light);
-        transform: translateY(-1px);
         box-shadow: 0 4px 16px rgba(45, 149, 150, 0.1);
       }
     }

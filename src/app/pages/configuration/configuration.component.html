@@ -81,56 +81,6 @@
     </mat-card-content>
   </mat-card>
 
-  <!-- New Project Form -->
-  <mat-card class="new-project-section">
-    <mat-card-header>
-      <mat-card-title>
-        <mat-icon>add_business</mat-icon>
-        Crear Nuevo Proyecto
-      </mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <div class="new-project-form">
-        <div class="form-row">
-          <mat-form-field class="form-field">
-            <mat-label>Nombre del Proyecto *</mat-label>
-            <input matInput [(ngModel)]="newProject.name" placeholder="Ej: Edificio Residencial Los Pinos">
-          </mat-form-field>
-          
-          <mat-form-field class="form-field">
-            <mat-label>Ubicación *</mat-label>
-            <input matInput [(ngModel)]="newProject.location" placeholder="Ej: Av. Principal 123, Ciudad">
-          </mat-form-field>
-        </div>
-        
-        <div class="form-row">
-          <mat-form-field class="form-field">
-            <mat-label>Contratista</mat-label>
-            <input matInput [(ngModel)]="newProject.contractor" placeholder="Nombre del contratista">
-          </mat-form-field>
-          
-          <mat-form-field class="form-field">
-            <mat-label>Supervisor</mat-label>
-            <input matInput [(ngModel)]="newProject.supervisor" placeholder="Nombre del supervisor">
-          </mat-form-field>
-        </div>
-        
-        <mat-form-field class="form-field">
-          <mat-label>Fecha de Inicio</mat-label>
-          <input matInput [matDatepicker]="startPicker" [(ngModel)]="newProject.start_date">
-          <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
-          <mat-datepicker #startPicker></mat-datepicker>
-        </mat-form-field>
-        
-        <div class="form-actions">
-          <button mat-raised-button color="primary" (click)="createNewProject()">
-            <mat-icon>add</mat-icon>
-            Crear Proyecto
-          </button>
-        </div>
-      </div>
-    </mat-card-content>
-  </mat-card>
 
   <!-- Reports History -->
   <mat-card class="history-section" *ngIf="selectedProject">

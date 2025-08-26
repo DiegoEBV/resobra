@@ -182,6 +182,35 @@ h6, .h6 {
   --bitepoint-orange-800: #B8601C;
   --bitepoint-orange-900: #9F4605;
   
+  /* Civil Colors - Para compatibilidad con componentes existentes */
+  --civil-green: #10B981;
+  --civil-green-light: #34D399;
+  --civil-green-dark: #047857;
+  --civil-green-50: #ECFDF5;
+  --civil-green-100: #D1FAE5;
+  --civil-green-200: #A7F3D0;
+  --civil-green-300: #6EE7B7;
+  --civil-green-400: #34D399;
+  --civil-green-500: #10B981;
+  --civil-green-600: #059669;
+  --civil-green-700: #047857;
+  --civil-green-800: #065F46;
+  --civil-green-900: #064E3B;
+  
+  --civil-orange: var(--bitepoint-orange);
+  --civil-orange-light: var(--bitepoint-orange-light);
+  --civil-orange-dark: var(--bitepoint-orange-dark);
+  --civil-orange-50: var(--bitepoint-orange-50);
+  --civil-orange-100: var(--bitepoint-orange-100);
+  --civil-orange-200: var(--bitepoint-orange-200);
+  --civil-orange-300: var(--bitepoint-orange-300);
+  --civil-orange-400: var(--bitepoint-orange-400);
+  --civil-orange-500: var(--bitepoint-orange-500);
+  --civil-orange-600: var(--bitepoint-orange-600);
+  --civil-orange-700: var(--bitepoint-orange-700);
+  --civil-orange-800: var(--bitepoint-orange-800);
+  --civil-orange-900: var(--bitepoint-orange-900);
+  
   /* Primary Colors - Basados en BitePoint Teal */
   --primary-color: var(--bitepoint-teal);
   --primary-dark: var(--bitepoint-teal-dark);
@@ -329,7 +358,6 @@ h6, .h6 {
 }
 
 .btn-primary:hover {
-  transform: translateY(-1px) !important;
   box-shadow: var(--elevation-4) !important;
   background: linear-gradient(135deg, var(--bitepoint-teal-600), var(--bitepoint-teal-700)) !important;
 }
@@ -350,7 +378,7 @@ h6, .h6 {
   background-color: var(--surface-elevated) !important;
   border-color: var(--bitepoint-teal) !important;
   color: var(--bitepoint-teal) !important;
-  transform: translateY(-1px) !important;
+  box-shadow: var(--elevation-2) !important;
 }
 
 .btn-accent {
@@ -367,7 +395,6 @@ h6, .h6 {
 }
 
 .btn-accent:hover {
-  transform: translateY(-1px) !important;
   box-shadow: var(--elevation-4) !important;
   background: linear-gradient(135deg, var(--bitepoint-orange-600), var(--bitepoint-orange-700)) !important;
 }
@@ -387,7 +414,6 @@ h6, .h6 {
 
 .btn-success:hover {
   background-color: #2d8a47 !important;
-  transform: translateY(-1px) !important;
   box-shadow: var(--elevation-4) !important;
 }
 
@@ -406,7 +432,7 @@ h6, .h6 {
 .btn-outline:hover {
   background-color: var(--bitepoint-teal) !important;
   color: var(--text-on-teal) !important;
-  transform: translateY(-1px) !important;
+  box-shadow: var(--elevation-2) !important;
 }
 
 .btn-outline-accent {
@@ -424,7 +450,7 @@ h6, .h6 {
 .btn-outline-accent:hover {
   background-color: var(--bitepoint-orange) !important;
   color: var(--text-on-orange) !important;
-  transform: translateY(-1px) !important;
+  box-shadow: var(--elevation-2) !important;
 }
 
 /* Cards Estandarizadas */
@@ -441,8 +467,7 @@ h6, .h6 {
 }
 
 .corporate-card:hover {
-  box-shadow: var(--elevation-4);
-  transform: translateY(-2px);
+  box-shadow: var(--elevation-6);
 }
 
 .corporate-card::before {
@@ -770,7 +795,6 @@ h6, .h6 {
 
 .mat-mdc-raised-button:hover,
 .mat-mdc-unelevated-button:hover {
-  transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(60, 64, 67, 0.3), 0 1px 3px rgba(60, 64, 67, 0.15) !important;
 }
 
@@ -800,6 +824,7 @@ h6, .h6 {
 
 /* Enhanced Material Card Hover Effects */
 .mat-mdc-card {
+  margin: 10px 0px;
   transition: all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
   border-radius: 12px !important;
   border: 1px solid #e8eaed !important;
@@ -879,7 +904,6 @@ h6, .h6 {
 
 .mat-mdc-menu-item:hover {
   background-color: rgba(26, 115, 232, 0.04) !important;
-  transform: translateX(2px);
 }
 
 /* Enhanced Material List Item Hover Effects */
@@ -891,7 +915,6 @@ h6, .h6 {
 
 .mat-mdc-list-item:hover {
   background-color: rgba(26, 115, 232, 0.04) !important;
-  transform: translateX(4px);
 }
 
 /* Enhanced Material Expansion Panel Hover Effects */
@@ -904,7 +927,6 @@ h6, .h6 {
 
 .mat-expansion-panel:hover {
   box-shadow: 0 2px 4px rgba(60, 64, 67, 0.15);
-  transform: translateY(-1px);
 }
 
 .mat-expansion-panel-header {
@@ -964,7 +986,6 @@ h6, .h6 {
 }
 
 .hover-lift:hover {
-  transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(60, 64, 67, 0.15);
 }
 

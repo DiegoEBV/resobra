@@ -20,7 +20,7 @@
     font-family: 'Inter', sans-serif;
     font-weight: 600;
     font-size: 2.5rem;
-    color: white;
+    color: black;
     margin-bottom: 1rem;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     
@@ -37,7 +37,7 @@
     font-family: 'Inter', sans-serif;
     font-weight: 400;
     font-size: 1.25rem;
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(0, 0, 0, 0.9);
   }
 }
 
@@ -51,8 +51,7 @@ mat-card {
   transition: all 0.2s ease;
   
   &:hover {
-    box-shadow: 0 4px 12px rgba(45, 149, 150, 0.12);
-    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(45, 149, 150, 0.15);
   }
   
   mat-card-header {
@@ -68,7 +67,7 @@ mat-card {
       font-family: 'Inter', sans-serif;
       font-weight: 600;
       font-size: 1.5rem;
-      color: white;
+      color: black;
       text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       
       mat-icon {
@@ -96,7 +95,6 @@ mat-card {
         
         &:hover {
           box-shadow: var(--elevation-4);
-          transform: translateY(-1px);
         }
         
         &.from-gray-50 { background: linear-gradient(135deg, var(--surface-elevated) 0%, var(--surface-hover) 100%); }
@@ -129,43 +127,53 @@ mat-card {
 }
 
 // Material Table estandarizada
-mat-mdc-table {
-  background: var(--surface-color);
+mat-table, .mat-mdc-table {
+  background: var(--surface-color) !important;
   border-radius: var(--radius-lg);
   box-shadow: var(--elevation-2);
   overflow: hidden;
+  width: 100%;
   
-  .mat-mdc-header-row {
-    background: linear-gradient(to right, var(--bitepoint-teal), var(--bitepoint-teal-light));
+  .mat-mdc-header-row, .mat-header-row {
+    background: linear-gradient(to right, var(--bitepoint-teal), var(--bitepoint-teal-light)) !important;
     
-    .mat-mdc-header-cell {
-      color: white;
+    .mat-mdc-header-cell, .mat-header-cell {
+      color: white !important;
       font-family: 'Google Sans', sans-serif;
-      font-weight: 500;
+      font-weight: 600 !important;
       font-size: 0.875rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      padding: var(--spacing-md);
-      border-bottom: none;
+      padding: var(--spacing-md) !important;
+      border-bottom: none !important;
     }
   }
   
-  .mat-mdc-row {
-    border-bottom: 1px solid var(--divider-color);
+  .mat-mdc-row, .mat-row {
+    border-bottom: 1px solid var(--divider-color) !important;
     transition: var(--transition-fast);
     
     &:hover {
-      background-color: var(--surface-elevated);
+      background-color: var(--surface-elevated) !important;
     }
     
-    .mat-mdc-cell {
-      padding: var(--spacing-md);
-      font-family: 'Roboto', sans-serif;
-      color: var(--text-primary);
-      border-bottom: none;
+    .mat-mdc-cell, .mat-cell {
+      padding: var(--spacing-md) !important;
+      font-family: 'Roboto', sans-serif !important;
+      color: var(--text-primary) !important;
+      border-bottom: none !important;
+      font-size: 0.875rem !important;
+      font-weight: 500 !important;
+      
+      // Forzar visibilidad del texto
+      * {
+        color: inherit !important;
+      }
       
       // Embedded spans and badges
       span {
+        color: var(--text-primary) !important;
+        
         &.badge {
           display: inline-block;
           padding: var(--spacing-xs) var(--spacing-sm);
@@ -176,22 +184,82 @@ mat-mdc-table {
           letter-spacing: 0.05em;
           
           &.bg-blue-100 {
-            background-color: var(--bitepoint-teal-100);
-            color: var(--bitepoint-teal-dark);
+            background-color: var(--bitepoint-teal-100) !important;
+            color: var(--bitepoint-teal-dark) !important;
           }
           
           &.bg-green-100 {
-            background-color: var(--success-100);
-            color: var(--success-dark);
+            background-color: var(--success-100) !important;
+            color: var(--success-dark) !important;
           }
           
           &.bg-orange-100 {
-            background-color: var(--civil-orange-100);
-            color: var(--civil-orange-dark);
+            background-color: var(--civil-orange-100) !important;
+            color: var(--civil-orange-dark) !important;
           }
         }
       }
     }
+  }
+}
+
+// Estilos específicos para las clases de Tailwind en la tabla
+.mat-mdc-table, mat-table {
+  .text-sm {
+    color: var(--text-primary) !important;
+    font-size: 0.875rem !important;
+  }
+  
+  .text-gray-900 {
+    color: var(--text-primary) !important;
+  }
+  
+  .text-gray-700 {
+    color: var(--text-secondary) !important;
+  }
+  
+  .font-medium {
+    font-weight: 500 !important;
+  }
+  
+  .font-semibold {
+    font-weight: 600 !important;
+  }
+  
+  .font-bold {
+    font-weight: 700 !important;
+  }
+  
+  // Asegurar visibilidad de todos los elementos de texto
+  span, div, p {
+    color: var(--text-primary) !important;
+  }
+  
+  // Estilos específicos para el resumen de partidas
+  .text-xs {
+    color: var(--text-secondary) !important;
+    font-size: 0.75rem !important;
+  }
+  
+  .text-base {
+    color: var(--text-primary) !important;
+    font-size: 1rem !important;
+  }
+  
+  .text-lg {
+    color: var(--text-primary) !important;
+    font-size: 1.125rem !important;
+  }
+  
+  // Mejorar contraste en celdas con fondo
+  .bg-gray-50 {
+    background-color: #f9fafb !important;
+    color: var(--text-primary) !important;
+  }
+  
+  .bg-white {
+    background-color: white !important;
+    color: var(--text-primary) !important;
   }
 }
 
@@ -216,10 +284,7 @@ mat-mdc-table {
     
     &:hover {
       box-shadow: 0 4px 12px rgba(45, 149, 150, 0.15);
-      transform: translateY(-1px);
     }
-    
-    &:active { transform: translateY(0); }
     
     &.bg-gray-600 {
       background: linear-gradient(135deg, #6c757d 0%, #495057 100%) !important;
@@ -282,7 +347,6 @@ mat-mdc-table {
       &:hover {
         background: linear-gradient(135deg, #1f7a7b 0%, var(--primary-teal) 100%);
         box-shadow: 0 2px 8px rgba(45, 149, 150, 0.3);
-        transform: translateY(-1px);
       }
       
       &:disabled {
@@ -299,7 +363,6 @@ mat-mdc-table {
       &:hover {
         background: linear-gradient(135deg, #e76f51 0%, var(--accent-orange) 100%);
         box-shadow: 0 2px 8px rgba(244, 162, 97, 0.3);
-        transform: translateY(-1px);
       }
     }
     
@@ -310,7 +373,6 @@ mat-mdc-table {
       &:hover {
         background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
         box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
-        transform: translateY(-1px);
       }
     }
     

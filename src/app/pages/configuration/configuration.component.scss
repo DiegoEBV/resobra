@@ -54,6 +54,7 @@
   overflow: hidden;
   border: 1px solid var(--border-light);
   transition: all 0.2s ease;
+  margin-bottom: 20px;
   
   &:hover {
     box-shadow: 0 4px 12px rgba(45, 149, 150, 0.12);
@@ -141,7 +142,6 @@
     &:hover {
       box-shadow: 0 4px 12px rgba(45, 149, 150, 0.1);
       border-color: var(--primary-teal-light);
-      transform: translateY(-1px);
     }
     
     .item-header {
@@ -315,7 +315,6 @@
     &:hover {
       border-color: var(--primary-teal-light);
       box-shadow: 0 4px 12px rgba(45, 149, 150, 0.1);
-      transform: translateY(-2px);
     }
     
     &.selected {

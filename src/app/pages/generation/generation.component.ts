@@ -60,9 +60,13 @@ export class GenerationComponent implements OnInit, OnDestroy {
     private exportService: ExportService
   ) {}
   
-  ngOnInit(): void {
-    this.loadDataFromStorage();
-    this.generateReportPreview();
+  async ngOnInit(): Promise<void> {
+    await this.loadDataFromStorage();
+    // generateReportPreview() se llama desde loadDataFromStorage() cuando es necesario
+    // Para el flujo normal (nuevo informe), se llama aquí
+    if (this.selectedProject && this.selectedItems.length) {
+      this.generateReportPreview();
+    }
   }
 
   ngOnDestroy(): void {
@@ -70,15 +74,69 @@ export class GenerationComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
   
-  private loadDataFromStorage(): void {
+  private async loadDataFromStorage(): Promise<void> {
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      const editingReport = localStorage.getItem('editingReport');
       const storedItems = localStorage.getItem('selectedItems');
       const storedProject = localStorage.getItem('selectedProject');
       
       console.log('🔍 Datos en localStorage:');
+      console.log('editingReport raw:', editingReport);
       console.log('selectedItems raw:', storedItems);
       console.log('selectedProject raw:', storedProject);
       
+      // Si estamos visualizando un informe existente
+      if (editingReport) {
+        try {
+          const report = JSON.parse(editingReport);
+          console.log('📋 Cargando informe existente:', report);
+          
+          // Cargar el informe completo con sus partidas desde el servicio
+           this.reportsService.getReportById(report.id).subscribe({
+             next: (fullReport: any) => {
+               if (fullReport) {
+                 console.log('✅ Informe completo cargado:', fullReport);
+                 
+                 // Establecer el proyecto
+                 this.selectedProject = fullReport.project || null;
+                 
+                 // Mapear las partidas del informe a selectedItems
+                 const reportItems = fullReport.report_items || [];
+                 this.selectedItems = reportItems.map((reportItem: any) => ({
+                   item: reportItem.item,
+                   currentQuantity: reportItem.current_quantity || 0,
+                   previousQuantity: reportItem.previous_quantity || 0
+                 }));
+                 
+                 console.log('✅ Proyecto cargado:', this.selectedProject);
+                 console.log('✅ Partidas cargadas:', this.selectedItems);
+                 
+                 // Generar la vista previa con los datos cargados
+                 this.generateReportPreview(fullReport);
+                 
+                 // Limpiar editingReport del localStorage
+                 localStorage.removeItem('editingReport');
+               } else {
+                 throw new Error('No se pudo cargar el informe');
+               }
+             },
+            error: (error) => {
+              console.error('❌ Error cargando informe:', error);
+              this.snackBar.open('Error al cargar el informe', 'Cerrar', {
+                duration: 3000
+              });
+              this.router.navigate(['/configuration']);
+            }
+          });
+          
+          return; // Salir temprano para el flujo de informe existente
+        } catch (error) {
+          console.error('❌ Error parseando editingReport:', error);
+          localStorage.removeItem('editingReport');
+        }
+      }
+      
+      // Flujo normal para crear nuevo informe
       if (storedItems) {
         this.selectedItems = JSON.parse(storedItems);
         console.log('✅ selectedItems parseados:', this.selectedItems);
@@ -91,7 +149,7 @@ export class GenerationComponent implements OnInit, OnDestroy {
       }
     }
     
-    // Validar que tenemos los datos necesarios
+    // Validar que tenemos los datos necesarios (solo para flujo de nuevo informe)
     if (!this.selectedItems.length || !this.selectedProject) {
       console.error('❌ Faltan datos para generar el informe');
       console.log('selectedItems.length:', this.selectedItems.length);
@@ -103,17 +161,30 @@ export class GenerationComponent implements OnInit, OnDestroy {
     }
   }
   
-  private generateReportPreview(): void {
+  private generateReportPreview(existingReport?: any): void {
     if (!this.selectedProject || !this.selectedItems.length) return;
     
-    const reportDate = new Date();
-    const reportNumber = this.generateReportNumber();
+    // Usar datos del informe existente si están disponibles, sino generar nuevos
+    const reportDate = existingReport?.report_date ? new Date(existingReport.report_date) : new Date();
+    const reportNumber = existingReport?.report_number || this.generateReportNumber();
+    
+    // Mapear las partidas con las propiedades correctas para el HTML
+    const mappedPartidas = this.selectedItems.map(selectedItem => ({
+      codigo: selectedItem.item?.name || '',
+      descripcion: selectedItem.item?.description || '',
+      unidad: selectedItem.item?.unit || '',
+      anterior: selectedItem.previousQuantity || 0,
+      actual: selectedItem.currentQuantity || 0,
+      acumulado: (selectedItem.previousQuantity || 0) + (selectedItem.currentQuantity || 0)
+    }));
+    
+    console.log('🔍 Partidas mapeadas para mostrar:', mappedPartidas);
     
     this.reportData = {
       numero: reportNumber,
       fecha: reportDate,
       proyecto: this.selectedProject,
-      partidas: this.selectedItems,
+      partidas: mappedPartidas,
       totales: this.calculateTotals()
     };
   }
@@ -137,9 +208,12 @@ export class GenerationComponent implements OnInit, OnDestroy {
     };
     
     this.selectedItems.forEach(item => {
-      totals.totalAnterior += item.previousQuantity || 0;
-      totals.totalActual += item.currentQuantity || 0;
-      totals.totalAcumulado += (item.previousQuantity || 0) + (item.currentQuantity || 0);
+      const anterior = item.previousQuantity || 0;
+      const actual = item.currentQuantity || 0;
+      
+      totals.totalAnterior += anterior;
+      totals.totalActual += actual;
+      totals.totalAcumulado += anterior + actual;
     });
     
     return totals;

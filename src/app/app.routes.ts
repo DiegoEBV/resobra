@@ -3,6 +3,7 @@ import { MainComponent } from './pages/main/main.component';
 import { ConfigurationComponent } from './pages/configuration/configuration.component';
 import { GenerationComponent } from './pages/generation/generation.component';
 import { AdminItemsComponent } from './pages/admin-items/admin-items.component';
+import { AdminProjectsComponent } from './pages/admin-projects/admin-projects.component';
 
 export const routes: Routes = [
   {
@@ -24,6 +25,11 @@ export const routes: Routes = [
     path: 'admin-items',
     component: AdminItemsComponent,
     title: 'Sistema de Informes - Administración de Partidas'
+  },
+  {
+    path: 'admin-projects',
+    component: AdminProjectsComponent,
+    title: 'Sistema de Informes - Administración de Obras'
   },
 
   {

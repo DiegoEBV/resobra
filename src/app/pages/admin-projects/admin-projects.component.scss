@@ -1,0 +1,156 @@
+// Admin Projects Component Styles
+
+.mat-toolbar {
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.mat-card {
+  border-radius: 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border: none;
+}
+
+.mat-form-field {
+  .mat-form-field-outline {
+    border-radius: 8px;
+  }
+  
+  &.mat-focused {
+    .mat-form-field-outline-thick {
+      border-color: #0d9488;
+    }
+  }
+}
+
+.mat-table {
+  border-radius: 8px;
+  overflow: hidden;
+  
+  .mat-header-cell {
+    background-color: #0d9488;
+    color: white;
+    font-weight: 600;
+    border-bottom: none;
+  }
+  
+  .mat-cell {
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .mat-row:hover {
+    background-color: #f9fafb;
+  }
+}
+
+.mat-icon-button {
+  transition: all 0.2s ease-in-out;
+  
+  &:hover {
+    transform: scale(1.1);
+  }
+}
+
+.mat-raised-button {
+  border-radius: 8px;
+  font-weight: 500;
+  text-transform: none;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  
+  &:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+}
+
+.mat-spinner {
+  margin: 0 auto;
+}
+
+// Custom badge styles
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  
+  &.badge-blue {
+    background-color: #dbeafe;
+    color: #1e40af;
+  }
+  
+  &.badge-green {
+    background-color: #dcfce7;
+    color: #166534;
+  }
+  
+  &.badge-teal {
+    background-color: #ccfbf1;
+    color: #0f766e;
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .mat-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    padding: 1rem;
+    
+    .mat-toolbar-row {
+      justify-content: space-between;
+    }
+  }
+  
+  .mat-table {
+    font-size: 0.875rem;
+    
+    .mat-header-cell,
+    .mat-cell {
+      padding: 0.5rem;
+    }
+  }
+  
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Animation for loading state
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mat-card {
+  animation: fadeIn 0.3s ease-out;
+}
+
+// Custom scrollbar for table
+.overflow-x-auto {
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+    
+    &:hover {
+      background: #94a3b8;
+    }
+  }
+}
