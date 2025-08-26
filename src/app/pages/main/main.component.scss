@@ -270,6 +270,129 @@ mat-form-field {
   }
 }
 
+// Estilos específicos para campos de entrada de partidas seleccionadas
+.selected-items-section {
+  mat-card {
+    mat-card-content {
+      .grid {
+        &.grid-cols-1 {
+          @media (min-width: 768px) {
+            &.md\:grid-cols-3 {
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 1rem;
+              align-items: start;
+              
+              mat-form-field {
+                width: 100%;
+                
+                .mat-mdc-text-field-wrapper {
+                  .mdc-text-field__input {
+                    text-align: center;
+                    font-weight: 500;
+                    font-size: 0.95rem;
+                  }
+                }
+                
+                .mat-mdc-form-field-label {
+                  font-weight: 600;
+                  font-size: 0.875rem;
+                }
+                
+                // Estilo especial para campo readonly (Acumulado)
+                &:last-child {
+                  .mat-mdc-text-field-wrapper {
+                    background-color: var(--bitepoint-teal-50);
+                    border-radius: 8px;
+                    
+                    .mdc-text-field__input {
+                      background-color: var(--bitepoint-teal-50);
+                      color: var(--bitepoint-teal-dark);
+                      font-weight: 700;
+                      font-size: 1rem;
+                    }
+                  }
+                  
+                  .mat-mdc-form-field-label {
+                    color: var(--bitepoint-teal-dark);
+                    font-weight: 700;
+                  }
+                  
+                  .mdc-notched-outline {
+                    .mdc-notched-outline__leading,
+                    .mdc-notched-outline__notch,
+                    .mdc-notched-outline__trailing {
+                      border-color: var(--bitepoint-teal-light) !important;
+                      border-width: 2px;
+                    }
+                  }
+                }
+                
+                // Mejorar el focus de los campos editables
+                &:not(:last-child) {
+                  .mat-mdc-text-field-wrapper {
+                    &.mdc-text-field--focused {
+                      .mdc-notched-outline {
+                        .mdc-notched-outline__leading,
+                        .mdc-notched-outline__notch,
+                        .mdc-notched-outline__trailing {
+                          border-color: var(--bitepoint-teal) !important;
+                          border-width: 2px;
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          
+          // Estilos para móvil (grid de 1 columna)
+          @media (max-width: 767px) {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            
+            mat-form-field {
+              width: 100%;
+              
+              .mat-mdc-text-field-wrapper {
+                .mdc-text-field__input {
+                  text-align: left;
+                  font-weight: 500;
+                  font-size: 1rem;
+                  padding: 0.75rem;
+                }
+              }
+              
+              .mat-mdc-form-field-label {
+                font-weight: 600;
+                font-size: 1rem;
+              }
+              
+              // Campo Acumulado en móvil
+              &:last-child {
+                .mat-mdc-text-field-wrapper {
+                  background-color: var(--bitepoint-teal-50);
+                  border-radius: 8px;
+                  
+                  .mdc-text-field__input {
+                    background-color: var(--bitepoint-teal-50);
+                    color: var(--bitepoint-teal-dark);
+                    font-weight: 700;
+                    font-size: 1.1rem;
+                    text-align: center;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 // Responsive Design
 
 // Tablets (768px - 1024px)
