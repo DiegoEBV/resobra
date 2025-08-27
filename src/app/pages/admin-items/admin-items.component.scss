@@ -286,12 +286,12 @@ mat-tab-group {
               
               // BitePoint Save button
               &.save-btn {
-                background: linear-gradient(135deg, var(--accent-orange) 0%, #e76f51 100%);
+                background: linear-gradient(135deg, var(--bitepoint-orange) 0%, var(--bitepoint-orange-dark) 100%);
                 color: white;
                 border: none;
                 
                 &:hover {
-                  background: linear-gradient(135deg, #e76f51 0%, var(--accent-orange) 100%);
+                  background: linear-gradient(135deg, var(--bitepoint-orange-dark) 0%, var(--bitepoint-orange) 100%);
                   box-shadow: 0 2px 8px rgba(244, 162, 97, 0.3);
                 }
               }

@@ -9,10 +9,10 @@
 
 // BitePoint Header section
 .text-center.mb-12 {
-  background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-light) 100%);
+  background: linear-gradient(135deg, var(--bitepoint-teal) 0%, var(--bitepoint-teal-light) 100%);
   box-shadow: 0 4px 16px rgba(45, 149, 150, 0.15);
   border-radius: 12px;
-  border: 1px solid var(--primary-teal-light);
+  border: 1px solid var(--bitepoint-teal-light);
   padding: 2rem;
   margin-bottom: 2rem;
   
@@ -58,10 +58,10 @@ mat-card {
     border-radius: 12px 12px 0 0;
     padding: 1.5rem;
     
-    &.from-civil-lightblue { background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-light) 100%); }
-    &.from-civil-orange { background: linear-gradient(135deg, var(--accent-orange) 0%, #e76f51 100%); }
-    &.from-civil-green { background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); }
-    &.from-civil-darkblue { background: linear-gradient(135deg, var(--bitepoint-teal) 0%, var(--bitepoint-teal-dark) 100%); }
+    &.from-bitepoint-teal { background: linear-gradient(135deg, var(--bitepoint-teal) 0%, var(--bitepoint-teal-light) 100%); }
+    &.from-orange-400 { background: linear-gradient(135deg, var(--bitepoint-orange) 0%, var(--bitepoint-orange-dark) 100%); }
+  &.from-teal-500 { background: linear-gradient(135deg, var(--bitepoint-teal) 0%, var(--bitepoint-teal-dark) 100%); }
+    &.from-bitepoint-teal-dark { background: linear-gradient(135deg, var(--bitepoint-teal) 0%, var(--bitepoint-teal-dark) 100%); }
     
     mat-card-title {
       font-family: 'Inter', sans-serif;
@@ -98,7 +98,7 @@ mat-card {
         }
         
         &.from-gray-50 { background: linear-gradient(135deg, var(--surface-elevated) 0%, var(--surface-hover) 100%); }
-        &.from-orange-50 { background: linear-gradient(135deg, var(--civil-orange-50) 0%, var(--civil-orange-100) 100%); }
+        &.from-orange-50 { background: linear-gradient(135deg, var(--bitepoint-orange-50) 0%, var(--bitepoint-orange-100) 100%); }
         &.from-green-50 { background: linear-gradient(135deg, var(--success-50) 0%, var(--success-100) 100%); }
         &.from-blue-50 { background: linear-gradient(135deg, var(--bitepoint-teal-50) 0%, var(--bitepoint-teal-100) 100%); }
         
@@ -194,8 +194,8 @@ mat-table, .mat-mdc-table {
           }
           
           &.bg-orange-100 {
-            background-color: var(--civil-orange-100) !important;
-            color: var(--civil-orange-dark) !important;
+            background-color: var(--bitepoint-orange-100) !important;
+    color: var(--bitepoint-orange-dark) !important;
           }
         }
       }
@@ -304,7 +304,7 @@ mat-table, .mat-mdc-table {
       &:hover { background: linear-gradient(135deg, var(--bitepoint-teal-dark) 0%, var(--bitepoint-teal) 100%) !important; }
     }
     
-    &.from-civil-green {
+    &.from-teal-500 {
       background: linear-gradient(135deg, var(--accent-orange) 0%, #e76f51 100%) !important;
       color: white !important;
       &:hover { background: linear-gradient(135deg, #e76f51 0%, var(--accent-orange) 100%) !important; }
@@ -341,11 +341,11 @@ mat-table, .mat-mdc-table {
     border: 1px solid transparent;
     
     &.mat-primary {
-      background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-light) 100%);
+      background: linear-gradient(135deg, var(--bitepoint-teal) 0%, var(--bitepoint-teal-light) 100%);
       color: white;
       
       &:hover {
-        background: linear-gradient(135deg, #1f7a7b 0%, var(--primary-teal) 100%);
+        background: linear-gradient(135deg, #1f7a7b 0%, var(--bitepoint-teal) 100%);
         box-shadow: 0 2px 8px rgba(45, 149, 150, 0.3);
       }
       
@@ -379,11 +379,11 @@ mat-table, .mat-mdc-table {
     &.mat-stroked-button {
       background: white;
       border: 1px solid var(--border-light);
-      color: var(--primary-teal);
+      color: var(--bitepoint-teal);
       
       &:hover {
         background: rgba(45, 149, 150, 0.05);
-        border-color: var(--primary-teal);
+        border-color: var(--bitepoint-teal);
       }
     }
   }
@@ -409,7 +409,7 @@ mat-table, .mat-mdc-table {
         margin-bottom: 1rem;
         
         ::ng-deep circle {
-          stroke: var(--primary-teal);
+          stroke: var(--bitepoint-teal);
         }
       }
       

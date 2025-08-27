@@ -40,7 +40,7 @@
 
   <!-- Información del Informe -->
   <mat-card class="shadow-lg border-0 rounded-xl mb-8" *ngIf="reportData">
-    <mat-card-header class="bg-gradient-to-r from-civil-orange to-civil-darkorange text-white rounded-t-xl p-6">
+    <mat-card-header class="bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-t-xl p-6">
       <mat-card-title class="text-2xl font-semibold flex items-center gap-3">
         <mat-icon>assignment</mat-icon>
         Datos del Informe
@@ -49,15 +49,15 @@
     <mat-card-content class="p-6">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-5 rounded-xl border border-orange-200">
-          <span class="text-sm font-semibold text-civil-orange uppercase tracking-wide">Número</span>
+          <span class="text-sm font-semibold text-orange-500 uppercase tracking-wide">Número</span>
           <p class="text-2xl font-bold text-gray-900 mt-1">{{ reportData.numero }}</p>
         </div>
         <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-5 rounded-xl border border-orange-200">
-          <span class="text-sm font-semibold text-civil-orange uppercase tracking-wide">Fecha</span>
+          <span class="text-sm font-semibold text-orange-500 uppercase tracking-wide">Fecha</span>
           <p class="text-lg font-medium text-gray-900 mt-1">{{ reportData.fecha | date:'dd/MM/yyyy HH:mm' }}</p>
         </div>
         <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-5 rounded-xl border border-orange-200">
-          <span class="text-sm font-semibold text-civil-orange uppercase tracking-wide">Total de Partidas</span>
+          <span class="text-sm font-semibold text-orange-500 uppercase tracking-wide">Total de Partidas</span>
           <p class="text-2xl font-bold text-gray-900 mt-1">{{ reportData.totales.cantidadPartidas }}</p>
         </div>
       </div>
@@ -66,7 +66,7 @@
 
   <!-- Tabla de Partidas -->
   <mat-card class="shadow-lg border-0 rounded-xl mb-8" *ngIf="reportData?.partidas?.length > 0">
-    <mat-card-header class="bg-gradient-to-r from-civil-green to-civil-darkgreen text-white rounded-t-xl p-6">
+    <mat-card-header class="bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-t-xl p-6">
       <mat-card-title class="text-2xl font-semibold flex items-center gap-3">
         <mat-icon>table_chart</mat-icon>
         Partidas del Informe
@@ -111,7 +111,7 @@
           <ng-container matColumnDef="actual">
             <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-bitepoint-teal-dark font-bold text-sm uppercase tracking-wide p-4 text-right border-b-2 border-gray-200">Actual</th>
             <td mat-cell *matCellDef="let item" class="p-4 text-right border-b border-gray-100">
-              <span class="text-sm font-semibold text-civil-green bg-green-100 px-3 py-1 rounded-lg">{{ item.actual | number:'1.2-2' }}</span>
+              <span class="text-sm font-semibold text-teal-600 bg-teal-100 px-3 py-1 rounded-lg">{{ item.actual | number:'1.2-2' }}</span>
             </td>
           </ng-container>
 
@@ -181,7 +181,7 @@
     </div>
 
     <div>
-      <button mat-raised-button (click)="saveReport()" [disabled]="isGenerating || !reportData" class="bg-gradient-to-r from-civil-green to-civil-darkgreen hover:from-civil-darkgreen hover:to-green-700 text-white px-8 py-3 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 shadow-xl">
+      <button mat-raised-button (click)="saveReport()" [disabled]="isGenerating || !reportData" class="bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white px-8 py-3 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 shadow-xl">
         <mat-icon class="mr-2">save</mat-icon>
         <span *ngIf="!isGenerating">Guardar Informe</span>
         <span *ngIf="isGenerating">Guardando...</span>
