@@ -1,5 +1,39 @@
 <div class="max-w-7xl mx-auto p-6 min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
   
+  <!-- Información del proyecto -->
+  <mat-card class="project-info-card shadow-lg border-0 rounded-xl mb-6">
+    
+    <mat-card-content class="p-6">
+      <!-- Botones de Productividad -->
+      <div class="productivity-buttons border-t border-gray-200 pt-1">
+        <div class="flex items-center gap-3 mb-4">
+          <mat-icon class="text-bitepoint-teal text-2xl">speed</mat-icon>
+          <h3 class="text-lg font-semibold text-gray-800">Herramientas</h3>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-2 gap-3">
+          <button 
+            mat-raised-button 
+            (click)="copyPreviousReport()"
+            matTooltip="Copia todas las partidas del último reporte generado"
+            class="productivity-btn bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-200 p-4 h-auto flex flex-col items-center gap-2"
+          >
+            <mat-icon class="text-2xl">content_copy</mat-icon>
+            <span class="text-sm font-medium">Copiar Anterior</span>
+          </button>
+          
+          <button 
+            mat-raised-button 
+            (click)="createQuickReport()"
+            matTooltip="Crea un reporte rápido usando tus partidas favoritas"
+            class="productivity-btn bg-green-600 text-white hover:bg-green-700 transition-colors duration-200 p-4 h-auto flex flex-col items-center gap-2"
+          >
+            <mat-icon class="text-2xl">flash_on</mat-icon>
+            <span class="text-sm font-medium">Reporte Rápido</span>
+          </button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
 
   <!-- Controles de vista y filtros -->
   <mat-card class="mb-6 shadow-lg border-0 rounded-xl">
@@ -27,6 +61,46 @@
     </mat-card-content>
   </mat-card>
 
+  <!-- Sección de Favoritos -->
+  <mat-card class="mb-6 shadow-lg border-0 rounded-xl" *ngIf="favoriteItems.length > 0">
+    <mat-card-header class="bg-gradient-to-r from-yellow-50 to-yellow-100 border-b-2 border-yellow-400 p-4">
+      <mat-card-title class="flex items-center justify-between w-full">
+        <div class="flex items-center gap-3">
+          <mat-icon class="text-yellow-500">star</mat-icon>
+          <span class="text-xl font-semibold text-gray-800">Partidas Favoritas</span>
+          <span class="bg-yellow-400 text-white px-3 py-1 rounded-full text-sm font-medium">({{ favoriteItems.length }})</span>
+        </div>
+        <button 
+          mat-icon-button 
+          (click)="toggleFavorites()"
+          matTooltip="{{ showFavorites ? 'Ocultar' : 'Mostrar' }} favoritos"
+          class="text-yellow-600 hover:text-yellow-700"
+        >
+          <mat-icon>{{ showFavorites ? 'expand_less' : 'expand_more' }}</mat-icon>
+        </button>
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content class="p-0" *ngIf="showFavorites">
+      <mat-list class="divide-y divide-gray-100">
+        <mat-list-item 
+          *ngFor="let item of favoriteItems" 
+          class="hover:bg-yellow-50 transition-colors duration-200 cursor-pointer p-4"
+          (click)="selectItem(item)"
+        >
+          <div matListItemTitle class="font-semibold text-gray-900 flex items-center gap-2">
+            <mat-icon class="text-yellow-500 text-lg">star</mat-icon>
+            {{ item.name }}
+          </div>
+          <div matListItemLine *ngIf="item.description" class="text-gray-600 text-sm">{{ item.description }}</div>
+          <div matListItemLine *ngIf="item.unit" class="text-sm">
+            <strong class="text-bitepoint-teal">Unidad:</strong> <span class="text-gray-700">{{ item.unit }}</span>
+          </div>
+          <mat-icon matListItemMeta class="text-bitepoint-teal hover:text-bitepoint-teal-dark transition-colors">add_circle_outline</mat-icon>
+        </mat-list-item>
+      </mat-list>
+    </mat-card-content>
+  </mat-card>
+
   <!-- Vista agrupada por especialidades -->
   <div class="grid gap-6" *ngIf="showGroupedView">
     <div *ngFor="let specialty of specialties">
@@ -45,7 +119,10 @@
               class="hover:bg-slate-50 transition-colors duration-200 cursor-pointer p-4"
               (click)="selectItem(item)"
             >
-              <div matListItemTitle class="font-semibold text-gray-900">{{ item.name }}</div>
+              <div matListItemTitle class="font-semibold text-gray-900 flex items-center gap-2">
+                <mat-icon *ngIf="isFavorite(item)" class="text-yellow-500 text-lg">star</mat-icon>
+                {{ item.name }}
+              </div>
               <div matListItemLine *ngIf="item.description" class="text-gray-600 text-sm">{{ item.description }}</div>
               <div matListItemLine *ngIf="item.unit" class="text-sm">
                 <strong class="text-bitepoint-teal">Unidad:</strong> <span class="text-gray-700">{{ item.unit }}</span>
@@ -116,7 +193,10 @@
           *ngFor="let item of searchResults" 
           (click)="selectItem(item)"
         >
-          <div matListItemTitle>{{ item.name }}</div>
+          <div matListItemTitle class="flex items-center gap-2">
+            <mat-icon *ngIf="isFavorite(item)" class="text-yellow-500 text-lg">star</mat-icon>
+            {{ item.name }}
+          </div>
           <div matListItemLine *ngIf="item.description">{{ item.description }}</div>
           <div matListItemLine *ngIf="item.unit">
             <strong>Unidad:</strong> {{ item.unit }}

@@ -24,6 +24,7 @@ import { Project } from '../../models/interfaces';
     MatDatepickerModule,
     MatNativeDateModule
   ],
+  styleUrls: ['./create-project-dialog.component.scss'],
   template: `
     <h2 mat-dialog-title>
       <mat-icon>add_circle</mat-icon>
@@ -94,41 +95,7 @@ import { Project } from '../../models/interfaces';
         Crear Obra
       </button>
     </mat-dialog-actions>
-  `,
-  styles: [`
-    .project-form {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      min-width: 500px;
-      padding: 16px 0;
-    }
-    
-    .full-width {
-      width: 100%;
-    }
-    
-    mat-dialog-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: #0d9488;
-      font-weight: 600;
-    }
-    
-    mat-dialog-actions {
-      padding: 16px 0;
-      gap: 8px;
-    }
-    
-    .mat-mdc-raised-button {
-      background-color: #0d9488;
-    }
-    
-    .mat-mdc-raised-button:hover {
-      background-color: #0f766e;
-    }
-  `]
+  `
 })
 export class CreateProjectDialogComponent {
   projectForm: FormGroup;

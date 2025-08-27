@@ -1,0 +1,79 @@
+<div class="copy-report-preview">
+  <h2 mat-dialog-title class="dialog-title">
+    <mat-icon>content_copy</mat-icon>
+    Vista Previa - Copiar Reporte Anterior
+  </h2>
+
+  <mat-dialog-content class="dialog-content">
+    <div class="report-info">
+      <div class="info-card">
+        <mat-icon>schedule</mat-icon>
+        <div>
+          <strong>Fecha del Reporte:</strong>
+          <span>{{ formatDate(data.reportDate) }}</span>
+        </div>
+      </div>
+      
+      <div class="info-card">
+        <mat-icon>list_alt</mat-icon>
+        <div>
+          <strong>Total de Partidas:</strong>
+          <span>{{ data.totalItems }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="specialties-preview">
+      <h3>Partidas por Especialidad</h3>
+      
+      <div class="specialty-section" *ngFor="let specialty of specialties">
+        <div class="specialty-header">
+          <mat-icon>engineering</mat-icon>
+          <h4>{{ specialty }}</h4>
+          <mat-chip class="quantity-chip">
+            {{ data.itemsBySpecialty[specialty].length }} partidas
+          </mat-chip>
+        </div>
+        
+        <div class="items-preview">
+          <div class="item-card" *ngFor="let selectedItem of data.itemsBySpecialty[specialty]; let i = index">
+            <div class="item-info">
+              <span class="item-code">{{ selectedItem.item.name }}</span>
+              <span class="item-description">{{ selectedItem.item.description }}</span>
+            </div>
+            <div class="item-quantity">
+              <mat-icon>straighten</mat-icon>
+              <span>{{ selectedItem.currentQuantity }} {{ selectedItem.item.unit }}</span>
+            </div>
+          </div>
+          
+          <!-- Mostrar solo los primeros 3 items, el resto como "y X más" -->
+          <div class="more-items" *ngIf="data.itemsBySpecialty[specialty].length > 3">
+            <mat-icon>more_horiz</mat-icon>
+            <span>y {{ data.itemsBySpecialty[specialty].length - 3 }} partidas más...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="warning-message">
+      <mat-icon>info</mat-icon>
+      <p>
+        Se copiarán <strong>todas las partidas</strong> del reporte anterior con sus cantidades originales.
+        Podrás modificar las cantidades después de confirmar.
+      </p>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="dialog-actions">
+    <button mat-button (click)="onCancel()" class="cancel-btn">
+      <mat-icon>close</mat-icon>
+      Cancelar
+    </button>
+    
+    <button mat-raised-button (click)="onConfirm()" class="confirm-btn">
+      <mat-icon>content_copy</mat-icon>
+      Copiar {{ data.totalItems }} Partidas
+    </button>
+  </mat-dialog-actions>
+</div>

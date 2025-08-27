@@ -1,0 +1,175 @@
+// Estilos para el diálogo de crear proyecto
+// Usando la paleta de colores BitePoint
+
+.project-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 500px;
+  padding: 16px 0;
+  
+  @media (max-width: 768px) {
+    min-width: 300px;
+    padding: 12px 0;
+    gap: 12px;
+  }
+}
+
+.full-width {
+  width: 100%;
+}
+
+// Título del diálogo
+mat-dialog-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--bitepoint-teal) !important;
+  font-weight: 600;
+  font-size: 1.5rem;
+  margin-bottom: 16px;
+  
+  mat-icon {
+    color: var(--bitepoint-teal);
+    font-size: 1.5rem;
+  }
+}
+
+// Contenido del diálogo
+mat-dialog-content {
+  padding: 0 24px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+// Acciones del diálogo
+mat-dialog-actions {
+  padding: 16px 24px;
+  gap: 8px;
+  justify-content: flex-end;
+  border-top: 1px solid var(--bitepoint-gray-200);
+  margin-top: 16px;
+}
+
+// Estilos para campos de formulario
+.mat-mdc-form-field {
+  &.mat-form-field-appearance-outline {
+    .mat-mdc-form-field-outline {
+      color: var(--bitepoint-gray-300);
+    }
+    
+    &.mat-focused .mat-mdc-form-field-outline-thick {
+      color: var(--bitepoint-teal);
+    }
+    
+    .mat-mdc-form-field-label {
+      color: var(--bitepoint-gray-600);
+    }
+    
+    &.mat-focused .mat-mdc-form-field-label {
+      color: var(--bitepoint-teal);
+    }
+  }
+  
+  .mat-mdc-input-element {
+    color: var(--bitepoint-gray-900);
+    
+    &::placeholder {
+      color: var(--bitepoint-gray-400);
+    }
+  }
+}
+
+// Botones del diálogo
+.mat-mdc-button {
+  color: var(--bitepoint-gray-600);
+  
+  &:hover {
+    background-color: var(--bitepoint-gray-100);
+  }
+  
+  mat-icon {
+    margin-right: 4px;
+  }
+}
+
+.mat-mdc-raised-button {
+  background-color: var(--bitepoint-teal) !important;
+  color: white !important;
+  font-weight: 500;
+  
+  &:hover:not([disabled]) {
+    background-color: var(--bitepoint-teal-dark) !important;
+    box-shadow: 0 4px 8px rgba(13, 148, 136, 0.3);
+  }
+  
+  &:disabled {
+    background-color: var(--bitepoint-gray-300) !important;
+    color: var(--bitepoint-gray-500) !important;
+  }
+  
+  mat-icon {
+    margin-right: 4px;
+  }
+}
+
+// Estilos para errores de validación
+.mat-mdc-form-field-error {
+  color: #dc2626;
+  font-size: 0.75rem;
+}
+
+// Estilos para el datepicker
+.mat-datepicker-toggle {
+  color: var(--bitepoint-teal);
+}
+
+// Estilos para textarea
+textarea.mat-mdc-input-element {
+  resize: vertical;
+  min-height: 60px;
+}
+
+// Animaciones suaves
+.project-form {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Mejoras de accesibilidad
+.mat-mdc-form-field:focus-within {
+  .mat-mdc-form-field-outline-thick {
+    border-width: 2px;
+  }
+}
+
+// Estilos responsive adicionales
+@media (max-width: 480px) {
+  .project-form {
+    min-width: 280px;
+  }
+  
+  mat-dialog-content {
+    padding: 0 16px;
+  }
+  
+  mat-dialog-actions {
+    padding: 12px 16px;
+    flex-direction: column;
+    
+    button {
+      width: 100%;
+      margin: 4px 0;
+    }
+  }
+}

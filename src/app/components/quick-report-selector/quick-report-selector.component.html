@@ -1,0 +1,134 @@
+<div class="quick-report-selector">
+  <h2 mat-dialog-title class="dialog-title">
+    <mat-icon>flash_on</mat-icon>
+    Reporte Rápido - Seleccionar Partidas Favoritas
+  </h2>
+
+  <mat-dialog-content class="dialog-content">
+    <!-- Información general -->
+    <div class="summary-info">
+      <div class="info-card">
+        <mat-icon>favorite</mat-icon>
+        <div>
+          <strong>Partidas Favoritas:</strong>
+          <span>{{ data.totalFavorites }}</span>
+        </div>
+      </div>
+      
+      <div class="info-card">
+        <mat-icon>check_circle</mat-icon>
+        <div>
+          <strong>Seleccionadas:</strong>
+          <span>{{ selection.selected.length }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Acciones rápidas -->
+    <div class="quick-actions">
+      <button mat-stroked-button (click)="selectTopUsed()" class="action-btn">
+        <mat-icon>trending_up</mat-icon>
+        Top 5 por Especialidad
+      </button>
+      
+      <button mat-stroked-button (click)="selectAll()" class="action-btn">
+        <mat-icon>select_all</mat-icon>
+        Seleccionar Todas
+      </button>
+      
+      <button mat-stroked-button (click)="clearSelection()" class="action-btn">
+        <mat-icon>clear</mat-icon>
+        Limpiar
+      </button>
+    </div>
+
+    <!-- Lista de especialidades -->
+    <div class="specialties-list">
+      <div class="specialty-section" *ngFor="let specialty of specialties">
+        <!-- Header de especialidad -->
+        <div class="specialty-header" (click)="toggleSpecialty(specialty)">
+          <div class="header-left">
+            <mat-checkbox
+              [checked]="isSpecialtyFullySelected(specialty)"
+              [indeterminate]="isSpecialtyPartiallySelected(specialty)"
+              (change)="toggleSpecialtySelection(specialty)"
+              (click)="$event.stopPropagation()"
+              class="specialty-checkbox">
+            </mat-checkbox>
+            
+            <mat-icon class="expand-icon" [class.expanded]="isSpecialtyExpanded(specialty)">
+              expand_more
+            </mat-icon>
+            
+            <mat-icon class="specialty-icon">engineering</mat-icon>
+            
+            <h4>{{ specialty }}</h4>
+          </div>
+          
+          <div class="header-right">
+            <mat-chip class="count-chip">
+              {{ getSelectedCountBySpecialty(specialty) }} / {{ data.favoritesBySpecialty[specialty].length }}
+            </mat-chip>
+          </div>
+        </div>
+
+        <!-- Lista de partidas (expandible) -->
+        <div class="items-list" *ngIf="isSpecialtyExpanded(specialty)">
+          <div class="item-row" *ngFor="let favorite of data.favoritesBySpecialty[specialty]">
+            <mat-checkbox
+              [checked]="selection.isSelected(favorite)"
+              (change)="selection.toggle(favorite)"
+              class="item-checkbox">
+            </mat-checkbox>
+            
+            <div class="item-info">
+              <div class="item-main">
+                <span class="item-code">{{ favorite.item.code }}</span>
+                <span class="item-description">{{ favorite.item.description }}</span>
+              </div>
+              
+              <div class="item-meta">
+                <div class="usage-info">
+                  <mat-icon>bar_chart</mat-icon>
+                  <span>{{ favorite.usage_count || 0 }} usos</span>
+                </div>
+                
+                <div class="last-used">
+                  <mat-icon>schedule</mat-icon>
+                  <span>{{ formatLastUsed(favorite.last_used) }}</span>
+                </div>
+                
+                <div class="unit-info">
+                  <mat-icon>straighten</mat-icon>
+                  <span>{{ favorite.item.unit }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mensaje si no hay selección -->
+    <div class="no-selection" *ngIf="selection.selected.length === 0">
+      <mat-icon>info</mat-icon>
+      <p>Selecciona las partidas favoritas que deseas incluir en tu reporte rápido.</p>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="dialog-actions">
+    <button mat-button (click)="onCancel()" class="cancel-btn">
+      <mat-icon>close</mat-icon>
+      Cancelar
+    </button>
+    
+    <button 
+      mat-raised-button 
+      (click)="onConfirm()" 
+      class="confirm-btn"
+      [disabled]="selection.selected.length === 0">
+      <mat-icon>flash_on</mat-icon>
+      Crear Reporte con {{ selection.selected.length }} Partidas
+    </button>
+  </mat-dialog-actions>
+</div>

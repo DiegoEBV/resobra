@@ -13,9 +13,12 @@ import { AddItemModalComponent } from '../../components/add-item-modal/add-item-
 import { EditItemDialogComponent } from '../../components/edit-item-dialog/edit-item-dialog.component';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
+import { CopyReportPreviewComponent } from '../../components/copy-report-preview/copy-report-preview.component';
+import { QuickReportSelectorComponent } from '../../components/quick-report-selector/quick-report-selector.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Subject, debounceTime, distinctUntilChanged, switchMap, takeUntil, of } from 'rxjs';
 import { ItemsService } from '../../services/items.service';
+import { ProductivityService } from '../../services/productivity.service';
 import { Item, SelectedItem, Specialty } from '../../models/interfaces';
 import { Router } from '@angular/router';
 
@@ -43,8 +46,10 @@ export class MainComponent implements OnInit, OnDestroy {
   searchTerm = '';
   searchResults: Item[] = [];
   selectedItems: SelectedItem[] = [];
+  favoriteItems: Item[] = [];
   isLoading = false;
   showGroupedView = false;
+  showFavorites = true;
   groupedItems: { [key in Specialty]: Item[] } = {
     'arquitectura': [],
     'estructura': [],
@@ -60,6 +65,7 @@ export class MainComponent implements OnInit, OnDestroy {
 
   constructor(
     private itemsService: ItemsService,
+    private productivityService: ProductivityService,
     private snackBar: MatSnackBar,
     private router: Router,
     private dialog: MatDialog
@@ -97,6 +103,9 @@ export class MainComponent implements OnInit, OnDestroy {
     
     // Cargar partidas seleccionadas del localStorage si existen
     this.loadSelectedItems();
+    
+    // Cargar partidas favoritas
+    this.loadFavoriteItems();
     
     // Cargar vista agrupada por defecto
     this.loadGroupedItems();
@@ -187,6 +196,10 @@ export class MainComponent implements OnInit, OnDestroy {
 
     this.selectedItems.push(selectedItem);
     this.saveSelectedItems();
+    
+    // Marcar como usado para favoritos
+    this.productivityService.markItemAsUsed(item.id!);
+    
     this.snackBar.open('Partida agregada', 'Cerrar', { duration: 2000 });
 
     // Limpiar búsqueda
@@ -270,6 +283,188 @@ export class MainComponent implements OnInit, OnDestroy {
           this.selectedItems = [];
         }
       }
+    }
+  }
+
+  // Métodos para favoritos
+  loadFavoriteItems() {
+    this.productivityService.getFavoriteItems()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (favorites) => {
+          this.favoriteItems = favorites.map(fav => fav.item);
+        },
+        error: (error) => {
+          console.error('Error loading favorite items:', error);
+          this.favoriteItems = [];
+        }
+      });
+  }
+
+  toggleFavorites() {
+    this.showFavorites = !this.showFavorites;
+  }
+
+  isFavorite(item: Item): boolean {
+    return this.favoriteItems.some(fav => fav.id === item.id);
+  }
+
+  // ============ FUNCIONES DE PRODUCTIVIDAD ============
+
+  // Copiar reporte anterior
+  async copyPreviousReport() {
+    try {
+      // Obtener el último reporte del proyecto actual (usando un ID de proyecto por defecto)
+      const projectId = 'default-project'; // En una implementación real, esto vendría del contexto
+      const lastReport = await this.productivityService.getLastReport(projectId).toPromise();
+      
+      if (!lastReport) {
+        this.snackBar.open('No se encontró un reporte anterior para copiar', 'Cerrar', { duration: 3000 });
+        return;
+      }
+
+      // Copiar todas las partidas del reporte anterior
+      const copiedData = await this.productivityService.copyPreviousReport(lastReport.id!);
+      
+      // Convertir los items del reporte a SelectedItems y organizarlos por especialidad
+      const copiedItems: SelectedItem[] = copiedData.items.map((reportItem: any) => ({
+        item: reportItem.item,
+        currentQuantity: reportItem.current_quantity || 0, // Mantener la cantidad original
+        previousQuantity: reportItem.previous_quantity || 0
+      }));
+
+      // Organizar por especialidad
+      const itemsBySpecialty = this.groupItemsBySpecialty(copiedItems);
+      
+      // Mostrar modal de confirmación con preview
+      const dialogRef = this.dialog.open(CopyReportPreviewComponent, {
+        width: '800px',
+        maxHeight: '80vh',
+        data: {
+          reportDate: lastReport.created_at,
+          itemsBySpecialty: itemsBySpecialty,
+          totalItems: copiedItems.length
+        }
+      });
+
+      const result = await dialogRef.afterClosed().toPromise();
+      
+      if (result === 'confirm') {
+        // Agregar las partidas copiadas a las seleccionadas
+        this.selectedItems = [...this.selectedItems, ...copiedItems];
+        this.saveSelectedItems();
+        
+        this.snackBar.open(`Se copiaron ${copiedItems.length} partidas del reporte anterior`, 'Cerrar', { duration: 3000 });
+      }
+    } catch (error) {
+      console.error('Error copiando reporte anterior:', error);
+      this.snackBar.open('Error al copiar el reporte anterior', 'Cerrar', { duration: 3000 });
+    }
+  }
+
+  // Función auxiliar para agrupar items por especialidad
+  private groupItemsBySpecialty(items: SelectedItem[]): { [key: string]: SelectedItem[] } {
+    return items.reduce((groups, item) => {
+      const specialty = item.item.specialty || 'Sin Especialidad';
+      if (!groups[specialty]) {
+        groups[specialty] = [];
+      }
+      groups[specialty].push(item);
+      return groups;
+    }, {} as { [key: string]: SelectedItem[] });
+  }
+
+  // Crear reporte rápido
+  async createQuickReport() {
+    try {
+      const projectId = 'default-project'; // En una implementación real, esto vendría del contexto
+      
+      // Obtener partidas favoritas organizadas por especialidad
+      const favoriteItems = await this.productivityService.getFavoriteItems().toPromise() || [];
+      
+      if (favoriteItems.length === 0) {
+        this.snackBar.open('No tienes partidas favoritas. Usa algunas partidas primero.', 'Cerrar', { duration: 3000 });
+        return;
+      }
+
+      // Organizar favoritas por especialidad
+      const favoritesBySpecialty = this.groupFavoritesBySpecialty(favoriteItems);
+      
+      // Mostrar modal de selección rápida
+      const dialogRef = this.dialog.open(QuickReportSelectorComponent, {
+        width: '900px',
+        maxHeight: '80vh',
+        data: {
+          favoritesBySpecialty: favoritesBySpecialty,
+          totalFavorites: favoriteItems.length
+        }
+      });
+
+      const result = await dialogRef.afterClosed().toPromise();
+      
+      if (result && result.selectedItems) {
+        // Convertir a SelectedItems con cantidades por defecto
+        const quickItems: SelectedItem[] = result.selectedItems.map((fav: any) => ({
+          item: fav.item,
+          currentQuantity: 1, // Cantidad por defecto
+          previousQuantity: 0
+        }));
+
+        // Agregar las partidas del reporte rápido
+        this.selectedItems = [...this.selectedItems, ...quickItems];
+        this.saveSelectedItems();
+        
+        this.snackBar.open(`Reporte rápido creado con ${quickItems.length} partidas favoritas`, 'Cerrar', { duration: 3000 });
+      }
+    } catch (error) {
+      console.error('Error creando reporte rápido:', error);
+      this.snackBar.open('Error al crear el reporte rápido', 'Cerrar', { duration: 3000 });
+    }
+  }
+
+  // Función auxiliar para agrupar favoritas por especialidad
+  private groupFavoritesBySpecialty(favorites: any[]): { [key: string]: any[] } {
+    return favorites.reduce((groups, fav) => {
+      const specialty = fav.item.specialty || 'Sin Especialidad';
+      if (!groups[specialty]) {
+        groups[specialty] = [];
+      }
+      groups[specialty].push(fav);
+      return groups;
+    }, {} as { [key: string]: any[] });
+  }
+
+  // Guardar plantilla
+  saveTemplate() {
+    if (this.selectedItems.length === 0) {
+      this.snackBar.open('No hay partidas seleccionadas para guardar como plantilla', 'Cerrar', { duration: 3000 });
+      return;
+    }
+
+    try {
+      const projectId = 'default-project'; // En una implementación real, esto vendría del contexto
+      
+      this.productivityService.saveQuickReportTemplate({
+        name: `Plantilla ${new Date().toLocaleDateString()}`,
+        projectId: projectId,
+        items: this.selectedItems
+      });
+      
+      this.snackBar.open('Plantilla guardada exitosamente', 'Cerrar', { duration: 3000 });
+    } catch (error) {
+      console.error('Error guardando plantilla:', error);
+      this.snackBar.open('Error al guardar la plantilla', 'Cerrar', { duration: 3000 });
+    }
+  }
+
+  // Realizar backup manual
+  async performManualBackup() {
+    try {
+      await this.productivityService.performBackup();
+      this.snackBar.open('Backup realizado exitosamente', 'Cerrar', { duration: 3000 });
+    } catch (error) {
+      console.error('Error realizando backup:', error);
+      this.snackBar.open('Error al realizar el backup', 'Cerrar', { duration: 3000 });
     }
   }
 }

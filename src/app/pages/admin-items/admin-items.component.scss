@@ -8,7 +8,7 @@
 
 // BitePoint Header Toolbar
 mat-toolbar {
-  background: linear-gradient(135deg, var(--primary-teal) 0%, #1f7a7b 100%);
+  background: linear-gradient(135deg, #1f7a7b 100%);
   box-shadow: 0 4px 12px rgba(45, 149, 150, 0.15);
   border-radius: 12px;
   border: none;
@@ -29,7 +29,7 @@ mat-toolbar {
   }
   
   button[mat-raised-button] {
-    background: linear-gradient(135deg, var(--accent-orange) 0%, #e76f51 100%) !important;
+    background: linear-gradient(135deg, #e76f51 100%) !important;
     color: white !important;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(244, 162, 97, 0.3);
@@ -41,7 +41,7 @@ mat-toolbar {
     border: none;
     
     &:hover {
-      background: linear-gradient(135deg, #e76f51 0%, var(--accent-orange) 100%) !important;
+      background: linear-gradient(135deg, #e76f51 0%) !important;
       box-shadow: 0 4px 16px rgba(244, 162, 97, 0.4);
     }
     

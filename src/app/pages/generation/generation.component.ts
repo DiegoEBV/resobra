@@ -18,6 +18,7 @@ import { takeUntil } from 'rxjs/operators';
 
 import { ReportsService } from '../../services/reports.service';
 import { ExportService } from '../../services/export.service';
+import { ProductivityService } from '../../services/productivity.service';
 import { Report, Project, SelectedItem } from '../../models/interfaces';
 
 @Component({
@@ -48,6 +49,13 @@ export class GenerationComponent implements OnInit, OnDestroy {
   isGenerating = false;
   isExporting = false;
   
+  // Nuevas propiedades para funcionalidades de productividad
+  showQuickReportOptions = false;
+  quickReportTemplates: any[] = [];
+  canCopyPreviousReport = false;
+  lastReport: any = null;
+  selectedTemplate: string = '';
+  
 
   
   displayedColumns: string[] = ['codigo', 'descripcion', 'unidad', 'anterior', 'actual', 'acumulado'];
@@ -57,7 +65,8 @@ export class GenerationComponent implements OnInit, OnDestroy {
     private snackBar: MatSnackBar,
     private dialog: MatDialog,
     private reportsService: ReportsService,
-    private exportService: ExportService
+    private exportService: ExportService,
+    private productivityService: ProductivityService
   ) {}
   
   async ngOnInit(): Promise<void> {
@@ -67,6 +76,9 @@ export class GenerationComponent implements OnInit, OnDestroy {
     if (this.selectedProject && this.selectedItems.length) {
       this.generateReportPreview();
     }
+    
+    // Inicializar funcionalidades de productividad
+    await this.initializeProductivityFeatures();
   }
 
   ngOnDestroy(): void {
@@ -219,45 +231,7 @@ export class GenerationComponent implements OnInit, OnDestroy {
     return totals;
   }
   
-  async saveReport(): Promise<void> {
-    if (!this.reportData || this.isGenerating) return;
-    
-    this.isGenerating = true;
-    
-    try {
-      const reportToSave = {
-        project_id: this.selectedProject!.id,
-        report_number: this.reportData.numero,
-        report_date: this.reportData.fecha,
-        status: 'draft'
-      };
-      
-      const savedReport = await this.reportsService.createReport(reportToSave);
-      
-      this.snackBar.open('Informe guardado exitosamente', 'Cerrar', {
-        duration: 3000
-      });
-      
-      // Limpiar localStorage
-      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-        localStorage.removeItem('selectedItems');
-        localStorage.removeItem('selectedProject');
-      }
-      
-      // Navegar de vuelta al inicio
-      setTimeout(() => {
-        this.router.navigate(['/']);
-      }, 2000);
-      
-    } catch (error) {
-      console.error('Error al guardar informe:', error);
-      this.snackBar.open('Error al guardar el informe', 'Cerrar', {
-        duration: 3000
-      });
-    } finally {
-      this.isGenerating = false;
-    }
-  }
+
   
   private mapSelectedItemsForExport(): any[] {
     console.log('🔄 Mapeando partidas para exportación...');
@@ -355,6 +329,226 @@ export class GenerationComponent implements OnInit, OnDestroy {
   goHome(): void {
     this.router.navigate(['/']);
   }
-
+  
+  // ===== NUEVAS FUNCIONALIDADES DE PRODUCTIVIDAD =====
+  
+  private async initializeProductivityFeatures(): Promise<void> {
+    try {
+      // Cargar plantillas de reporte rápido
+      this.quickReportTemplates = await this.productivityService.getQuickReportTemplates();
+      
+      // Verificar si hay un reporte anterior para copiar
+      if (this.selectedProject) {
+        this.lastReport = await this.productivityService.getLastReport(this.selectedProject.id);
+        this.canCopyPreviousReport = !!this.lastReport;
+      }
+      
+      // Inicializar backup automático
+      await this.productivityService.initializeAutoBackup();
+    } catch (error) {
+      console.error('Error inicializando funcionalidades de productividad:', error);
+    }
+  }
+  
+  // Funcionalidad: Copiar reporte anterior
+  async copyPreviousReport(): Promise<void> {
+    if (!this.lastReport || !this.selectedProject) {
+      this.snackBar.open('No hay reporte anterior disponible', 'Cerrar', { duration: 3000 });
+      return;
+    }
+    
+    try {
+      const copiedData = await this.productivityService.copyPreviousReport(this.lastReport.id);
+      
+      // Actualizar los datos del componente
+      this.selectedItems = copiedData.items.map((item: any) => ({
+        item: item.item,
+        currentQuantity: 0, // Las cantidades actuales se resetean
+        previousQuantity: item.current_quantity // La cantidad actual se convierte en anterior
+      }));
+      
+      this.selectedProject = copiedData.project;
+      
+      // Regenerar la vista previa
+      this.generateReportPreview();
+      
+      this.snackBar.open('Reporte anterior copiado exitosamente', 'Cerrar', { duration: 3000 });
+    } catch (error) {
+      console.error('Error copiando reporte anterior:', error);
+      this.snackBar.open('Error al copiar reporte anterior', 'Cerrar', { duration: 3000 });
+    }
+  }
+  
+  // Funcionalidad: Reporte rápido
+  toggleQuickReportOptions(): void {
+    this.showQuickReportOptions = !this.showQuickReportOptions;
+  }
+  
+  async createQuickReport(templateId?: string): Promise<void> {
+    if (!this.selectedProject) {
+      this.snackBar.open('Seleccione un proyecto primero', 'Cerrar', { duration: 3000 });
+      return;
+    }
+    
+    try {
+      let reportData;
+      
+      if (templateId) {
+        // Usar plantilla existente
+        reportData = await this.productivityService.createQuickReportFromTemplate(templateId, this.selectedProject.id);
+      } else {
+        // Crear reporte rápido con partidas favoritas
+        this.productivityService.getFavoriteItems().subscribe({
+          next: (favoriteItems) => {
+            if (favoriteItems.length === 0) {
+              this.snackBar.open('No hay partidas favoritas disponibles', 'Cerrar', { duration: 3000 });
+              return;
+            }
+            
+            // Tomar las primeras 5 partidas favoritas
+            const topFavorites = favoriteItems.slice(0, 5);
+            
+            this.selectedItems = topFavorites.map((fav: any) => ({
+              item: fav.item,
+              currentQuantity: fav.suggestedQuantity || 1,
+              previousQuantity: 0
+            }));
+            
+            // Regenerar vista previa
+            this.generateReportPreview();
+            
+            this.snackBar.open('Reporte rápido creado con partidas favoritas', 'Cerrar', { duration: 3000 });
+          },
+          error: (error) => {
+            console.error('Error obteniendo partidas favoritas:', error);
+            this.snackBar.open('Error al obtener partidas favoritas', 'Cerrar', { duration: 3000 });
+          }
+        });
+        return;
+      }
+      
+      // Si se usó una plantilla, actualizar los datos
+      if (reportData) {
+        this.selectedItems = reportData.items;
+        this.generateReportPreview();
+        this.snackBar.open('Reporte rápido creado desde plantilla', 'Cerrar', { duration: 3000 });
+      }
+      
+    } catch (error) {
+      console.error('Error creando reporte rápido:', error);
+      this.snackBar.open('Error al crear reporte rápido', 'Cerrar', { duration: 3000 });
+    } finally {
+      this.showQuickReportOptions = false;
+    }
+  }
+  
+  // Funcionalidad: Guardar como plantilla de reporte rápido
+  async saveAsQuickTemplate(): Promise<void> {
+    if (!this.selectedItems.length || !this.selectedProject) {
+      this.snackBar.open('No hay datos para guardar como plantilla', 'Cerrar', { duration: 3000 });
+      return;
+    }
+    
+    try {
+      const templateName = `Plantilla ${this.selectedProject.name} - ${new Date().toLocaleDateString()}`;
+      
+      await this.productivityService.saveQuickReportTemplate({
+        name: templateName,
+        projectId: this.selectedProject.id,
+        items: this.selectedItems
+      });
+      
+      // Recargar plantillas
+      this.quickReportTemplates = await this.productivityService.getQuickReportTemplates();
+      
+      this.snackBar.open('Plantilla guardada exitosamente', 'Cerrar', { duration: 3000 });
+    } catch (error) {
+      console.error('Error guardando plantilla:', error);
+      this.snackBar.open('Error al guardar plantilla', 'Cerrar', { duration: 3000 });
+    }
+  }
+  
+  // Método para realizar backup manual
+  async performManualBackup(): Promise<void> {
+    try {
+      await this.productivityService.performBackup();
+      this.snackBar.open('Backup realizado exitosamente', 'Cerrar', { duration: 3000 });
+    } catch (error) {
+      console.error('Error al realizar backup:', error);
+      this.snackBar.open('Error al realizar el backup. Inténtelo nuevamente.', 'Cerrar', { duration: 3000 });
+    }
+  }
+  
+  // Funcionalidad: Actualizar datos de auto-completado
+  private async updateAutoCompleteData(): Promise<void> {
+    if (!this.selectedItems.length || !this.selectedProject) return;
+    
+    try {
+      // Actualizar datos de auto-completado con las cantidades usadas
+      for (const item of this.selectedItems) {
+        if (item.currentQuantity && item.currentQuantity > 0) {
+          await this.productivityService.updateAutoCompleteData({
+            itemId: item.item?.id || '',
+            projectId: this.selectedProject.id,
+            quantity: item.currentQuantity,
+            description: item.item?.description || ''
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error actualizando datos de auto-completado:', error);
+    }
+  }
+  
+  // Override del método saveReport para incluir funcionalidades de productividad
+  async saveReport(): Promise<void> {
+    if (!this.reportData || this.isGenerating) return;
+    
+    this.isGenerating = true;
+    
+    try {
+      const reportToSave = {
+        project_id: this.selectedProject!.id,
+        report_number: this.reportData.numero,
+        report_date: this.reportData.fecha,
+        status: 'draft'
+      };
+      
+      const savedReport = await this.reportsService.createReport(reportToSave);
+      
+      // Actualizar datos de auto-completado y favoritos
+      await this.updateAutoCompleteData();
+      
+      // Marcar cada item como usado individualmente
+      for (const selectedItem of this.selectedItems) {
+        if (selectedItem.item?.id) {
+          this.productivityService.markItemAsUsed(selectedItem.item.id);
+        }
+      }
+      
+      this.snackBar.open('Informe guardado exitosamente', 'Cerrar', {
+        duration: 3000
+      });
+      
+      // Limpiar localStorage
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        localStorage.removeItem('selectedItems');
+        localStorage.removeItem('selectedProject');
+      }
+      
+      // Navegar de vuelta al inicio
+      setTimeout(() => {
+        this.router.navigate(['/']);
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Error al guardar informe:', error);
+      this.snackBar.open('Error al guardar el informe', 'Cerrar', {
+        duration: 3000
+      });
+    } finally {
+      this.isGenerating = false;
+    }
+  }
 
 }
