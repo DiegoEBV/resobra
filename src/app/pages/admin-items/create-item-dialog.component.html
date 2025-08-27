@@ -45,6 +45,12 @@
       <mat-label>Materiales</mat-label>
       <textarea matInput formControlName="materiales" rows="2" placeholder="Materiales necesarios (opcional)"></textarea>
     </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Metrado</mat-label>
+      <input matInput formControlName="metrado" type="number" step="0.01" min="0" placeholder="0.00">
+      <mat-hint>Cantidad fija de la partida que se almacenará en la base de datos</mat-hint>
+    </mat-form-field>
   </form>
 </mat-dialog-content>
 

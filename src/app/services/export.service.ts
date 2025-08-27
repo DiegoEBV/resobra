@@ -191,7 +191,7 @@ export class ExportService {
       doc.setFont('helvetica', 'bold');
       const itemName = item.item?.name || item.name || 'Sin nombre';
       console.log('📋 Nombre usado para el item:', itemName);
-      doc.text(`${index + 1}. ${itemName}`, 20, yPosition);
+      doc.text(`${itemName}`, 20, yPosition);
       yPosition += 15;
 
       // Información detallada
@@ -215,6 +215,14 @@ export class ExportService {
       yPosition += 8;
       
       doc.text(`AVANCE ACUMULADO: ${(item.accumulated_quantity || 0).toString()}`, 25, yPosition);
+      yPosition += 8;
+      
+      const metrado = item.item?.metrado || item.metrado || 0;
+      doc.text(`METRADO: ${metrado.toString()}`, 25, yPosition);
+      yPosition += 8;
+      
+      const saldo = metrado - (item.accumulated_quantity || 0);
+      doc.text(`SALDO: ${saldo.toString()}`, 25, yPosition);
       yPosition += 15;
       
       // Línea separadora
@@ -370,7 +378,7 @@ export class ExportService {
                 new Paragraph({
                   children: [
                     new TextRun({
-                      text: `${index + 1}. ${itemName}`,
+                      text: `${itemName}`,
                       bold: true,
                       size: 24
                     })
@@ -417,6 +425,24 @@ export class ExportService {
                 children: [
                   new TextRun({
                     text: `AVANCE ACUMULADO: ${(item.accumulated_quantity || 0).toString()}`,
+                    size: 20
+                  })
+                ],
+                spacing: { after: 100 }
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: `METRADO: ${(item.item?.metrado || item.metrado || 0).toString()}`,
+                    size: 20
+                  })
+                ],
+                spacing: { after: 100 }
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: `SALDO: ${((item.item?.metrado || item.metrado || 0) - (item.accumulated_quantity || 0)).toString()}`,
                     size: 20
                   })
                 ],

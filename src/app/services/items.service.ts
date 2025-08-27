@@ -137,10 +137,14 @@ export class ItemsService {
 
   // Crear nueva partida
   createItem(item: Omit<Item, 'id' | 'created_at' | 'updated_at'>): Observable<Item> {
+    const itemWithMetrado = {
+      ...item,
+      metrado: item.metrado || 0
+    };
     return from(
       this.supabase.client
         .from('items')
-        .insert([item])
+        .insert([itemWithMetrado])
         .select()
         .single()
         .then(({ data, error }) => {
@@ -155,10 +159,19 @@ export class ItemsService {
 
   // Actualizar partida
   updateItem(id: string, updates: Partial<Item>): Observable<Item> {
+    const updateData: any = {};
+    
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.description !== undefined) updateData.description = updates.description;
+    if (updates.unit !== undefined) updateData.unit = updates.unit;
+    if (updates.materials !== undefined) updateData.materials = updates.materials;
+    if (updates.specialty !== undefined) updateData.specialty = updates.specialty;
+    if (updates.metrado !== undefined) updateData.metrado = updates.metrado;
+
     return from(
       this.supabase.client
         .from('items')
-        .update(updates)
+        .update(updateData)
         .eq('id', id)
         .select()
         .single()

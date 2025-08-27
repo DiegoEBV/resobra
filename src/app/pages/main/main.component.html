@@ -101,9 +101,34 @@
     </mat-card-content>
   </mat-card>
 
+  <!-- Filtros para vista agrupada por especialidades -->
+  <div class="filter-section mb-6" *ngIf="showGroupedView">
+    <div class="filter-header">
+      <mat-icon>filter_list</mat-icon>
+      <h4>Filtrar por especialidad:</h4>
+    </div>
+    <div class="filter-chips-container">
+      <mat-chip-set>
+        <mat-chip-option 
+          [selected]="selectedSpecialtyGrouped === null"
+          (click)="filterBySpecialtyGrouped(null)"
+        >
+          Todas
+        </mat-chip-option>
+        <mat-chip-option 
+          *ngFor="let specialty of specialties"
+          [selected]="selectedSpecialtyGrouped === specialty"
+          (click)="filterBySpecialtyGrouped(specialty)"
+        >
+          {{ getSpecialtyDisplayName(specialty) }}
+        </mat-chip-option>
+      </mat-chip-set>
+    </div>
+  </div>
+
   <!-- Vista agrupada por especialidades -->
   <div class="grid gap-6" *ngIf="showGroupedView">
-    <div *ngFor="let specialty of specialties">
+    <div *ngFor="let specialty of getFilteredSpecialties()">
       <mat-card class="shadow-lg border-0 rounded-xl overflow-hidden" *ngIf="getSpecialtyItemCount(specialty) > 0">
         <mat-card-header class="bg-gradient-to-r from-slate-50 to-slate-100 border-b-2 border-orange-400 p-6">
           <mat-card-title class="flex items-center gap-3 text-xl font-semibold text-gray-800">
@@ -262,7 +287,19 @@
                 <p *ngIf="selectedItem.item.specialty" class="text-sm"><strong class="text-bitepoint-teal">Especialidad:</strong> <span class="text-gray-700">{{ getSpecialtyDisplayName(selectedItem.item.specialty) }}</span></p>
               </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-label>Metrado</mat-label>
+                  <input 
+                    matInput 
+                    type="number" 
+                    [value]="selectedItem.metrado"
+                    readonly
+                    class="text-center font-medium bg-gray-50"
+                    placeholder="0.00"
+                  >
+                </mat-form-field>
+
                 <mat-form-field appearance="outline" class="w-full">
                   <mat-label>Anterior</mat-label>
                   <input 
@@ -297,6 +334,17 @@
                     [value]="selectedItem.previousQuantity + selectedItem.currentQuantity"
                     readonly
                     class="text-center font-bold text-bitepoint-teal bg-bitepoint-teal-50"
+                  >
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-label>Saldo</mat-label>
+                  <input 
+                    matInput 
+                    type="number" 
+                    [value]="getSaldo(selectedItem)"
+                    readonly
+                    class="text-center font-bold text-orange-600 bg-orange-50"
                   >
                 </mat-form-field>
               </div>

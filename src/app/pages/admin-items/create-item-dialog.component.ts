@@ -74,6 +74,22 @@ import { Item } from '../../models/interfaces';
         </mat-form-field>
 
         <mat-form-field appearance="outline">
+          <mat-label>Metrado</mat-label>
+          <input matInput 
+                 formControlName="metrado" 
+                 type="number"
+                 step="0.01"
+                 min="0"
+                 placeholder="0.00">
+          <mat-error *ngIf="itemForm.get('metrado')?.hasError('required')">
+            El metrado es requerido
+          </mat-error>
+          <mat-error *ngIf="itemForm.get('metrado')?.hasError('min')">
+            El metrado debe ser mayor o igual a 0
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
           <mat-label>Materiales</mat-label>
           <textarea matInput 
                     formControlName="materiales" 
@@ -150,7 +166,8 @@ export class CreateItemDialogComponent {
       descripcion: ['', [Validators.required]],
       unidad: ['', [Validators.required]],
       especialidad: ['', [Validators.required]],
-      materiales: ['']
+      materiales: [''],
+      metrado: [0, [Validators.required, Validators.min(0)]]
     });
   }
 
@@ -166,7 +183,8 @@ export class CreateItemDialogComponent {
         description: formValue.descripcion,
         unit: formValue.unidad,
         specialty: formValue.especialidad,
-        materials: formValue.materiales ? formValue.materiales.split(',').map((m: string) => m.trim()).filter((m: string) => m) : []
+        materials: formValue.materiales ? formValue.materiales.split(',').map((m: string) => m.trim()).filter((m: string) => m) : [],
+        metrado: formValue.metrado || 0
       };
       this.dialogRef.close(newItem);
     }

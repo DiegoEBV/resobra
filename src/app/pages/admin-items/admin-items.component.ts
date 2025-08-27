@@ -44,7 +44,7 @@ export class AdminItemsComponent implements OnInit {
   items: Item[] = [];
   filteredItems: Item[] = [];
   specialties: string[] = ['Arquitectura', 'Estructura', 'Sanitaria', 'Eléctrica', 'Mecánica', 'Comunicaciones'];
-  displayedColumns: string[] = ['codigo', 'descripcion', 'unidad', 'materiales', 'acciones'];
+  displayedColumns: string[] = ['codigo', 'descripcion', 'unidad', 'metrado', 'materiales', 'acciones'];
   searchTerm: string = '';
   selectedSpecialty: string = 'all';
   isLoading: boolean = false;
@@ -61,7 +61,8 @@ export class AdminItemsComponent implements OnInit {
       codigo: ['', [Validators.required]],
       descripcion: ['', [Validators.required]],
       unidad: ['', [Validators.required]],
-      materiales: ['']
+      materiales: [''],
+      metrado: [0, [Validators.required, Validators.min(0)]]
     });
   }
 
@@ -186,7 +187,8 @@ export class AdminItemsComponent implements OnInit {
       codigo: item.name,
       descripcion: item.description || '',
       unidad: item.unit || '',
-      materiales: item.materials ? item.materials.join(', ') : ''
+      materiales: item.materials ? item.materials.join(', ') : '',
+      metrado: item.metrado || 0
     });
   }
 
@@ -203,7 +205,8 @@ export class AdminItemsComponent implements OnInit {
         name: formValue.codigo,
         description: formValue.descripcion,
         unit: formValue.unidad,
-        materials: formValue.materiales ? formValue.materiales.split(',').map((m: string) => m.trim()).filter((m: string) => m) : []
+        materials: formValue.materiales ? formValue.materiales.split(',').map((m: string) => m.trim()).filter((m: string) => m) : [],
+        metrado: formValue.metrado || 0
       };
       
       this.itemsService.updateItem(this.editingItem.id, updates).subscribe({

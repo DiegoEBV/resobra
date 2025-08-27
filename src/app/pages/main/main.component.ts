@@ -59,6 +59,7 @@ export class MainComponent implements OnInit, OnDestroy {
     'comunicaciones': []
   };
   selectedSpecialty: Specialty | null = null;
+  selectedSpecialtyGrouped: Specialty | null = null;
   specialties: Specialty[] = [];
   private destroy$ = new Subject<void>();
   private searchSubject = new Subject<string>();
@@ -154,6 +155,17 @@ export class MainComponent implements OnInit, OnDestroy {
     }
   }
 
+  filterBySpecialtyGrouped(specialty: Specialty | null) {
+    this.selectedSpecialtyGrouped = specialty;
+  }
+
+  getFilteredSpecialties(): Specialty[] {
+    if (this.selectedSpecialtyGrouped === null) {
+      return this.specialties;
+    }
+    return [this.selectedSpecialtyGrouped];
+  }
+
   getSpecialtyDisplayName(specialty: Specialty): string {
     return this.itemsService.getSpecialtyDisplayName(specialty);
   }
@@ -191,7 +203,8 @@ export class MainComponent implements OnInit, OnDestroy {
     const selectedItem: SelectedItem = {
       item: item,
       currentQuantity: 0,
-      previousQuantity: 0
+      previousQuantity: 0,
+      metrado: item.metrado || 0
     };
 
     this.selectedItems.push(selectedItem);
@@ -239,6 +252,14 @@ export class MainComponent implements OnInit, OnDestroy {
   updateQuantity(index: number, field: 'currentQuantity' | 'previousQuantity', value: number) {
     this.selectedItems[index][field] = value;
     this.saveSelectedItems();
+  }
+
+
+
+  getSaldo(selectedItem: SelectedItem): number {
+    const metrado = selectedItem.metrado || 0;
+    const acumulado = (selectedItem.previousQuantity || 0) + (selectedItem.currentQuantity || 0);
+    return metrado - acumulado;
   }
 
   clearAllItems() {

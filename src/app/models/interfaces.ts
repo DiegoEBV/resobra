@@ -7,6 +7,7 @@ export interface Item {
   unit?: string;
   materials?: string[];
   specialty: Specialty;
+  metrado?: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -51,4 +52,5 @@ export interface SelectedItem {
   item: Item;
   currentQuantity: number;
   previousQuantity: number;
+  metrado?: number;
 }
