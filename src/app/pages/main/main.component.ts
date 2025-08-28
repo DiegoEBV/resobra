@@ -15,11 +15,12 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { CopyReportPreviewComponent } from '../../components/copy-report-preview/copy-report-preview.component';
 import { QuickReportSelectorComponent } from '../../components/quick-report-selector/quick-report-selector.component';
+import { ExcelImportDialogComponent } from '../../components/excel-import-dialog/excel-import-dialog.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Subject, debounceTime, distinctUntilChanged, switchMap, takeUntil, of } from 'rxjs';
 import { ItemsService } from '../../services/items.service';
 import { ProductivityService } from '../../services/productivity.service';
-import { Item, SelectedItem, Specialty } from '../../models/interfaces';
+import { Item, SelectedItem, Specialty, ProcessedPartida } from '../../models/interfaces';
 import { Router } from '@angular/router';
 
 @Component({
@@ -35,9 +36,10 @@ import { Router } from '@angular/router';
         MatListModule,
         MatChipsModule,
         MatDialogModule,
-    MatProgressSpinnerModule,
-    MatSnackBarModule,
-    MatTooltipModule
+        MatProgressSpinnerModule,
+        MatSnackBarModule,
+        MatTooltipModule,
+        ExcelImportDialogComponent
     ],
     templateUrl: './main.component.html',
     styleUrls: ['./main.component.scss']
@@ -49,7 +51,7 @@ export class MainComponent implements OnInit, OnDestroy {
   favoriteItems: Item[] = [];
   isLoading = false;
   showGroupedView = false;
-  showFavorites = true;
+  showFavorites = false;
   groupedItems: { [key in Specialty]: Item[] } = {
     'arquitectura': [],
     'estructura': [],
@@ -61,6 +63,8 @@ export class MainComponent implements OnInit, OnDestroy {
   selectedSpecialty: Specialty | null = null;
   selectedSpecialtyGrouped: Specialty | null = null;
   specialties: Specialty[] = [];
+  showExcelImportDialog = false;
+  allItems: Item[] = [];
   private destroy$ = new Subject<void>();
   private searchSubject = new Subject<string>();
 
@@ -110,6 +114,9 @@ export class MainComponent implements OnInit, OnDestroy {
     
     // Cargar vista agrupada por defecto
     this.loadGroupedItems();
+    
+    // Cargar todos los ítems para el diálogo de importación Excel
+    this.loadAllItems();
   }
 
   ngOnDestroy() {
@@ -487,5 +494,62 @@ export class MainComponent implements OnInit, OnDestroy {
       console.error('Error realizando backup:', error);
       this.snackBar.open('Error al realizar el backup', 'Cerrar', { duration: 3000 });
     }
+  }
+
+  // ============ FUNCIONES DE IMPORTACIÓN EXCEL ============
+
+  loadAllItems() {
+    this.itemsService.getAllItems()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (items) => {
+          this.allItems = items;
+        },
+        error: (error) => {
+          console.error('Error loading all items:', error);
+          this.snackBar.open('Error al cargar partidas', 'Cerrar', { duration: 3000 });
+        }
+      });
+  }
+
+  openExcelImportDialog() {
+    this.showExcelImportDialog = true;
+  }
+
+  closeExcelImportDialog() {
+    this.showExcelImportDialog = false;
+  }
+
+  onExcelImportComplete(processedPartidas: ProcessedPartida[]): void {
+    if (processedPartidas && processedPartidas.length > 0) {
+      // Convertir ProcessedPartida a SelectedItem para las partidas con coincidencias
+      const newSelectedItems: SelectedItem[] = processedPartidas
+        .filter(partida => partida.matchedItem && partida.selected)
+        .map(partida => ({
+          item: partida.matchedItem!,
+          // Mantener el metrado original de la partida (no importar desde Excel)
+          metrado: partida.matchedItem!.metrado || 0,
+          // Solo importar los metrados anterior y actual desde Excel
+          previousQuantity: partida.excelRow.metradoAnterior || 0,
+          currentQuantity: partida.excelRow.metradoActual || 0
+        }));
+      
+      // Filtrar partidas que ya están seleccionadas
+      const itemsToAdd = newSelectedItems.filter(imported => 
+        !this.selectedItems.some(selected => selected.item.id === imported.item.id)
+      );
+      
+      if (itemsToAdd.length > 0) {
+        this.selectedItems.push(...itemsToAdd);
+        this.saveSelectedItems();
+        
+        // Mostrar mensaje de éxito
+        console.log(`Se importaron ${itemsToAdd.length} partidas desde Excel`);
+      } else {
+        console.log('Todas las partidas del Excel ya estaban seleccionadas');
+      }
+    }
+    
+    this.closeExcelImportDialog();
   }
 }

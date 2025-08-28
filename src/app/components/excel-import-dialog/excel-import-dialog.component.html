@@ -1,0 +1,106 @@
+<!-- Modal Overlay -->
+<div class="modal-overlay" [class.show]="isOpen" (click)="onClose()">
+  <!-- Modal Dialog -->
+  <div class="modal-dialog" (click)="$event.stopPropagation()">
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <h2 class="modal-title">{{ dialogTitle }}</h2>
+      <div class="header-actions">
+        <button 
+          *ngIf="canGoBack" 
+          type="button" 
+          class="btn-back"
+          (click)="goBack()"
+          [disabled]="isProcessing">
+          <i class="icon-arrow-left"></i>
+          Atrás
+        </button>
+        <button type="button" class="btn-close" (click)="onClose()">
+          <i class="icon-x"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="modal-body">
+      <!-- Step 1: File Upload -->
+      <div *ngIf="currentStep === 'upload'" class="upload-step">
+        <!-- Template Download Section -->
+        <div class="template-section">
+          <div class="template-info">
+            <h3>Plantilla de Excel</h3>
+            <p>Descarga la plantilla para asegurar el formato correcto de tu archivo.</p>
+            <p class="format-info">
+              <strong>Columnas requeridas:</strong> Partida, Metrado Anterior, Metrado Actual
+            </p>
+          </div>
+          <button 
+            type="button" 
+            class="btn-template"
+            (click)="downloadTemplate()"
+            [disabled]="isProcessing">
+            <i class="icon-download"></i>
+            Descargar Plantilla
+          </button>
+        </div>
+
+        <!-- File Upload Component -->
+        <div class="upload-section">
+          <app-file-upload
+            [disabled]="isProcessing"
+            (fileSelected)="onFileSelected($event)"
+            (error)="onFileError($event)">
+          </app-file-upload>
+        </div>
+
+        <!-- Processing Status -->
+        <div *ngIf="isProcessing" class="processing-status">
+          <div class="spinner"></div>
+          <p>Procesando archivo Excel...</p>
+        </div>
+
+        <!-- Error Display -->
+        <div *ngIf="processingError" class="error-message">
+          <i class="icon-alert-circle"></i>
+          <div>
+            <h4>Error al procesar archivo</h4>
+            <p>{{ processingError }}</p>
+          </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="instructions">
+          <h4>Instrucciones:</h4>
+          <ul>
+            <li>El archivo debe ser formato Excel (.xlsx o .xls)</li>
+            <li>Tamaño máximo: 5MB</li>
+            <li>Máximo 1000 filas de datos</li>
+            <li>Las columnas deben estar en el orden: Partida, Metrado Anterior, Metrado Actual</li>
+            <li>La primera fila debe contener los encabezados</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step 2: Preview Results -->
+      <div *ngIf="currentStep === 'preview'" class="preview-step">
+        <app-excel-preview
+          [processedPartidas]="processedPartidas"
+          [availableItems]="availableItems"
+          (cancelled)="onPreviewCancel()"
+          (importConfirmed)="onPreviewConfirm($event)">
+        </app-excel-preview>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="modal-footer" *ngIf="currentStep === 'upload'">
+      <button 
+        type="button" 
+        class="btn-secondary"
+        (click)="onClose()"
+        [disabled]="isProcessing">
+        Cancelar
+      </button>
+    </div>
+  </div>
+</div>

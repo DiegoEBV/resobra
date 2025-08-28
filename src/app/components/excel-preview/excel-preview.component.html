@@ -1,0 +1,191 @@
+<div class="excel-preview-container">
+  <!-- Estadísticas -->
+  <div class="stats-section">
+    <h3>Resumen del procesamiento</h3>
+    <div class="stats-grid">
+      <div class="stat-item">
+        <span class="stat-number">{{ stats.total }}</span>
+        <span class="stat-label">Total</span>
+      </div>
+      <div class="stat-item exact">
+        <span class="stat-number">{{ stats.exact }}</span>
+        <span class="stat-label">Exactas ({{ stats.exactPercentage }}%)</span>
+      </div>
+      <div class="stat-item partial">
+        <span class="stat-number">{{ stats.partial }}</span>
+        <span class="stat-label">Parciales ({{ stats.partialPercentage }}%)</span>
+      </div>
+      <div class="stat-item not-found">
+        <span class="stat-number">{{ stats.notFound }}</span>
+        <span class="stat-label">No encontradas ({{ stats.notFoundPercentage }}%)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lista de partidas procesadas -->
+  <div class="partidas-section">
+    <h3>Partidas procesadas ({{ processedPartidas.length }})</h3>
+    
+    <div class="partidas-list">
+      <div 
+        *ngFor="let partida of processedPartidas; let i = index" 
+        class="partida-item"
+        [class]="getMatchTypeClass(partida.matchType)"
+      >
+        <!-- Información de la partida del Excel -->
+        <div class="partida-excel">
+          <div class="partida-header">
+            <div class="partida-selection">
+              <input 
+                type="checkbox" 
+                [checked]="partida.selected" 
+                [disabled]="!partida.matchedItem"
+                (change)="togglePartidaSelection(partida)"
+                class="partida-checkbox"
+              >
+              <span class="status-icon">{{ getStatusIcon(partida.matchType) }}</span>
+            </div>
+            <h4>{{ partida.excelRow.partida }}</h4>
+            <span class="match-type">{{ getMatchTypeText(partida.matchType) }}</span>
+            <span *ngIf="partida.confidence && partida.confidence > 0" class="confidence">
+              {{ getConfidenceText(partida.confidence) }}
+            </span>
+          </div>
+          
+          <div class="metrado-info">
+            <span class="metrado-item">
+              <strong>Anterior:</strong> {{ formatMetrado(partida.excelRow.metradoAnterior) }}
+            </span>
+            <span class="metrado-item">
+              <strong>Actual:</strong> {{ formatMetrado(partida.excelRow.metradoActual) }}
+            </span>
+            <span class="metrado-item saldo" [class.positive]="getSaldo(partida) > 0" [class.negative]="getSaldo(partida) < 0">
+              <strong>Saldo:</strong> {{ formatMetrado(getSaldo(partida)) }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Partida coincidente -->
+        <div class="partida-match" *ngIf="partida.matchedItem">
+          <div class="match-header">
+            <span class="match-label">Coincide con:</span>
+          </div>
+          <div class="match-details">
+            <h5>{{ partida.matchedItem.name }}</h5>
+            <p *ngIf="partida.matchedItem.description">{{ partida.matchedItem.description }}</p>
+            <div class="match-meta">
+              <span class="specialty">{{ partida.matchedItem.specialty }}</span>
+              <span class="unit">{{ partida.matchedItem.unit }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="partida-actions">
+          <button 
+            type="button" 
+            class="btn-secondary btn-sm"
+            (click)="openSuggestions(i)"
+          >
+            {{ partida.matchedItem ? 'Cambiar' : 'Buscar' }}
+          </button>
+          
+          <button 
+            *ngIf="partida.matchedItem" 
+            type="button" 
+            class="btn-danger btn-sm"
+            (click)="removeSuggestion(i)"
+          >
+            Quitar
+          </button>
+        </div>
+
+        <!-- Sugerencias existentes -->
+        <div class="suggestions-preview" *ngIf="partida.suggestions && partida.suggestions.length > 0 && !partida.matchedItem">
+          <span class="suggestions-label">Sugerencias:</span>
+          <div class="suggestions-list">
+            <button 
+              *ngFor="let suggestion of partida.suggestions?.slice(0, 3)" 
+              type="button"
+              class="suggestion-btn"
+              (click)="selectSuggestion(i, suggestion.item)"
+            >
+              {{ suggestion.item.name }}
+              <small>({{ getConfidenceText(suggestion.confidence) }})</small>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de búsqueda de sugerencias -->
+  <div class="modal-overlay" *ngIf="showSuggestions" (click)="closeSuggestions()">
+    <div class="suggestions-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h4>Buscar partida</h4>
+        <button type="button" class="btn-close" (click)="closeSuggestions()">&times;</button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="search-input">
+          <input 
+            type="text" 
+            [(ngModel)]="searchQuery"
+            (input)="onSearchQueryChange()"
+            placeholder="Buscar por nombre o descripción..."
+            class="form-control"
+          >
+        </div>
+        
+        <div class="suggestions-results">
+          <div 
+            *ngFor="let item of filteredSuggestions" 
+            class="suggestion-item"
+            (click)="selectSuggestion(selectedPartidaIndex, item)"
+          >
+            <div class="suggestion-content">
+              <h5>{{ item.name }}</h5>
+              <p *ngIf="item.description">{{ item.description }}</p>
+              <div class="suggestion-meta">
+                <span class="specialty">{{ item.specialty }}</span>
+                <span class="unit">{{ item.unit }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div *ngIf="filteredSuggestions.length === 0" class="no-results">
+            No se encontraron resultados
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Acciones principales -->
+  <div class="actions-section">
+    <div class="import-summary">
+      <strong>{{ validPartidas.length }}</strong> de <strong>{{ processedPartidas.length }}</strong> 
+      partidas serán importadas
+    </div>
+    
+    <div class="action-buttons">
+      <button 
+        type="button" 
+        class="btn-secondary"
+        (click)="cancel()"
+      >
+        Cancelar
+      </button>
+      
+      <button 
+        type="button" 
+        class="btn-primary"
+        [disabled]="validPartidas.length === 0"
+        (click)="confirmImport()"
+      >
+        Importar {{ validPartidas.length }} partidas
+      </button>
+    </div>
+  </div>
+</div>

@@ -54,3 +54,47 @@ export interface SelectedItem {
   previousQuantity: number;
   metrado?: number;
 }
+
+// Interfaces para importación de Excel
+export interface ExcelRow {
+  partida: string;
+  metradoAnterior: number;
+  metradoActual: number;
+  rowNumber: number;
+}
+
+export interface ValidationResult {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+}
+
+export interface SuggestionItem {
+  item: Item;
+  confidence: number;
+}
+
+export interface ProcessedPartida {
+  excelRow: ExcelRow;
+  matchType: 'exact' | 'partial' | 'not_found';
+  matchedItem: Item | null;
+  suggestions?: SuggestionItem[];
+  selected?: boolean;
+  confidence?: number;
+}
+
+export interface ImportResult {
+  totalRows: number;
+  exactMatches: number;
+  partialMatches: number;
+  notFound: number;
+  processedPartidas: ProcessedPartida[];
+  errors: string[];
+}
+
+export interface ImportConfig {
+  exactMatchThreshold: number; // 0.95
+  partialMatchThreshold: number; // 0.7
+  maxSuggestions: number; // 5
+  caseSensitive: boolean; // false
+}

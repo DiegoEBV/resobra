@@ -78,7 +78,3 @@ INSERT INTO items (name, description, unit, materials) VALUES
 ('Acero de refuerzo fy=4200 kg/cm²', 'Suministro y colocación de acero de refuerzo corrugado', 'kg', ARRAY['Varillas de acero', 'Alambre de amarre', 'Mano de obra']),
 ('Encofrado y desencofrado', 'Encofrado y desencofrado de elementos de concreto con madera', 'm²', ARRAY['Madera', 'Clavos', 'Desmoldante', 'Mano de obra']),
 ('Mampostería de ladrillo', 'Muro de mampostería de ladrillo King Kong con mortero 1:4', 'm²', ARRAY['Ladrillo King Kong', 'Cemento', 'Arena fina', 'Agua']);
-
-INSERT INTO projects (name, location, contractor, supervisor, start_date) VALUES
-('Construcción de Edificio Multifamiliar', 'Av. Principal 123, Lima', 'Constructora ABC S.A.C.', 'Ing. Juan Pérez', '2024-01-15'),
-('Ampliación de Centro Comercial', 'Jr. Comercio 456, Arequipa', 'Obras y Proyectos XYZ', 'Ing. María García', '2024-02-01');

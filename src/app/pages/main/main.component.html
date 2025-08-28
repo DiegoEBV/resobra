@@ -10,7 +10,7 @@
           <mat-icon class="text-bitepoint-teal text-2xl">speed</mat-icon>
           <h3 class="text-lg font-semibold text-gray-800">Herramientas</h3>
         </div>
-        <div class="grid grid-cols-2 md:grid-cols-2 gap-3">
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
           <button 
             mat-raised-button 
             (click)="copyPreviousReport()"
@@ -29,6 +29,16 @@
           >
             <mat-icon class="text-2xl">flash_on</mat-icon>
             <span class="text-sm font-medium">Reporte Rápido</span>
+          </button>
+          
+          <button 
+            mat-raised-button 
+            (click)="openExcelImportDialog()"
+            matTooltip="Importa partidas desde un archivo Excel con metrados"
+            class="productivity-btn bg-orange-600 text-white hover:bg-orange-700 transition-colors duration-200 p-4 h-auto flex flex-col items-center gap-2"
+          >
+            <mat-icon class="text-2xl">upload_file</mat-icon>
+            <span class="text-sm font-medium">Importar Excel</span>
           </button>
         </div>
       </div>
@@ -124,7 +134,17 @@
         </mat-chip-option>
       </mat-chip-set>
     </div>
-  </div>
+ 
+</div>
+
+<!-- Excel Import Dialog -->
+<app-excel-import-dialog
+  *ngIf="showExcelImportDialog"
+  [isOpen]="showExcelImportDialog"
+  [availableItems]="allItems"
+  (importCompleted)="onExcelImportComplete($event)"
+  (closeDialog)="closeExcelImportDialog()"
+></app-excel-import-dialog>
 
   <!-- Vista agrupada por especialidades -->
   <div class="grid gap-6" *ngIf="showGroupedView">
