@@ -59,9 +59,6 @@
             <span class="metrado-item">
               <strong>Actual:</strong> {{ formatMetrado(partida.excelRow.metradoActual) }}
             </span>
-            <span class="metrado-item saldo" [class.positive]="getSaldo(partida) > 0" [class.negative]="getSaldo(partida) < 0">
-              <strong>Saldo:</strong> {{ formatMetrado(getSaldo(partida)) }}
-            </span>
           </div>
         </div>
 
