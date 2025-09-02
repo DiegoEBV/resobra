@@ -182,7 +182,7 @@
     </div>
 
     <div>
-      <button mat-raised-button (click)="saveReport()" [disabled]="isGenerating || !reportData" class="bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white px-8 py-3 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 shadow-xl">
+      <button mat-raised-button (click)="saveReport()" [disabled]="isGenerating || !reportData" class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 shadow-xl mdc-button mdc-button--raised mat-mdc-raised-button mat-unthemed mat-mdc-button-base">
         <mat-icon class="mr-2">save</mat-icon>
         <span *ngIf="!isGenerating">Guardar Informe</span>
         <span *ngIf="isGenerating">Guardando...</span>

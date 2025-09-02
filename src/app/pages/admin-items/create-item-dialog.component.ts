@@ -100,11 +100,12 @@ import { Item } from '../../models/interfaces';
       </form>
     </mat-dialog-content>
     
-    <mat-dialog-actions align="end">
+    <div mat-dialog-actions class="dialog-actions">
       <button mat-button (click)="onCancel()">
         <mat-icon>cancel</mat-icon>
         Cancelar
       </button>
+
       <button mat-raised-button 
               color="primary" 
               (click)="onCreate()"
@@ -112,7 +113,15 @@ import { Item } from '../../models/interfaces';
         <mat-icon>save</mat-icon>
         Crear Partida
       </button>
-    </mat-dialog-actions>
+      <button mat-raised-button 
+              color="primary" 
+              (click)="onCreateAndAddAnother()"
+              [disabled]="!itemForm.valid"
+              class="create-another-btn">
+        <mat-icon>add_circle</mat-icon>
+        Crear y Agregar Otra
+      </button>
+    </div>
   `,
   styles: [`
     .item-form {
@@ -135,16 +144,34 @@ import { Item } from '../../models/interfaces';
       overflow-y: auto;
     }
     
-    mat-dialog-actions {
+    .dialog-actions {
       padding: 16px 0;
       gap: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
     }
     
-    mat-dialog-actions button {
+    .dialog-actions button {
       display: flex;
       align-items: center;
       gap: 4px;
+      margin: 4px;
+      min-width: 140px;
+      font-size: 14px;
     }
+    
+    .create-another-btn {
+      background-color: #4caf50 !important;
+      border-color: #4caf50 !important;
+    }
+    
+    .create-another-btn:hover {
+      background-color: #45a049 !important;
+      border-color: #45a049 !important;
+    }
+    
+
     
     @media (max-width: 480px) {
       .item-form {
@@ -184,9 +211,30 @@ export class CreateItemDialogComponent {
         unit: formValue.unidad,
         specialty: formValue.especialidad,
         materials: formValue.materiales ? formValue.materiales.split(',').map((m: string) => m.trim()).filter((m: string) => m) : [],
-        metrado: formValue.metrado || 0
+        metrado: formValue.metrado || 0,
+        isDraft: false
       };
       this.dialogRef.close(newItem);
+    }
+  }
+
+
+
+  onCreateAndAddAnother(): void {
+    if (this.itemForm.valid) {
+      const formValue = this.itemForm.value;
+      const newItem: Partial<Item> = {
+        name: formValue.codigo,
+        description: formValue.descripcion,
+        unit: formValue.unidad,
+        specialty: formValue.especialidad,
+        materials: formValue.materiales ? formValue.materiales.split(',').map((m: string) => m.trim()).filter((m: string) => m) : [],
+        metrado: formValue.metrado || 0,
+        isDraft: false
+      };
+      
+      // Emitir el item creado con una bandera especial para indicar que se debe crear otro
+      this.dialogRef.close({ item: newItem, createAnother: true });
     }
   }
 }

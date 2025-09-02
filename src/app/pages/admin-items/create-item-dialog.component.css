@@ -42,6 +42,58 @@ button[mat-raised-button] {
   min-width: 120px;
 }
 
+/* Mejorar visibilidad de botones */
+mat-dialog-actions button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 40px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Botón Cancelar - con borde y fondo visible */
+mat-dialog-actions button[mat-button] {
+  border: 2px solid #6b7280 !important;
+  background-color: #f9fafb !important;
+  color: #374151 !important;
+  transition: all 0.2s ease;
+}
+
+mat-dialog-actions button[mat-button]:hover {
+  border-color: #4b5563 !important;
+  background-color: #f3f4f6 !important;
+  color: #1f2937 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Botón Crear Partida - estilo primario mejorado */
+mat-dialog-actions button[mat-raised-button] {
+  background-color: #1976d2 !important;
+  color: white !important;
+  border: 2px solid #1976d2 !important;
+  transition: all 0.2s ease;
+}
+
+mat-dialog-actions button[mat-raised-button]:hover {
+  background-color: #1565c0 !important;
+  border-color: #1565c0 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+}
+
+/* Estado deshabilitado */
+mat-dialog-actions button[mat-raised-button]:disabled {
+  background-color: #e0e0e0 !important;
+  color: #9e9e9e !important;
+  border-color: #e0e0e0 !important;
+  transform: none;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
 /* Error styling */
 mat-error {
   font-size: 12px;

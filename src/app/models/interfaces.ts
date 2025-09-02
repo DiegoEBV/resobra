@@ -8,6 +8,7 @@ export interface Item {
   materials?: string[];
   specialty: Specialty;
   metrado?: number;
+  isDraft?: boolean;
   created_at?: string;
   updated_at?: string;
 }
