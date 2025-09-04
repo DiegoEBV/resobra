@@ -1,12 +1,18 @@
 <div class="min-h-screen bg-gray-50 p-6">
   <!-- Header -->
-  <mat-toolbar class="bg-gradient-to-r from-bitepoint-teal to-bitepoint-teal-dark text-white shadow-lg rounded-xl mb-6 px-6">
+  <mat-toolbar class="bg-gradient-to-r from-bitepoint-teal to-bitepoint-teal-dark text-white shadow-lg rounded-xl mb-16 px-6">
     <mat-icon class="text-white mr-3">settings</mat-icon>
     <span class="text-2xl font-semibold flex-1">Administración de Partidas</span>
-    <button mat-raised-button (click)="openCreateDialog()">
-      <mat-icon class="mr-2">add</mat-icon>
-      Nueva Partida
-    </button>
+    <div class="flex items-center justify-center space-x-3">
+      <button mat-raised-button (click)="openImportEstructuraDialog()" class="bg-white text-bitepoint-teal hover:bg-gray-100">
+        <mat-icon class="mr-2">upload</mat-icon>
+        Importar Estructura
+      </button>
+      <button mat-raised-button (click)="openCreateDialog()">
+        <mat-icon class="mr-2">add</mat-icon>
+        Nueva Partida
+      </button>
+    </div>
   </mat-toolbar>
 
   <!-- Search and Filters -->

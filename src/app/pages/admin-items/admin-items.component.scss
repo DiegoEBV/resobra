@@ -515,6 +515,38 @@ mat-tab-group {
     padding: 0.75rem;
   }
   
+  .toolbar {
+    padding: 12px 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+    
+    .toolbar-left {
+      flex: 1;
+      min-width: 200px;
+      gap: 8px;
+      
+      .search-field {
+        flex: 1;
+        min-width: 150px;
+        
+        .mat-mdc-form-field {
+          width: 100%;
+        }
+      }
+    }
+    
+    .toolbar-right {
+      gap: 8px;
+      flex-wrap: wrap;
+      
+      .mat-mdc-button {
+        min-height: var(--mobile-touch-target);
+        padding: 0 16px;
+        font-size: 0.875rem;
+      }
+    }
+  }
+  
   mat-toolbar {
     padding: 1rem;
     flex-direction: column;
@@ -530,16 +562,37 @@ mat-tab-group {
     span {
       font-size: 1.125rem;
       text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    
+    // Container for buttons - Higher specificity to override Tailwind
+    div.flex.items-center.space-x-3 {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 0.75rem !important;
+      width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      align-items: stretch !important;
     }
     
     button[mat-raised-button] {
-      width: 100%;
-      padding: 1rem;
-      font-size: 1rem;
-      justify-content: center;
+      width: 100% !important;
+      padding: 1rem !important;
+      font-size: 1rem !important;
+      justify-content: center !important;
+      min-height: var(--mobile-touch-target, 44px) !important;
+      display: flex !important;
+      align-items: center !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      position: relative !important;
+      z-index: 1 !important;
       
       mat-icon {
-        margin-right: 0.5rem;
+        margin-right: 0.5rem !important;
       }
     }
   }
@@ -608,13 +661,33 @@ mat-tab-group {
     }
   }
   
+  /* Table container with horizontal scroll */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 8px;
+    
+    &::-webkit-scrollbar {
+      height: 8px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: var(--background-color);
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 4px;
+    }
+  }
+  
   // Table mobile optimization
   .overflow-x-auto {
     margin: -1rem;
     padding: 1rem;
     
     table.mat-mdc-table {
-      min-width: 700px;
+      min-width: 800px; // Ensure table doesn't compress too much
       font-size: 0.75rem;
       
       .mat-mdc-header-row {
@@ -648,6 +721,43 @@ mat-tab-group {
         .mat-mdc-cell {
           padding: 0.75rem 0.5rem;
           font-size: 0.75rem;
+          white-space: nowrap;
+          
+          /* Specific column optimizations */
+          &.mat-column-codigo {
+            min-width: 80px;
+            max-width: 100px;
+          }
+          
+          &.mat-column-descripcion {
+            min-width: 200px;
+            max-width: 250px;
+            white-space: normal;
+            word-wrap: break-word;
+          }
+          
+          &.mat-column-unidad {
+            min-width: 60px;
+            text-align: center;
+          }
+          
+          &.mat-column-precio {
+            min-width: 80px;
+            text-align: right;
+          }
+          
+          &.mat-column-materiales {
+            min-width: 150px;
+            max-width: 200px;
+          }
+          
+          &.mat-column-actions {
+            min-width: 120px;
+            position: sticky;
+            right: 0;
+            background: var(--surface-color);
+            z-index: 1;
+          }
           
           // Code column mobile
           &:first-child {
@@ -739,6 +849,26 @@ mat-tab-group {
     padding: 0.5rem;
   }
   
+  .toolbar {
+    padding: 8px 12px;
+    
+    .toolbar-left {
+      min-width: 150px;
+      
+      .search-field {
+        min-width: 120px;
+      }
+    }
+    
+    .toolbar-right {
+      .mat-mdc-button {
+        padding: 0 12px;
+        font-size: 0.8rem;
+        min-height: 40px;
+      }
+    }
+  }
+  
   mat-toolbar {
     padding: 0.75rem;
     
@@ -779,18 +909,63 @@ mat-tab-group {
     }
   }
   
+  .tab-group {
+    .mat-mdc-tab-label {
+      font-size: 0.8rem;
+      padding: 0 8px;
+      min-height: 40px;
+    }
+  }
+  
   // Table extra small mobile
   .overflow-x-auto {
     table.mat-mdc-table {
-      min-width: 600px;
+      min-width: 700px; // Slightly smaller for very small screens
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
+      font-size: 0.75rem;
       
       .mat-mdc-header-cell,
       .mat-mdc-cell {
-        padding: 0.5rem 0.25rem;
+        padding: 8px 6px;
         font-size: 0.7rem;
         white-space: nowrap;
+        
+        &:first-child {
+          padding-left: 12px;
+        }
+        
+        &:last-child {
+          padding-right: 12px;
+        }
+        
+        /* Adjust column sizes for small screens */
+        &.mat-column-codigo {
+          min-width: 70px;
+          max-width: 80px;
+        }
+        
+        &.mat-column-descripcion {
+          min-width: 150px;
+          max-width: 180px;
+        }
+        
+        &.mat-column-unidad {
+          min-width: 50px;
+        }
+        
+        &.mat-column-precio {
+          min-width: 70px;
+        }
+        
+        &.mat-column-materiales {
+          min-width: 120px;
+          max-width: 150px;
+        }
+        
+        &.mat-column-actions {
+          min-width: 100px;
+        }
       }
       
       .mat-mdc-cell {
@@ -818,6 +993,15 @@ mat-tab-group {
         }
       }
     }
+  }
+  
+  .card {
+    margin: 8px;
+    padding: 12px;
+  }
+  
+  .form-row {
+    gap: 12px;
   }
   
   // Form fields smaller

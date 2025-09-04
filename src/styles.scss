@@ -277,6 +277,21 @@ h6, .h6 {
   --transition-fast: 0.15s ease-in-out;
   --transition-normal: 0.2s ease-in-out;
   --transition-slow: 0.3s ease-in-out;
+  
+  /* Mobile Responsive Variables */
+  --mobile-touch-target: 44px;
+  --mobile-padding: 16px;
+  --mobile-margin: 12px;
+  --mobile-font-size: 16px;
+  --mobile-line-height: 1.5;
+  
+  /* Breakpoints */
+  --breakpoint-xs: 320px;
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
 }
 
 /* Material Design Elevation Shadows */
@@ -1073,6 +1088,132 @@ html {
 .hover\:text-bitepoint-teal-dark:hover { color: var(--bitepoint-teal-dark) !important; }
 .hover\:bg-bitepoint-teal-50:hover { background-color: var(--bitepoint-teal-50) !important; }
 .hover\:bg-bitepoint-orange-dark:hover { background-color: var(--bitepoint-orange-dark) !important; }
+
+/* Mobile-First Responsive Improvements */
+
+/* Touch-friendly buttons and inputs */
+@media (max-width: 768px) {
+  /* Ensure minimum touch target size */
+  .mat-mdc-button,
+  .mat-mdc-raised-button,
+  .mat-mdc-unelevated-button,
+  .mat-mdc-outlined-button,
+  .mat-mdc-icon-button {
+    min-height: var(--mobile-touch-target) !important;
+    min-width: var(--mobile-touch-target) !important;
+  }
+  
+  /* Larger form inputs for mobile */
+  .mat-mdc-form-field {
+    .mat-mdc-text-field-wrapper {
+      .mat-mdc-form-field-infix {
+        min-height: var(--mobile-touch-target) !important;
+        
+        input,
+        textarea {
+          font-size: var(--mobile-font-size) !important;
+          line-height: var(--mobile-line-height) !important;
+        }
+      }
+    }
+  }
+  
+  /* Better spacing for mobile */
+  .mat-mdc-card {
+    margin: var(--mobile-margin) !important;
+    padding: var(--mobile-padding) !important;
+  }
+  
+  /* Improved dialog sizing */
+  .mat-mdc-dialog-container {
+    max-width: calc(100vw - 32px) !important;
+    max-height: calc(100vh - 32px) !important;
+    margin: 16px !important;
+  }
+  
+  /* Better table scrolling */
+  .mat-mdc-table {
+    font-size: 14px !important;
+    
+    .mat-mdc-header-cell,
+    .mat-mdc-cell {
+      padding: 8px 12px !important;
+      
+      &:first-child {
+        padding-left: var(--mobile-padding) !important;
+      }
+      
+      &:last-child {
+        padding-right: var(--mobile-padding) !important;
+      }
+    }
+  }
+  
+  /* Responsive text sizes */
+  h1, .h1 { font-size: 1.75rem !important; }
+  h2, .h2 { font-size: 1.5rem !important; }
+  h3, .h3 { font-size: 1.25rem !important; }
+  h4, .h4 { font-size: 1.125rem !important; }
+  h5, .h5 { font-size: 1rem !important; }
+  h6, .h6 { font-size: 0.875rem !important; }
+}
+
+/* Extra small devices */
+@media (max-width: 480px) {
+  /* Even more compact spacing */
+  .mat-mdc-card {
+    margin: 8px !important;
+    padding: 12px !important;
+  }
+  
+  /* Smaller text for very small screens */
+  .mat-mdc-table {
+    font-size: 12px !important;
+    
+    .mat-mdc-header-cell,
+    .mat-mdc-cell {
+      padding: 6px 8px !important;
+    }
+  }
+  
+  /* Compact form fields */
+  .mat-mdc-form-field {
+    margin-bottom: 12px !important;
+  }
+}
+
+/* Utility classes for responsive design */
+.mobile-only {
+  display: none !important;
+  
+  @media (max-width: 768px) {
+    display: block !important;
+  }
+}
+
+.desktop-only {
+  display: block !important;
+  
+  @media (max-width: 768px) {
+    display: none !important;
+  }
+}
+
+.touch-target {
+  min-height: var(--mobile-touch-target) !important;
+  min-width: var(--mobile-touch-target) !important;
+}
+
+/* Improved focus states for mobile */
+@media (max-width: 768px) {
+  .mat-mdc-button:focus,
+  .mat-mdc-raised-button:focus,
+  .mat-mdc-unelevated-button:focus,
+  .mat-mdc-outlined-button:focus {
+    outline: 2px solid var(--primary-color) !important;
+    outline-offset: 2px !important;
+  }
+}
 
 /* Accessibility improvements */
 @media (prefers-reduced-motion: reduce) {

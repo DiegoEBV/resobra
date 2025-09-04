@@ -10,18 +10,23 @@
     
     <nav class="sidebar-nav">
       <a routerLink="/" class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
-        <mat-icon>dashboard</mat-icon>
-        <span>Crear Reportes</span>
+        <div class="nav-link">
+          <mat-icon>dashboard</mat-icon>
+          <span>Crear Reportes</span>
+        </div>
       </a>
       <a routerLink="/admin-projects" class="nav-item" routerLinkActive="active">
-        <mat-icon>business</mat-icon>
-        <span>Obras</span>
+        <div class="nav-link">
+          <mat-icon>business</mat-icon>
+          <span>Obras</span>
+        </div>
       </a>
       <a routerLink="/admin-items" class="nav-item" routerLinkActive="active">
-        <mat-icon>settings</mat-icon>
-        <span>Partidas</span>
+        <div class="nav-link">
+          <mat-icon>settings</mat-icon>
+          <span>Partidas</span>
+        </div>
       </a>
-
     </nav>
     
     

@@ -76,6 +76,9 @@ export class ExportService {
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     let yPosition = 20;
+    
+    // Calcular páginas donde aparecerá cada partida
+    const itemPages = this.calculateItemPages(reportItems, pageHeight);
 
     // Portada
     doc.setFontSize(20);
@@ -147,19 +150,8 @@ export class ExportService {
     doc.addPage();
     yPosition = 20;
 
-    // Índice
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.text('ÍNDICE', 20, yPosition);
-    
-    yPosition += 15;
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text('1. Información del Proyecto ........................... 1', 20, yPosition);
-    yPosition += 8;
-    doc.text('2. Partidas Ejecutadas ................................. 2', 20, yPosition);
-    yPosition += 8;
-    doc.text('3. Resumen de Avance .................................. 3', 20, yPosition);
+    // Índice dinámico de partidas
+    this.generateDynamicIndex(doc, reportItems, itemPages, yPosition);
 
     // Nueva página para partidas
     doc.addPage();
@@ -171,7 +163,7 @@ export class ExportService {
     
     yPosition += 20;
 
-    // Tabla de partidas con formato detallado
+    // Tabla de partidas con formato detallado (múltiples partidas por página)
     reportItems.forEach((item, index) => {
       console.log(`🔍 Procesando item ${index + 1}:`, item);
       console.log('📝 Estructura del item:', {
@@ -181,7 +173,8 @@ export class ExportService {
         fullItem: item
       });
       
-      if (yPosition > pageHeight - 60) {
+      // Verificar si necesitamos una nueva página (altura estimada de una partida ~120px)
+      if (yPosition + 120 > pageHeight - 40) {
         doc.addPage();
         yPosition = 20;
       }
@@ -222,7 +215,7 @@ export class ExportService {
       yPosition += 8;
       
       const saldo = metrado - (item.accumulated_quantity || 0);
-      doc.text(`SALDO: ${saldo.toString()}`, 25, yPosition);
+      doc.text(`SALDO: ${saldo.toFixed(2)}`, 25, yPosition);
       yPosition += 15;
       
       // Línea separadora
@@ -233,6 +226,75 @@ export class ExportService {
 
     // Guardar PDF
     doc.save(`${report.report_number}.pdf`);
+  }
+
+  // Calcular en qué página aparecerá cada partida (múltiples partidas por página)
+  private calculateItemPages(reportItems: any[], pageHeight: number): number[] {
+    const itemPages: number[] = [];
+    let currentPage = 3; // Página 1: portada, Página 2: índice, Página 3+: partidas
+    let currentPageHeight = 40; // Posición Y inicial después del título 'PARTIDAS EJECUTADAS' (20 + 20)
+    const itemHeight = 120; // Altura estimada de cada partida
+    const pageMargin = 40; // Margen inferior
+    
+    reportItems.forEach((item, index) => {
+      // Verificar si la partida cabe en la página actual
+      if (currentPageHeight + itemHeight > pageHeight - pageMargin) {
+        currentPage++;
+        currentPageHeight = 40; // Reiniciar posición Y después del título en nueva página
+      }
+      
+      itemPages[index] = currentPage;
+      currentPageHeight += itemHeight; // Actualizar posición para la siguiente partida
+    });
+    
+    return itemPages;
+  }
+
+  // Generar índice dinámico con nombres de partidas y páginas
+  private generateDynamicIndex(doc: jsPDF, reportItems: any[], itemPages: number[], startY: number): void {
+    let yPosition = startY;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    
+    // Título del índice
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ÍNDICE DE PARTIDAS', 20, yPosition);
+    
+    yPosition += 20;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    
+    // Generar línea para cada partida
+    reportItems.forEach((item, index) => {
+      const itemName = item.item?.name || item.name || 'Sin nombre';
+      const pageNumber = itemPages[index] || 3;
+      
+      // Truncar nombre si es muy largo
+      const maxNameLength = 50;
+      const displayName = itemName.length > maxNameLength ? 
+        itemName.substring(0, maxNameLength) + '...' : itemName;
+      
+      // Calcular posición para los puntos y número de página
+      const nameWidth = doc.getTextWidth(displayName);
+      const pageNumText = `Página ${pageNumber}`;
+      const pageNumWidth = doc.getTextWidth(pageNumText);
+      const dotsWidth = pageWidth - 40 - nameWidth - pageNumWidth - 10; // Margen y espacios
+      const dotsCount = Math.floor(dotsWidth / doc.getTextWidth('.'));
+      const dots = '.'.repeat(Math.max(3, dotsCount));
+      
+      // Escribir la línea del índice
+      doc.text(displayName, 20, yPosition);
+      doc.text(dots, 20 + nameWidth + 5, yPosition);
+      doc.text(pageNumText, pageWidth - 20 - pageNumWidth, yPosition);
+      
+      yPosition += 8;
+      
+      // Si se acaba el espacio, continuar en la siguiente página
+      if (yPosition > doc.internal.pageSize.getHeight() - 40) {
+        doc.addPage();
+        yPosition = 20;
+      }
+    });
   }
 
   // Exportar a Word

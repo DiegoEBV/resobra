@@ -15,6 +15,7 @@ import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { ItemsService } from '../../services/items.service';
 import { CreateItemDialogComponent } from './create-item-dialog.component';
+import { ImportEstructuraDialogComponent } from '../../components/import-estructura-dialog/import-estructura-dialog.component';
 import { Item, Specialty } from '../../models/interfaces';
 
 @Component({
@@ -180,6 +181,20 @@ export class AdminItemsComponent implements OnInit {
         }
       });
    }
+
+  openImportEstructuraDialog(): void {
+    const dialogRef = this.dialog.open(ImportEstructuraDialogComponent, {
+      width: '600px',
+      disableClose: true
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result && result.success) {
+        this.loadItems();
+        this.showMessage(`Se importaron ${result.importedCount} partidas de estructura exitosamente`, 'success');
+      }
+    });
+  }
 
   startEdit(item: Item): void {
     this.editingItem = item;

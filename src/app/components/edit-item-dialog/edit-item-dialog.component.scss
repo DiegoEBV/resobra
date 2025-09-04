@@ -96,13 +96,14 @@ mat-dialog-actions button {
   transition: all 0.2s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   
+  
   &.mat-primary {
-    background: linear-gradient(135deg, var(--primary-teal) 0%, #1f7a7b 100%);
+    background: linear-gradient(135deg, #1f7a7b 100%);
     color: white;
     border: none;
     
     &:hover {
-      background: linear-gradient(135deg, #1f7a7b 0%, var(--primary-teal) 100%);
+      background: linear-gradient(135deg, #1f7a7b 0%);
       box-shadow: 0 4px 16px rgba(45, 149, 150, 0.3);
     }
     
