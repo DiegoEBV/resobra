@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1757015363938,
+  "timestamp": 1757018176212,
   "index": "/resobra/index.html",
   "assetGroups": [
     {
@@ -85,7 +85,7 @@
     "/resobra/chunk-SW6XZSZV.js": "2cdfa36114f742769b3153e6a8c1b9b3cb4a9909",
     "/resobra/chunk-X5YLR3NI.js": "57e1ca8dfddc6905958dc157e5f8bac6fb329f8f",
     "/resobra/favicon.ico": "9c39f434fe1261f68c5e3eefdf734630d99c5670",
-    "/resobra/index.html": "17aef08d04f130ecb26694a81a8bc3e1031ee2bf",
+    "/resobra/index.html": "12d35bf313cff8fbf80928fac890b11255e6dbe5",
     "/resobra/main-45V6H264.js": "d0d473dd021b93dd46908479edaaa6ad1108f0b0",
     "/resobra/manifest.webmanifest": "ce8934d03af568a58a47626712652dc2a9dc404d",
     "/resobra/polyfills-B6TNHZQ6.js": "bf76ac291d7f51c1139b7edcf86b359a30c08c64",
