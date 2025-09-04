@@ -84,6 +84,7 @@
           mat-icon-button 
           (click)="toggleFavorites()"
           matTooltip="{{ showFavorites ? 'Ocultar' : 'Mostrar' }} favoritos"
+          [attr.aria-label]="showFavorites ? 'Ocultar' : 'Mostrar' + ' favoritos'"
           class="text-yellow-600 hover:text-yellow-700"
         >
           <mat-icon>{{ showFavorites ? 'expand_less' : 'expand_more' }}</mat-icon>
@@ -227,7 +228,7 @@
 
     <!-- Spinner de carga -->
     <div class="loading-section" *ngIf="isLoading">
-      <mat-spinner diameter="40"></mat-spinner>
+      <mat-spinner diameter="40" aria-label="Buscando partidas"></mat-spinner>
       <p>Buscando partidas...</p>
     </div>
 
@@ -374,6 +375,7 @@
                   mat-icon-button 
                   (click)="editSelectedItem(i)"
                   matTooltip="Editar partida"
+                  aria-label="Editar partida"
                   class="text-bitepoint-teal hover:text-bitepoint-teal-dark hover:bg-bitepoint-teal-50 transition-colors duration-200"
                 >
                   <mat-icon>edit</mat-icon>
@@ -382,6 +384,7 @@
                   mat-icon-button 
                   (click)="removeSelectedItem(i)"
                   matTooltip="Eliminar partida"
+                  aria-label="Eliminar partida"
                   class="text-red-600 hover:text-red-800 hover:bg-red-50 transition-colors duration-200"
                 >
                   <mat-icon>delete</mat-icon>

@@ -29,12 +29,12 @@
 
     <!-- Estado de importación -->
     <div *ngIf="importing" class="text-center py-8">
-      <mat-spinner class="mx-auto mb-4"></mat-spinner>
+      <mat-spinner class="mx-auto mb-4" aria-label="Importando partidas de estructura"></mat-spinner>
       <h3 class="text-lg font-medium text-gray-800 mb-2">Importando partidas...</h3>
       <p class="text-gray-600 mb-4">{{currentMessage}}</p>
       
       <!-- Barra de progreso -->
-      <div class="w-full bg-gray-200 rounded-full h-2 mb-4">
+      <div class="w-full bg-gray-200 rounded-full h-2 mb-4" role="progressbar" [attr.aria-valuenow]="progress" aria-valuemin="0" aria-valuemax="100" [attr.aria-label]="'Progreso de importación: ' + progress + '%'">
         <div class="bg-bitepoint-teal h-2 rounded-full transition-all duration-300" 
              [style.width.%]="progress"></div>
       </div>

@@ -6,9 +6,14 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#1976d2">
+  <!-- Firefox compatibility for theme-color -->
+  <meta name="theme-color" content="#1976d2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1976d2" media="(prefers-color-scheme: dark)">
+  <!-- Safari compatibility for theme-color -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="msapplication-navbutton-color" content="#1976d2">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="ResObra">
   <meta name="description" content="Sistema de Informes de Obra - Gestión integral de proyectos de construcción">
   <meta name="application-name" content="ResObra">

@@ -73,7 +73,8 @@
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "outputHashing": "media"
             },
             "github-pages": {
               "baseHref": "/resobra/",

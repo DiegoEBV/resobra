@@ -11,11 +11,12 @@
           type="button" 
           class="btn-back"
           (click)="goBack()"
-          [disabled]="isProcessing">
+          [disabled]="isProcessing"
+          aria-label="Volver al paso anterior">
           <i class="icon-arrow-left"></i>
           Atrás
         </button>
-        <button type="button" class="btn-close" (click)="onClose()">
+        <button type="button" class="btn-close" (click)="onClose()" aria-label="Cerrar diálogo">
           <i class="icon-x"></i>
         </button>
       </div>

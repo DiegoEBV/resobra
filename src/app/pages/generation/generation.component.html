@@ -193,7 +193,7 @@
   <!-- Loading Spinner -->
   <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" *ngIf="isGenerating || isExporting">
     <div class="bg-white p-8 rounded-2xl shadow-2xl text-center">
-      <mat-spinner diameter="50" class="mx-auto mb-4"></mat-spinner>
+      <mat-spinner diameter="50" class="mx-auto mb-4" [attr.aria-label]="isGenerating ? 'Guardando informe' : 'Exportando documento'"></mat-spinner>
       <p class="text-lg font-semibold text-gray-700">{{ isGenerating ? 'Guardando informe...' : 'Exportando documento...' }}</p>
     </div>
   </div>

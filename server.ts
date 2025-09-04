@@ -19,9 +19,33 @@ export function app(): express.Express {
 
   // Example Express Rest API endpoints
   // server.get('/api/**', (req, res) => { });
+  // Security headers middleware
+  server.use((req, res, next) => {
+    // Modern security headers
+    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self';");
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    
+    // Cache control headers
+    if (req.url.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    } else {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
+    
+    next();
+  });
+
   // Serve static files from /browser
   server.get('*.*', express.static(browserDistFolder, {
-    maxAge: '1y'
+    maxAge: '1y',
+    setHeaders: (res, path) => {
+      // Additional cache busting for static assets
+      if (path.match(/\.(js|css)$/)) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      }
+    }
   }));
 
   // All regular routes use the Angular engine
