@@ -1,0 +1,68 @@
+/* Estilos personalizados para el componente de página no encontrada */
+
+.mat-mdc-card {
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.mat-mdc-raised-button {
+  border-radius: 8px;
+  height: 48px;
+}
+
+.mat-mdc-button {
+  border-radius: 8px;
+  height: 44px;
+}
+
+.mat-mdc-outlined-button {
+  border-radius: 8px;
+  height: 44px;
+  text-align: left;
+}
+
+/* Código de URL */
+code {
+  font-family: 'Courier New', monospace;
+  word-break: break-all;
+}
+
+/* Animaciones */
+.mat-mdc-card {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hover effects */
+.mat-mdc-raised-button:hover,
+.mat-mdc-outlined-button:hover {
+  transform: translateY(-1px);
+  transition: transform 0.2s ease-in-out;
+}
+
+/* Estilos para botones de sugerencias */
+.mat-mdc-outlined-button {
+  justify-content: flex-start;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .mat-mdc-card {
+    padding: 1rem;
+    margin: 1rem;
+  }
+  
+  code {
+    font-size: 0.75rem;
+  }
+}

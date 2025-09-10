@@ -99,12 +99,16 @@ export class OfflineSyncService {
   }
   
   private startPeriodicSync(): void {
-    // Sincronizar cada 5 minutos si hay conexión
-    setInterval(() => {
-      if (navigator.onLine) {
-        this.syncPendingOperations();
-      }
-    }, 5 * 60 * 1000);
+    // DESHABILITADO: Timer de sincronización automática para resolver NavigatorLockAcquireTimeoutError
+    console.log('Sincronización automática deshabilitada para resolver problemas de concurrencia con NavigatorLockManager');
+    console.log('Use syncPendingOperations() manualmente cuando sea necesario');
+    
+    // DESHABILITADO: Sincronizar cada 5 minutos si hay conexión
+    // setInterval(() => {
+    //   if (navigator.onLine) {
+    //     this.syncPendingOperations();
+    //   }
+    // }, 5 * 60 * 1000);
   }
   
   private getReportsService(): ReportsService {

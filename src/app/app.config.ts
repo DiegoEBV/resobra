@@ -6,13 +6,16 @@ import { routes } from './app.routes';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { provideServiceWorker } from '@angular/service-worker';
+import { provideNativeDateAdapter } from '@angular/material/core';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes), 
     // provideClientHydration(withNoHttpTransferCache()), // Temporalmente deshabilitado para resolver NG0505
     provideAnimationsAsync(),
-    provideHttpClient(withFetch()), provideServiceWorker('ngsw-worker.js', {
+    provideHttpClient(withFetch()),
+    provideNativeDateAdapter(), // Proveedor para el DateAdapter
+    provideServiceWorker('ngsw-worker.js', {
             enabled: !isDevMode(),
             registrationStrategy: 'registerWhenStable:30000'
           })

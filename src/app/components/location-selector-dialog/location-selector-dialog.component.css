@@ -1,0 +1,206 @@
+.location-selector-dialog {
+  width: 100%;
+  max-width: 600px;
+}
+
+.location-form {
+  margin-bottom: 24px;
+}
+
+.coordinates-section {
+  margin-bottom: 24px;
+}
+
+.coordinates-section h3 {
+  margin: 0 0 16px 0;
+  color: #333;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.coordinates-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.coordinate-field {
+  width: 100%;
+}
+
+.location-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.map-section {
+  margin-bottom: 24px;
+}
+
+.map-section h3 {
+  margin: 0 0 16px 0;
+  color: #333;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.map-container {
+  position: relative;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.map {
+  width: 100%;
+  height: 300px;
+  background: #f5f5f5;
+}
+
+.map-instructions {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 8px 12px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: #666;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.map-instructions mat-icon {
+  font-size: 18px;
+  color: #1976d2;
+}
+
+.selected-location {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: #e8f5e8;
+  border: 1px solid #4caf50;
+  border-radius: 8px;
+  margin-top: 16px;
+}
+
+.selected-location mat-icon {
+  color: #4caf50;
+  margin-top: 2px;
+}
+
+.location-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.location-info strong {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.location-info span {
+  color: #333;
+  font-family: 'Courier New', monospace;
+}
+
+.location-info .address {
+  color: #666;
+  font-family: inherit;
+  font-style: italic;
+}
+
+h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: #333;
+}
+
+h2 mat-icon {
+  color: #1976d2;
+}
+
+/* Leaflet map styles override */
+:host ::ng-deep .leaflet-container {
+  font-family: inherit;
+}
+
+:host ::ng-deep .leaflet-popup-content-wrapper {
+  border-radius: 8px;
+}
+
+:host ::ng-deep .leaflet-popup-content {
+  margin: 12px 16px;
+  font-size: 0.9rem;
+}
+
+:host ::ng-deep .leaflet-control-zoom {
+  border: none;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+:host ::ng-deep .leaflet-control-zoom a {
+  border-radius: 6px;
+  border: none;
+  background: white;
+  color: #333;
+  font-weight: bold;
+}
+
+:host ::ng-deep .leaflet-control-zoom a:hover {
+  background: #f5f5f5;
+}
+
+/* Responsive design */
+@media (max-width: 600px) {
+  .coordinates-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .location-actions {
+    flex-direction: column;
+  }
+  
+  .location-actions button {
+    width: 100%;
+  }
+  
+  .map {
+    height: 250px;
+  }
+  
+  .map-instructions {
+    position: static;
+    margin-bottom: 8px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .location-selector-dialog {
+    max-width: 100%;
+  }
+  
+  .selected-location {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .location-info {
+    width: 100%;
+  }
+}

@@ -338,19 +338,24 @@ export class ProductivityService {
 
   // Inicializar backup automático (método interno)
   private initializeAutoBackupInternal(): void {
+    // DESHABILITADO: Timer de backup automático para resolver NavigatorLockAcquireTimeoutError
+    console.log('Backup automático deshabilitado para resolver problemas de concurrencia con NavigatorLockManager');
+    console.log('Use performBackup() manualmente cuando sea necesario');
+    
     // Verificar si es necesario hacer backup (cada 24 horas)
     const lastBackup = localStorage.getItem(this.STORAGE_KEYS.LAST_BACKUP);
     const now = new Date().getTime();
     const oneDayMs = 24 * 60 * 60 * 1000;
 
     if (!lastBackup || (now - parseInt(lastBackup)) > oneDayMs) {
+      // Solo hacer backup inicial, sin timer
       this.performAutoBackup();
     }
 
-    // Programar próximo backup
-    setInterval(() => {
-      this.performAutoBackup();
-    }, oneDayMs);
+    // DESHABILITADO: Programar próximo backup
+    // setInterval(() => {
+    //   this.performAutoBackup();
+    // }, oneDayMs);
   }
 
   // Realizar backup automático

@@ -1,56 +1,105 @@
 <div class="app-container">
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <div class="sidebar-header">
-      <div class="logo">
-        <mat-icon class="logo-icon">business</mat-icon>
-        <span class="logo-text">{{ title }}</span>
+  <!-- Authenticated Layout -->
+  <div *ngIf="isAuthenticated" class="authenticated-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <mat-icon class="logo-icon">construction</mat-icon>
+          <span class="logo-text">SGR Carreteras</span>
+        </div>
       </div>
+      
+      <nav class="sidebar-nav">
+        <a routerLink="/dashboard" class="nav-item" routerLinkActive="active">
+          <div class="nav-link">
+            <mat-icon>dashboard</mat-icon>
+            <span>Dashboard</span>
+          </div>
+        </a>
+        <a routerLink="/actividades" class="nav-item" routerLinkActive="active">
+          <div class="nav-link">
+            <mat-icon>assignment</mat-icon>
+            <span>Actividades</span>
+          </div>
+        </a>
+        <a routerLink="/mapa" class="nav-item" routerLinkActive="active">
+          <div class="nav-link">
+            <mat-icon>map</mat-icon>
+            <span>Mapa</span>
+          </div>
+        </a>
+        <a routerLink="/evaluaciones" class="nav-item" routerLinkActive="active">
+          <div class="nav-link">
+            <mat-icon>assessment</mat-icon>
+            <span>Evaluaciones</span>
+          </div>
+        </a>
+        <a routerLink="/kpis" class="nav-item" routerLinkActive="active">
+          <div class="nav-link">
+            <mat-icon>analytics</mat-icon>
+            <span>KPIs</span>
+          </div>
+        </a>
+        <a routerLink="/reportes" class="nav-item" routerLinkActive="active">
+          <div class="nav-link">
+            <mat-icon>description</mat-icon>
+            <span>Reportes</span>
+          </div>
+        </a>
+        <a routerLink="/main" class="nav-item" routerLinkActive="active" *ngIf="currentProfile?.rol === 'residente'">
+          <div class="nav-link">
+            <mat-icon>build</mat-icon>
+            <span>Crear Reportes</span>
+          </div>
+        </a>
+
+        <a routerLink="/partidas" class="nav-item" routerLinkActive="active" *ngIf="currentProfile?.rol === 'residente'">
+          <div class="nav-link">
+            <mat-icon>inventory</mat-icon>
+            <span>Administración de Partidas</span>
+          </div>
+        </a>
+        <a routerLink="/obras" class="nav-item" routerLinkActive="active" *ngIf="currentProfile?.rol === 'residente'">
+          <div class="nav-link">
+            <mat-icon>business</mat-icon>
+            <span>Obras</span>
+          </div>
+        </a>
+
+        <a routerLink="/perfil" class="nav-item" routerLinkActive="active">
+          <div class="nav-link">
+            <mat-icon>person</mat-icon>
+            <span>Perfil</span>
+          </div>
+        </a>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <mat-icon>person</mat-icon>
+          <div class="user-details">
+            <span class="user-name">{{ currentProfile?.nombre || currentUser?.nombre || 'Usuario' }}</span>
+            <span class="user-role">{{ currentProfile?.rol || 'Sin rol' }}</span>
+          </div>
+        </div>
+        <button mat-icon-button (click)="logout()" class="logout-btn" matTooltip="Cerrar sesión">
+          <mat-icon>logout</mat-icon>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+      <!-- Page Content -->
+      <main class="page-content">
+        <router-outlet></router-outlet>
+      </main>
     </div>
-    
-    <nav class="sidebar-nav">
-      <a routerLink="/" class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
-        <div class="nav-link">
-          <mat-icon>dashboard</mat-icon>
-          <span>Crear Reportes</span>
-        </div>
-      </a>
-      <a routerLink="/admin-projects" class="nav-item" routerLinkActive="active">
-        <div class="nav-link">
-          <mat-icon>business</mat-icon>
-          <span>Obras</span>
-        </div>
-      </a>
-      <a routerLink="/admin-items" class="nav-item" routerLinkActive="active">
-        <div class="nav-link">
-          <mat-icon>settings</mat-icon>
-          <span>Partidas</span>
-        </div>
-      </a>
-    </nav>
-    
-    
-  </aside>
-
-  <!-- Main Content Area -->
-  <div class="main-content">
-    <!-- Header -->
-    <header class="main-header">
-      <div class="header-content">
-        <div class="header-left">
-          <h1 class="page-title">¡Hola! Tenemos muchos proyectos 👋</h1>
-          <p class="page-subtitle">{{ getCurrentDate() }}</p>
-        </div>
-        
-      </div>
-    </header>
-
-    <!-- Page Content -->
-    <main class="page-content">
-      <router-outlet></router-outlet>
-    </main>
   </div>
-  
-  <!-- Connection Status Indicator -->
-  <app-connection-status></app-connection-status>
+
+  <!-- Unauthenticated Layout -->
+  <div *ngIf="!isAuthenticated" class="unauthenticated-layout">
+    <router-outlet></router-outlet>
+  </div>
 </div>

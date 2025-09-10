@@ -1,34 +1,47 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, RouterModule } from '@angular/router';
-import { MatToolbarModule } from '@angular/material/toolbar';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { ConnectionStatusComponent } from './components/connection-status/connection-status.component';
-import { OfflineSyncService } from './services/offline-sync.service';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { AuthService } from './services/auth.service';
 
 @Component({
-    selector: 'app-root',
-    imports: [
-        CommonModule,
-        RouterOutlet,
-        RouterModule,
-        MatToolbarModule,
-        MatIconModule,
-        MatButtonModule,
-        ConnectionStatusComponent
-    ],
-    templateUrl: './app.component.html',
-    styleUrl: './app.component.scss'
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css'],
+  standalone: true,
+  imports: [
+    CommonModule,
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    MatIconModule,
+    MatButtonModule,
+    MatTooltipModule
+  ]
 })
 export class AppComponent implements OnInit {
-  title = 'Sistema de Informes de Obra';
+  title = 'Sistema de Gestión de Rendimiento en Construcción de Carreteras';
+  isAuthenticated = false;
+  currentUser: any = null;
+  currentProfile: any = null;
 
-  constructor(private offlineSync: OfflineSyncService) {}
+  constructor(private authService: AuthService, private router: Router) {}
 
   ngOnInit() {
-    // OfflineSyncService se inicializa automáticamente en el constructor
-    console.log('App initialized with offline sync support');
+    // Verificar estado de autenticación al inicializar la app
+    this.authService.currentUser$.subscribe((user: any) => {
+      this.isAuthenticated = !!user;
+      this.currentUser = user;
+    });
+
+    // Suscribirse al perfil del usuario para obtener el rol
+    this.authService.currentProfile$.subscribe((profile: any) => {
+      this.currentProfile = profile;
+    });
+    
+    console.log('Sistema de Gestión de Rendimiento inicializado');
   }
 
   getCurrentDate(): string {
@@ -40,5 +53,21 @@ export class AppComponent implements OnInit {
       day: 'numeric'
     };
     return today.toLocaleDateString('es-ES', options);
+  }
+
+  logout() {
+    this.authService.signOut().subscribe({
+      next: ({ error }) => {
+        if (error) {
+          console.error('Error al cerrar sesión:', error);
+        } else {
+          console.log('Sesión cerrada exitosamente');
+          this.router.navigate(['/login']);
+        }
+      },
+      error: (error) => {
+        console.error('Error al cerrar sesión:', error);
+      }
+    });
   }
 }

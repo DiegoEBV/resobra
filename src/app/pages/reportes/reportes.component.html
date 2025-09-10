@@ -1,0 +1,354 @@
+<div class="reportes-container">
+  <!-- Sección de carga y error -->
+  <div *ngIf="cargando" class="cargando-container">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Cargando reportes...</p>
+  </div>
+
+  <div *ngIf="error" class="error-container">
+    <mat-icon color="warn">error</mat-icon>
+    <p>{{ error }}</p>
+  </div>
+  
+  <!-- Generador de reportes rápidos -->
+  <mat-card class="generator-card">
+    <mat-card-header>
+      <mat-card-title>Generador de Reportes</mat-card-title>
+      <mat-card-subtitle>Selecciona el tipo de reporte que deseas generar</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <app-report-generator (generarReporte)="exportarPDF($event)"></app-report-generator>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Filtros -->
+  <mat-card class="filtros-card">
+    <mat-card-header>
+      <mat-card-title>Filtros</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="filtros-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo de Reporte</mat-label>
+          <mat-select [(ngModel)]="filtros.tipo_reporte">
+            <mat-option value="rendimiento">Rendimiento</mat-option>
+            <mat-option value="personal">Personal</mat-option>
+            <mat-option value="actividades">Actividades</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha Inicio</mat-label>
+          <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="filtros.fecha_inicio">
+          <mat-datepicker-toggle matSuffix [for]="pickerInicio"></mat-datepicker-toggle>
+          <mat-datepicker #pickerInicio></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha Fin</mat-label>
+          <input matInput [matDatepicker]="pickerFin" [(ngModel)]="filtros.fecha_fin">
+          <mat-datepicker-toggle matSuffix [for]="pickerFin"></mat-datepicker-toggle>
+          <mat-datepicker #pickerFin></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Obra</mat-label>
+          <mat-select [(ngModel)]="filtros.obra_id">
+            <mat-option [value]="null">Todas</mat-option>
+            <mat-option *ngFor="let obra of obras" [value]="obra.id">{{ obra.nombre }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Frente</mat-label>
+          <mat-select [(ngModel)]="filtros.frente_id">
+            <mat-option [value]="null">Todos</mat-option>
+            <mat-option *ngFor="let frente of frentes" [value]="frente.id">{{ frente.nombre }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Empleado</mat-label>
+          <mat-select [(ngModel)]="filtros.empleado_id">
+            <mat-option [value]="null">Todos</mat-option>
+            <mat-option *ngFor="let empleado of empleados" [value]="empleado.id">{{ empleado.nombre }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </mat-card-content>
+    <mat-card-actions align="end">
+      <button mat-button color="warn" (click)="limpiarFiltros()">Limpiar</button>
+      <button mat-raised-button color="primary" (click)="aplicarFiltros()">Aplicar Filtros</button>
+    </mat-card-actions>
+  </mat-card>
+
+  <!-- KPIs Principales -->
+  <mat-card class="kpis-card" *ngIf="reporteKPIs">
+    <mat-card-header>
+      <mat-card-title>KPIs Principales</mat-card-title>
+      <div class="periodo-selector">
+        <button mat-button *ngFor="let periodo of periodos" 
+                [class.active]="periodoSeleccionado === periodo.valor"
+                (click)="cambiarPeriodoKPI(periodo.valor)">
+          {{ periodo.texto }}
+        </button>
+      </div>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="kpis-grid">
+        <div class="kpi-item">
+          <div class="kpi-value">{{ reporteKPIs.obras_activas }}</div>
+          <div class="kpi-label">Obras Activas</div>
+        </div>
+        <div class="kpi-item">
+          <div class="kpi-value">{{ reporteKPIs.actividades_completadas }}</div>
+          <div class="kpi-label">Actividades Completadas</div>
+        </div>
+        <div class="kpi-item">
+          <div class="kpi-value">{{ formatearPorcentaje(reporteKPIs.rendimiento_promedio) }}</div>
+          <div class="kpi-label">Rendimiento Promedio</div>
+          <div class="kpi-trend" [style.color]="obtenerColorTendencia(reporteKPIs.tendencia_rendimiento)">
+            <mat-icon>{{ obtenerIconoTendencia(reporteKPIs.tendencia_rendimiento) }}</mat-icon>
+          </div>
+        </div>
+        <div class="kpi-item">
+          <div class="kpi-value">{{ formatearPorcentaje(reporteKPIs.cumplimiento_cronograma) }}</div>
+          <div class="kpi-label">Cumplimiento de Cronograma</div>
+          <div class="kpi-trend" [style.color]="obtenerColorTendencia(reporteKPIs.tendencia_cumplimiento)">
+            <mat-icon>{{ obtenerIconoTendencia(reporteKPIs.tendencia_cumplimiento) }}</mat-icon>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Reportes Tabs -->
+  <mat-card class="reportes-tabs-card">
+    <mat-card-header>
+      <mat-card-title>Reportes Detallados</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <mat-tab-group dynamicHeight>
+        <!-- Tab Rendimiento -->
+        <mat-tab label="Rendimiento">
+          <div class="tab-content">
+            <div class="tab-actions">
+              <button mat-raised-button color="primary" (click)="exportarPDF('rendimiento')">
+                <mat-icon>picture_as_pdf</mat-icon> Exportar PDF
+              </button>
+            </div>
+            
+            <table mat-table [dataSource]="dataSourceRendimiento" matSort #sortRendimiento="matSort" class="mat-elevation-z2">
+              <!-- Columna Obra -->
+              <ng-container matColumnDef="obra">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Obra </th>
+                <td mat-cell *matCellDef="let elemento"> {{elemento.obra}} </td>
+              </ng-container>
+
+              <!-- Columna Frente -->
+              <ng-container matColumnDef="frente">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Frente </th>
+                <td mat-cell *matCellDef="let elemento"> {{elemento.frente}} </td>
+              </ng-container>
+
+              <!-- Columna Actividades Completadas -->
+              <ng-container matColumnDef="actividades_completadas">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Completadas </th>
+                <td mat-cell *matCellDef="let elemento"> {{elemento.actividades_completadas}} </td>
+              </ng-container>
+
+              <!-- Columna Actividades Pendientes -->
+              <ng-container matColumnDef="actividades_pendientes">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Pendientes </th>
+                <td mat-cell *matCellDef="let elemento"> {{elemento.actividades_pendientes}} </td>
+              </ng-container>
+
+              <!-- Columna Progreso Promedio -->
+              <ng-container matColumnDef="progreso_promedio">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Progreso </th>
+                <td mat-cell *matCellDef="let elemento"> 
+                  <div class="progreso-container">
+                    <div class="progreso-barra" 
+                         [style.width.%]="elemento.progreso_promedio"
+                         [style.background-color]="obtenerColorProgreso(elemento.progreso_promedio)">
+                    </div>
+                    <span>{{formatearPorcentaje(elemento.progreso_promedio)}}</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Columna Rendimiento Diario -->
+              <ng-container matColumnDef="rendimiento_diario">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Rendimiento Diario </th>
+                <td mat-cell *matCellDef="let elemento"> 
+                  {{formatearPorcentaje(elemento.rendimiento_diario)}}
+                  <mat-icon [style.color]="obtenerColorTendencia(elemento.tendencia)">
+                    {{obtenerIconoTendencia(elemento.tendencia)}}
+                  </mat-icon>
+                </td>
+              </ng-container>
+
+              <!-- Columna Acciones -->
+              <ng-container matColumnDef="acciones">
+                <th mat-header-cell *matHeaderCellDef> Acciones </th>
+                <td mat-cell *matCellDef="let elemento"> 
+                  <button mat-icon-button color="primary" [routerLink]="['/obras', elemento.obra_id]">
+                    <mat-icon>visibility</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="columnasRendimiento"></tr>
+              <tr mat-row *matRowDef="let row; columns: columnasRendimiento;"></tr>
+            </table>
+
+            <mat-paginator #paginatorRendimiento [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+          </div>
+        </mat-tab>
+
+        <!-- Tab Personal -->
+        <mat-tab label="Personal">
+          <div class="tab-content">
+            <div class="tab-actions">
+              <button mat-raised-button color="primary" (click)="exportarPDF('personal')">
+                <mat-icon>picture_as_pdf</mat-icon> Exportar PDF
+              </button>
+            </div>
+            
+            <table mat-table [dataSource]="dataSourcePersonal" matSort #sortPersonal="matSort" class="mat-elevation-z2">
+              <!-- Columna Empleado -->
+              <ng-container matColumnDef="empleado">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Empleado </th>
+                <td mat-cell *matCellDef="let elemento"> {{elemento.empleado}} </td>
+              </ng-container>
+
+              <!-- Columna Rol -->
+              <ng-container matColumnDef="rol">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Rol </th>
+                <td mat-cell *matCellDef="let elemento"> {{elemento.rol}} </td>
+              </ng-container>
+
+              <!-- Columna Evaluaciones Completadas -->
+              <ng-container matColumnDef="evaluaciones_completadas">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Evaluaciones </th>
+                <td mat-cell *matCellDef="let elemento"> {{elemento.evaluaciones_completadas}} </td>
+              </ng-container>
+
+              <!-- Columna Puntuación Promedio -->
+              <ng-container matColumnDef="puntuacion_promedio">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Puntuación </th>
+                <td mat-cell *matCellDef="let elemento"> 
+                  <div class="puntuacion-container">
+                    <div class="puntuacion-estrellas">
+                      <mat-icon *ngFor="let i of [1,2,3,4,5]" 
+                                [class.filled]="i <= elemento.puntuacion_promedio"
+                                [class.half-filled]="i - 0.5 === elemento.puntuacion_promedio">
+                        star
+                      </mat-icon>
+                    </div>
+                    <span>{{elemento.puntuacion_promedio | number:'1.1-1'}}</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Columna Última Evaluación -->
+              <ng-container matColumnDef="ultima_evaluacion">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Última Evaluación </th>
+                <td mat-cell *matCellDef="let elemento"> {{elemento.ultima_evaluacion | date:'dd/MM/yyyy'}} </td>
+              </ng-container>
+
+              <!-- Columna Acciones -->
+              <ng-container matColumnDef="acciones">
+                <th mat-header-cell *matHeaderCellDef> Acciones </th>
+                <td mat-cell *matCellDef="let elemento"> 
+                  <button mat-icon-button color="primary" [routerLink]="['/personal', elemento.empleado_id]">
+                    <mat-icon>visibility</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="columnasPersonal"></tr>
+              <tr mat-row *matRowDef="let row; columns: columnasPersonal;"></tr>
+            </table>
+
+            <mat-paginator #paginatorPersonal [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+          </div>
+        </mat-tab>
+
+        <!-- Tab Actividades -->
+        <mat-tab label="Actividades">
+          <div class="tab-content">
+            <div class="tab-actions">
+              <button mat-raised-button color="primary" (click)="exportarPDF('actividades')">
+                <mat-icon>picture_as_pdf</mat-icon> Exportar PDF
+              </button>
+            </div>
+            
+            <table mat-table [dataSource]="dataSourceActividades" matSort #sortActividades="matSort" class="mat-elevation-z2">
+              <!-- Columna Fecha -->
+              <ng-container matColumnDef="fecha">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Fecha </th>
+                <td mat-cell *matCellDef="let elemento"> {{elemento.fecha | date:'dd/MM/yyyy'}} </td>
+              </ng-container>
+
+              <!-- Columna Obra -->
+              <ng-container matColumnDef="obra">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Obra </th>
+                <td mat-cell *matCellDef="let elemento"> {{elemento.obra}} </td>
+              </ng-container>
+
+              <!-- Columna Actividad -->
+              <ng-container matColumnDef="actividad">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Actividad </th>
+                <td mat-cell *matCellDef="let elemento"> {{elemento.actividad}} </td>
+              </ng-container>
+
+              <!-- Columna Estado -->
+              <ng-container matColumnDef="estado">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Estado </th>
+                <td mat-cell *matCellDef="let elemento"> 
+                  <span class="estado-badge" [class]="elemento.estado.toLowerCase()">{{elemento.estado}}</span>
+                </td>
+              </ng-container>
+
+              <!-- Columna Progreso -->
+              <ng-container matColumnDef="progreso">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Progreso </th>
+                <td mat-cell *matCellDef="let elemento"> 
+                  <div class="progreso-container">
+                    <div class="progreso-barra" 
+                         [style.width.%]="elemento.progreso"
+                         [style.background-color]="obtenerColorProgreso(elemento.progreso)">
+                    </div>
+                    <span>{{formatearPorcentaje(elemento.progreso)}}</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Columna Responsable -->
+              <ng-container matColumnDef="responsable">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Responsable </th>
+                <td mat-cell *matCellDef="let elemento"> {{elemento.responsable}} </td>
+              </ng-container>
+
+              <!-- Columna Acciones -->
+              <ng-container matColumnDef="acciones">
+                <th mat-header-cell *matHeaderCellDef> Acciones </th>
+                <td mat-cell *matCellDef="let elemento"> 
+                  <button mat-icon-button color="primary" [routerLink]="['/actividades', elemento.actividad_id]">
+                    <mat-icon>visibility</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="columnasActividades"></tr>
+              <tr mat-row *matRowDef="let row; columns: columnasActividades;"></tr>
+            </table>
+
+            <mat-paginator #paginatorActividades [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-card-content>
+  </mat-card>
+</div>

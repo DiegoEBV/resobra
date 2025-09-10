@@ -1,0 +1,306 @@
+<div class="dashboard-kilometrico-container">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div class="header-title">
+      <h2>
+        <mat-icon>straighten</mat-icon>
+        Dashboard Kilométrico
+      </h2>
+      <p class="subtitle">Métricas y progreso de obras viales por kilómetro</p>
+    </div>
+    
+    <div class="header-actions">
+      <!-- Filtro por frente -->
+      <mat-form-field appearance="outline" class="frente-filter">
+        <mat-label>Filtrar por Frente</mat-label>
+        <mat-select [(value)]="frenteSeleccionado" (selectionChange)="onFrenteChange()">
+          <mat-option value="todos">Todos los Frentes</mat-option>
+          <mat-option *ngFor="let frente of frentes" [value]="frente.id">
+            {{ frente.nombre }}
+          </mat-option>
+        </mat-select>
+        <mat-icon matSuffix>filter_list</mat-icon>
+      </mat-form-field>
+      
+      <button mat-icon-button 
+              (click)="refreshData()" 
+              matTooltip="Actualizar datos"
+              [disabled]="isLoading">
+        <mat-icon [class.spinning]="isLoading">refresh</mat-icon>
+      </button>
+      
+      <button mat-raised-button 
+              color="primary" 
+              (click)="exportData()"
+              [disabled]="isLoading">
+        <mat-icon>download</mat-icon>
+        Exportar
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    <p>Cargando métricas kilométricas...</p>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!isLoading" class="dashboard-content">
+    
+    <!-- Métricas principales -->
+    <div class="metrics-grid">
+      <mat-card class="metric-card primary">
+        <mat-card-content>
+          <div class="metric-icon">
+            <mat-icon>straighten</mat-icon>
+          </div>
+          <div class="metric-info">
+            <div class="metric-value">{{ metricas.totalKilometros }}</div>
+            <div class="metric-label">Total Kilómetros</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="metric-card success">
+        <mat-card-content>
+          <div class="metric-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <div class="metric-info">
+            <div class="metric-value">{{ metricas.kilometrosCompletados }}</div>
+            <div class="metric-label">Completados</div>
+            <div class="metric-percentage">{{ metricas.totalKilometros > 0 ? ((metricas.kilometrosCompletados / metricas.totalKilometros) * 100 | number:'1.0-0') : 0 }}%</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="metric-card info">
+        <mat-card-content>
+          <div class="metric-icon">
+            <mat-icon>trending_up</mat-icon>
+          </div>
+          <div class="metric-info">
+            <div class="metric-value">{{ metricas.kilometrosEnProgreso }}</div>
+            <div class="metric-label">En Progreso</div>
+            <div class="metric-percentage">{{ metricas.totalKilometros > 0 ? ((metricas.kilometrosEnProgreso / metricas.totalKilometros) * 100 | number:'1.0-0') : 0 }}%</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="metric-card warning">
+        <mat-card-content>
+          <div class="metric-icon">
+            <mat-icon>schedule</mat-icon>
+          </div>
+          <div class="metric-info">
+            <div class="metric-value">{{ metricas.kilometrosPendientes }}</div>
+            <div class="metric-label">Pendientes</div>
+            <div class="metric-percentage">{{ metricas.totalKilometros > 0 ? ((metricas.kilometrosPendientes / metricas.totalKilometros) * 100 | number:'1.0-0') : 0 }}%</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Progreso general -->
+    <mat-card class="progress-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>analytics</mat-icon>
+          Progreso General
+        </mat-card-title>
+        <mat-card-subtitle>Avance promedio de todos los kilómetros</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="progress-section">
+          <div class="progress-info">
+            <div class="progress-value">{{ metricas.progresoPromedio }}%</div>
+            <div class="progress-description">
+              {{ metricas.actividadesCompletadas }} de {{ metricas.actividadesTotales }} actividades completadas
+            </div>
+          </div>
+          <div class="progress-bar-container">
+            <mat-progress-bar 
+              [value]="metricas.progresoPromedio" 
+              [color]="getProgressColor(metricas.progresoPromedio)"
+              class="main-progress-bar">
+            </mat-progress-bar>
+          </div>
+        </div>
+        
+        <div class="additional-metrics">
+          <div class="additional-metric">
+            <mat-icon>construction</mat-icon>
+            <span class="metric-text">{{ metricas.frentesActivos }} frentes activos</span>
+          </div>
+          <div class="additional-metric" *ngIf="metricas.alertasKilometricas > 0">
+            <mat-icon class="warning-icon">warning</mat-icon>
+            <span class="metric-text warning">{{ metricas.alertasKilometricas }} kilómetros con progreso bajo</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Gráficos -->
+    <div class="charts-grid">
+      
+      <!-- Distribución por estados -->
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>pie_chart</mat-icon>
+            Distribución por Estados
+          </mat-card-title>
+          <mat-card-subtitle>Kilómetros agrupados por estado actual</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="chart-container">
+            <canvas id="estadosChart"></canvas>
+          </div>
+          <div class="chart-legend">
+            <div *ngFor="let estado of estadisticasPorEstado" class="legend-item">
+              <div class="legend-color" [style.background-color]="estado.color"></div>
+              <span class="legend-text">{{ estado.estado }}: {{ estado.cantidad }} ({{ estado.porcentaje }}%)</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Progreso por kilómetro -->
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>bar_chart</mat-icon>
+            Progreso por Kilómetro
+          </mat-card-title>
+          <mat-card-subtitle>Porcentaje de avance de cada kilómetro</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="chart-container">
+            <canvas id="progresoChart"></canvas>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Tendencia de progreso -->
+      <mat-card class="chart-card full-width">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>show_chart</mat-icon>
+            Tendencia de Progreso
+          </mat-card-title>
+          <mat-card-subtitle>Evolución del progreso promedio en los últimos 7 días</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="chart-container">
+            <canvas id="tendenciaChart"></canvas>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Tabla de progreso detallado -->
+    <mat-card class="table-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>table_chart</mat-icon>
+          Detalle por Kilómetro
+        </mat-card-title>
+        <mat-card-subtitle>Información detallada de cada kilómetro</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="table-container">
+          <div class="table-header">
+            <div class="header-cell">Kilómetro</div>
+            <div class="header-cell">Frente</div>
+            <div class="header-cell">Estado</div>
+            <div class="header-cell">Progreso</div>
+            <div class="header-cell">Actividades</div>
+            <div class="header-cell">Acciones</div>
+          </div>
+          
+          <div *ngFor="let item of progresoKilometrico" class="table-row">
+            <div class="table-cell">
+              <span class="km-number">KM {{ item.kilometro }}</span>
+            </div>
+            <div class="table-cell">
+              <span class="frente-name">{{ item.frente }}</span>
+            </div>
+            <div class="table-cell">
+              <span class="estado-badge" 
+                    [style.background-color]="getEstadoColor(item.estado)"
+                    [style.color]="'white'">
+                {{ getEstadoLabel(item.estado) }}
+              </span>
+            </div>
+            <div class="table-cell">
+              <div class="progress-cell">
+                <mat-progress-bar 
+                  [value]="item.progreso" 
+                  [color]="getProgressColor(item.progreso)"
+                  class="table-progress">
+                </mat-progress-bar>
+                <span class="progress-text">{{ item.progreso }}%</span>
+              </div>
+            </div>
+            <div class="table-cell">
+              <span class="activities-count">
+                <mat-icon>assignment</mat-icon>
+                {{ item.actividades }}
+              </span>
+            </div>
+            <div class="table-cell">
+              <button mat-icon-button 
+                      (click)="viewKilometroDetails(item.kilometro)"
+                      matTooltip="Ver detalles">
+                <mat-icon>visibility</mat-icon>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Estado vacío -->
+          <div *ngIf="progresoKilometrico.length === 0" class="empty-table">
+            <mat-icon>straighten</mat-icon>
+            <p>No hay kilómetros registrados</p>
+            <p class="empty-subtitle">Los kilómetros aparecerán aquí cuando se registren en los frentes</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Alertas y recomendaciones -->
+    <mat-card class="alerts-card" *ngIf="metricas.alertasKilometricas > 0">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon class="warning-icon">warning</mat-icon>
+          Alertas y Recomendaciones
+        </mat-card-title>
+        <mat-card-subtitle>Kilómetros que requieren atención</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="alerts-list">
+          <div *ngFor="let item of progresoKilometrico" class="alert-item" 
+               *ngIf="item.estado === 'en_progreso' && item.progreso < 30">
+            <div class="alert-icon">
+              <mat-icon>warning</mat-icon>
+            </div>
+            <div class="alert-content">
+              <div class="alert-title">Kilómetro {{ item.kilometro }} - Progreso Bajo</div>
+              <div class="alert-description">
+                Solo {{ item.progreso }}% completado con {{ item.actividades }} actividades registradas
+              </div>
+            </div>
+            <div class="alert-actions">
+              <button mat-button 
+                      color="primary" 
+                      (click)="viewKilometroDetails(item.kilometro)">
+                <mat-icon>visibility</mat-icon>
+                Ver Detalles
+              </button>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+  </div>

@@ -1,0 +1,279 @@
+<div class="mapa-container">
+  <!-- Barra de herramientas superior -->
+  <mat-card class="toolbar-card">
+    <mat-card-content>
+      <div class="toolbar-content">
+        <div class="toolbar-left">
+          <button mat-icon-button (click)="toggleSidenav()" matTooltip="Alternar panel de filtros">
+            <mat-icon>menu</mat-icon>
+          </button>
+          <h2 class="page-title">Mapa Interactivo de Frentes</h2>
+        </div>
+        <div class="toolbar-right">
+          <button mat-raised-button 
+                  [color]="showKilometricView ? 'accent' : 'basic'"
+                  (click)="toggleKilometricView()"
+                  [disabled]="loading"
+                  matTooltip="Alternar vista kilométrica">
+            <mat-icon>{{ showKilometricView ? 'route' : 'timeline' }}</mat-icon>
+            {{ showKilometricView ? 'Vista Normal' : 'Vista Kilométrica' }}
+          </button>
+          
+          <button mat-raised-button 
+                  color="primary" 
+                  (click)="startCreatingFrente()" 
+                  [disabled]="loading || isCreatingFrente"
+                  matTooltip="Crear nuevo frente">
+            <mat-icon>add_location</mat-icon>
+            {{ isCreatingFrente ? 'Selecciona ubicación...' : 'Crear Frente' }}
+          </button>
+          
+          <button mat-icon-button 
+                  [matMenuTriggerFor]="frenteMenu" 
+                  matTooltip="Opciones de frentes"
+                  [disabled]="loading">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          
+          <mat-menu #frenteMenu="matMenu">
+            <button mat-menu-item (click)="toggleDragMode()">
+              <mat-icon [color]="isDragMode ? 'accent' : ''">open_with</mat-icon>
+              <span>{{ isDragMode ? 'Desactivar' : 'Activar' }} Modo Arrastrar</span>
+            </button>
+            <button mat-menu-item (click)="refreshData()">
+              <mat-icon>refresh</mat-icon>
+              <span>Actualizar Datos</span>
+            </button>
+          </mat-menu>
+          
+          <mat-chip-set>
+            <mat-chip>{{ filteredFrente.length }} frentes</mat-chip>
+            <mat-chip *ngIf="isDragMode" color="accent" selected>
+              <mat-icon>open_with</mat-icon>
+              Modo Arrastrar
+            </mat-chip>
+          </mat-chip-set>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Contenedor principal con sidenav -->
+  <div class="main-container">
+    <mat-sidenav-container class="sidenav-container">
+      <!-- Panel lateral de filtros -->
+      <mat-sidenav #sidenav [opened]="sidenavOpened" mode="side" class="filters-sidenav">
+        <div class="sidenav-content">
+          <div class="sidenav-header">
+            <h3>Filtros y Frentes</h3>
+            <button mat-icon-button (click)="toggleSidenav()">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+
+          <!-- Filtros -->
+          <div class="filters-section">
+            <h4>Filtros</h4>
+            
+            <!-- Búsqueda -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Buscar frente</mat-label>
+              <input matInput [(ngModel)]="searchTerm" (input)="onSearchChange()" placeholder="Nombre o descripción">
+              <mat-icon matSuffix>search</mat-icon>
+            </mat-form-field>
+
+            <!-- Filtro por estado -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Estado</mat-label>
+              <mat-select [(value)]="estadoFilter" (selectionChange)="onEstadoFilterChange()">
+                <mat-option *ngFor="let estado of estadosFrente" [value]="estado.value">
+                  {{ estado.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <!-- Filtro por tipo de actividad -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Tipo de Actividad</mat-label>
+              <mat-select [(value)]="tipoFilter" (selectionChange)="onTipoFilterChange()">
+                <mat-option *ngFor="let tipo of tiposActividad" [value]="tipo.value">
+                  {{ tipo.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <!-- Lista de frentes -->
+          <div class="frentes-section">
+            <h4>Frentes ({{ filteredFrente.length }})</h4>
+            
+            <div *ngIf="loading" class="loading-container">
+              <mat-spinner diameter="40"></mat-spinner>
+              <p>Cargando frentes...</p>
+            </div>
+
+            <mat-nav-list *ngIf="!loading">
+              <mat-list-item 
+                *ngFor="let frente of filteredFrente" 
+                (click)="centerOnFrente(frente)"
+                [class.selected]="selectedFrente?.id === frente.id"
+                class="frente-item">
+                
+                <div matListItemAvatar>
+                  <mat-icon 
+                    [matBadge]="getActividadesEnProgreso(frente.id)"
+                    [matBadgeHidden]="getActividadesEnProgreso(frente.id) === 0"
+                    matBadgeColor="accent"
+                    matBadgeSize="small"
+                    [style.color]="getFrenteIconColor(frente.estado)">
+                    {{ getFrenteIcon(frente.estado) }}
+                  </mat-icon>
+                </div>
+                
+                <div matListItemTitle>{{ frente.nombre }}</div>
+                <div matListItemLine>
+                  <span class="estado-chip" [ngClass]="'estado-' + frente.estado">
+                    {{ getEstadoLabel(frente.estado) }}
+                  </span>
+                  <span class="ubicacion">Lat: {{ frente.ubicacion_lat?.toFixed(4) }}, Lng: {{ frente.ubicacion_lng?.toFixed(4) }}</span>
+                </div>
+                <div matListItemLine class="progress-info">
+                  <span>Progreso: {{ getProgresoPromedio(frente.id).toFixed(1) }}%</span>
+                  <span>{{ getActividadesByFrente(frente.id).length }} actividades</span>
+                </div>
+                
+                <button mat-icon-button matListItemMeta (click)="centerOnFrente(frente); $event.stopPropagation()">
+                  <mat-icon>my_location</mat-icon>
+                </button>
+              </mat-list-item>
+            </mat-nav-list>
+
+            <div *ngIf="!loading && filteredFrente.length === 0" class="no-results">
+              <mat-icon>location_off</mat-icon>
+              <p>No se encontraron frentes con los filtros aplicados</p>
+            </div>
+          </div>
+        </div>
+      </mat-sidenav>
+
+      <!-- Contenido principal - Mapa -->
+      <mat-sidenav-content class="map-content">
+        <div class="map-container">
+          <div id="map" class="leaflet-map"></div>
+          
+          <!-- Overlay de carga -->
+          <div *ngIf="loading" class="map-loading-overlay">
+            <mat-spinner diameter="60"></mat-spinner>
+            <p>Cargando mapa...</p>
+          </div>
+          
+          <!-- Overlay de creación de frente -->
+          <div *ngIf="isCreatingFrente" class="creating-frente-overlay">
+            <mat-card class="creating-frente-card">
+              <mat-card-content>
+                <div class="creating-frente-content">
+                  <mat-icon color="primary">add_location</mat-icon>
+                  <h3>Creando Nuevo Frente</h3>
+                  <p>Haz clic en el mapa para seleccionar la ubicación del frente</p>
+                  <button mat-raised-button color="warn" (click)="cancelFrenteCreation()">
+                    <mat-icon>cancel</mat-icon>
+                    Cancelar
+                  </button>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </div>
+
+        <!-- Panel de información del frente seleccionado -->
+        <mat-card *ngIf="selectedFrente" class="frente-info-card">
+          <mat-card-header>
+            <div mat-card-avatar>
+              <mat-icon [style.color]="getFrenteIconColor(selectedFrente.estado)">
+                {{ getFrenteIcon(selectedFrente.estado) }}
+              </mat-icon>
+            </div>
+            <mat-card-title>{{ selectedFrente.nombre }}</mat-card-title>
+            <mat-card-subtitle>
+              <span class="estado-chip" [ngClass]="'estado-' + selectedFrente.estado">
+                {{ getEstadoLabel(selectedFrente.estado) }}
+              </span>
+            </mat-card-subtitle>
+            <button mat-icon-button (click)="selectedFrente = null" class="close-button">
+              <mat-icon>close</mat-icon>
+            </button>
+          </mat-card-header>
+          
+          <mat-card-content>
+            <div class="frente-details">
+              <div class="detail-row">
+                <mat-icon>location_on</mat-icon>
+                <span>Ubicación: {{ selectedFrente.ubicacion_lat?.toFixed(6) }}, {{ selectedFrente.ubicacion_lng?.toFixed(6) }}</span>
+              </div>
+              
+              <div class="detail-row" *ngIf="selectedFrente.descripcion">
+                <mat-icon>description</mat-icon>
+                <span>{{ selectedFrente.descripcion }}</span>
+              </div>
+              
+              <div class="detail-row">
+                <mat-icon>trending_up</mat-icon>
+                <span>Progreso General: {{ getProgresoPromedio(selectedFrente.id).toFixed(1) }}%</span>
+              </div>
+            </div>
+
+            <!-- Estadísticas de actividades -->
+            <div class="actividades-stats">
+              <h4>Actividades del Frente</h4>
+              <div class="stats-grid">
+                <div class="stat-item">
+                  <span class="stat-number">{{ getActividadesByFrente(selectedFrente.id).length }}</span>
+                  <span class="stat-label">Total</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-number">{{ getActividadesEnProgreso(selectedFrente.id) }}</span>
+                  <span class="stat-label">En Progreso</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-number">{{ getActividadesCompletadas(selectedFrente.id) }}</span>
+                  <span class="stat-label">Completadas</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-number">{{ getProgresoPromedio(selectedFrente.id).toFixed(1) }}%</span>
+                  <span class="stat-label">Progreso</span>
+                </div>
+              </div>
+            </div>
+          </mat-card-content>
+          
+          <mat-card-actions>
+            <button mat-button color="primary" [routerLink]="['/actividades']" [queryParams]="{frente: selectedFrente.id}">
+              <mat-icon>list</mat-icon>
+              Ver Actividades
+            </button>
+            <button mat-button (click)="centerOnFrente(selectedFrente)">
+              <mat-icon>center_focus_strong</mat-icon>
+              Centrar en Mapa
+            </button>
+            <button mat-button 
+                    color="accent" 
+                    (click)="generateKilometrosForFrente(selectedFrente)"
+                    [disabled]="!selectedFrente.km_inicial || !selectedFrente.km_final"
+                    matTooltip="Generar kilómetros para este frente">
+              <mat-icon>timeline</mat-icon>
+              Generar Kilómetros
+            </button>
+            <button mat-button color="accent" (click)="editFrente(selectedFrente)">
+              <mat-icon>edit</mat-icon>
+              Editar Frente
+            </button>
+            <button mat-button color="warn" (click)="deleteFrente(selectedFrente)">
+              <mat-icon>delete</mat-icon>
+              Eliminar
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      </mat-sidenav-content>
+    </mat-sidenav-container>
+  </div>
+</div>

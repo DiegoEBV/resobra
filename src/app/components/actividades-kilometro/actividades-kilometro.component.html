@@ -1,0 +1,438 @@
+<div class="actividades-kilometro-container">
+  <!-- Header -->
+  <div class="header-section">
+    <div class="title-section">
+      <h3>
+        <mat-icon>assignment</mat-icon>
+        Actividades {{ kilometro ? 'del Kilómetro ' + kilometro : 'del Frente' }}
+      </h3>
+      <p class="subtitle" *ngIf="frente">
+        {{ frente.nombre }}
+        <span *ngIf="kilometro" class="km-badge">KM {{ kilometro }}</span>
+      </p>
+    </div>
+    <div class="actions-section">
+      <button mat-raised-button 
+              color="primary" 
+              (click)="showCreateForm()"
+              [disabled]="loading">
+        <mat-icon>add</mat-icon>
+        Nueva Actividad
+      </button>
+    </div>
+  </div>
+
+  <!-- Formulario de creación/edición -->
+  <mat-card *ngIf="showForm" class="form-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>{{ editingActividad ? 'edit' : 'add' }}</mat-icon>
+        {{ editingActividad ? 'Editar Actividad' : 'Nueva Actividad' }}
+      </mat-card-title>
+    </mat-card-header>
+
+    <form [formGroup]="actividadForm" (ngSubmit)="onSubmit()">
+      <mat-card-content>
+        <div class="form-row">
+          <!-- Nombre -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Nombre de la Actividad</mat-label>
+            <input matInput 
+                   formControlName="nombre" 
+                   placeholder="Ej: Excavación de cunetas">
+            <mat-icon matSuffix>label</mat-icon>
+            <mat-error *ngIf="isFieldInvalid('nombre')">
+              {{ getErrorMessage('nombre') }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <!-- Descripción -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Descripción</mat-label>
+            <textarea matInput 
+                      formControlName="descripcion" 
+                      rows="3"
+                      placeholder="Describe los detalles de la actividad..."></textarea>
+            <mat-icon matSuffix>description</mat-icon>
+            <mat-error *ngIf="isFieldInvalid('descripcion')">
+              {{ getErrorMessage('descripcion') }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row two-columns">
+          <!-- Tipo -->
+          <mat-form-field appearance="outline">
+            <mat-label>Tipo de Actividad</mat-label>
+            <mat-select formControlName="tipo">
+              <mat-option *ngFor="let tipo of tiposActividad" [value]="tipo.value">
+                {{ tipo.label }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matSuffix>category</mat-icon>
+            <mat-error *ngIf="isFieldInvalid('tipo')">
+              {{ getErrorMessage('tipo') }}
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Prioridad -->
+          <mat-form-field appearance="outline">
+            <mat-label>Prioridad</mat-label>
+            <mat-select formControlName="prioridad">
+              <mat-option *ngFor="let prioridad of prioridades" [value]="prioridad.value">
+                {{ prioridad.label }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matSuffix>priority_high</mat-icon>
+            <mat-error *ngIf="isFieldInvalid('prioridad')">
+              {{ getErrorMessage('prioridad') }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row two-columns">
+          <!-- Estado -->
+          <mat-form-field appearance="outline">
+            <mat-label>Estado</mat-label>
+            <mat-select formControlName="estado">
+              <mat-option *ngFor="let estado of estados" [value]="estado.value">
+                {{ estado.label }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matSuffix>flag</mat-icon>
+            <mat-error *ngIf="isFieldInvalid('estado')">
+              {{ getErrorMessage('estado') }}
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Responsable -->
+          <mat-form-field appearance="outline">
+            <mat-label>Responsable</mat-label>
+            <input matInput 
+                   formControlName="responsable" 
+                   placeholder="Nombre del responsable">
+            <mat-icon matSuffix>person</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row two-columns">
+          <!-- Kilómetro -->
+          <mat-form-field appearance="outline">
+            <mat-label>Kilómetro</mat-label>
+            <input matInput 
+                   type="number" 
+                   formControlName="kilometro" 
+                   min="0"
+                   step="0.1"
+                   placeholder="Ej: 2.5">
+            <mat-icon matSuffix>straighten</mat-icon>
+            <mat-error *ngIf="isFieldInvalid('kilometro')">
+              {{ getErrorMessage('kilometro') }}
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Progreso -->
+          <mat-form-field appearance="outline">
+            <mat-label>Progreso (%)</mat-label>
+            <input matInput 
+                   type="number" 
+                   formControlName="progreso_porcentaje" 
+                   min="0"
+                   max="100"
+                   placeholder="0">
+            <mat-icon matSuffix>trending_up</mat-icon>
+            <mat-error *ngIf="isFieldInvalid('progreso_porcentaje')">
+              {{ getErrorMessage('progreso_porcentaje') }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Sección de Ubicación -->
+        <div class="form-section">
+          <h4 class="section-title">
+            <mat-icon>location_on</mat-icon>
+            Ubicación de la Actividad
+          </h4>
+          
+          <div class="form-row two-columns">
+            <!-- Latitud -->
+            <mat-form-field appearance="outline" class="coordinate-field">
+              <mat-label>Latitud</mat-label>
+              <input matInput 
+                     type="number" 
+                     formControlName="ubicacion_lat" 
+                     step="0.000001"
+                     placeholder="Ej: -12.0464">
+              <mat-icon matSuffix>my_location</mat-icon>
+              <mat-error *ngIf="actividadForm.get('ubicacion_lat')?.hasError('min')">
+                La latitud debe ser mayor a -90
+              </mat-error>
+              <mat-error *ngIf="actividadForm.get('ubicacion_lat')?.hasError('max')">
+                La latitud debe ser menor a 90
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Longitud -->
+            <mat-form-field appearance="outline" class="coordinate-field">
+              <mat-label>Longitud</mat-label>
+              <input matInput 
+                     type="number" 
+                     formControlName="ubicacion_lng" 
+                     step="0.000001"
+                     placeholder="Ej: -77.0428">
+              <mat-icon matSuffix>my_location</mat-icon>
+              <mat-error *ngIf="actividadForm.get('ubicacion_lng')?.hasError('min')">
+                La longitud debe ser mayor a -180
+              </mat-error>
+              <mat-error *ngIf="actividadForm.get('ubicacion_lng')?.hasError('max')">
+                La longitud debe ser menor a 180
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <!-- Dirección -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Dirección</mat-label>
+              <input matInput 
+                     formControlName="ubicacion_direccion" 
+                     placeholder="Dirección o referencia de la ubicación">
+              <mat-icon matSuffix>place</mat-icon>
+            </mat-form-field>
+          </div>
+          
+          <!-- Mensajes de error de validación de ubicación -->
+          <div class="location-errors" *ngIf="actividadForm.hasError('incompleteLocation')">
+            <mat-error>
+              <mat-icon>error</mat-icon>
+              Debe completar tanto la latitud como la longitud, o dejar ambos campos vacíos
+            </mat-error>
+          </div>
+          
+          <div class="location-errors" *ngIf="actividadForm.hasError('invalidLatitude')">
+            <mat-error>
+              <mat-icon>error</mat-icon>
+              La latitud debe estar entre -90 y 90 grados
+            </mat-error>
+          </div>
+          
+          <div class="location-errors" *ngIf="actividadForm.hasError('invalidLongitude')">
+            <mat-error>
+              <mat-icon>error</mat-icon>
+              La longitud debe estar entre -180 y 180 grados
+            </mat-error>
+          </div>
+
+          <!-- Botones de ubicación -->
+          <div class="location-buttons">
+            <button mat-stroked-button 
+                    type="button" 
+                    (click)="selectLocationOnMap()"
+                    [disabled]="loading">
+              <mat-icon>map</mat-icon>
+              Seleccionar en Mapa
+            </button>
+            
+            <button mat-stroked-button 
+                    type="button" 
+                    (click)="getCurrentLocation()"
+                    [disabled]="loading">
+              <mat-icon>gps_fixed</mat-icon>
+              Usar Mi Ubicación
+            </button>
+          </div>
+        </div>
+
+        <div class="form-row two-columns">
+          <!-- Fecha inicio -->
+          <mat-form-field appearance="outline">
+            <mat-label>Fecha de Inicio</mat-label>
+            <input matInput 
+                   [matDatepicker]="startPicker" 
+                   formControlName="fecha_inicio">
+            <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+            <mat-datepicker #startPicker></mat-datepicker>
+            <mat-error *ngIf="isFieldInvalid('fecha_inicio')">
+              {{ getErrorMessage('fecha_inicio') }}
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Fecha fin estimada -->
+          <mat-form-field appearance="outline">
+            <mat-label>Fecha Fin Estimada</mat-label>
+            <input matInput 
+                   [matDatepicker]="endPicker" 
+                   formControlName="fecha_fin_estimada">
+            <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+            <mat-datepicker #endPicker></mat-datepicker>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <!-- Observaciones -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Observaciones</mat-label>
+            <textarea matInput 
+                      formControlName="observaciones" 
+                      rows="2"
+                      placeholder="Observaciones adicionales..."></textarea>
+            <mat-icon matSuffix>note</mat-icon>
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+
+      <mat-card-actions align="end">
+        <button mat-button 
+                type="button" 
+                (click)="cancelForm()"
+                [disabled]="loading">
+          <mat-icon>cancel</mat-icon>
+          Cancelar
+        </button>
+        
+        <button mat-raised-button 
+                color="primary" 
+                type="submit"
+                [disabled]="loading || actividadForm.invalid">
+          <mat-icon *ngIf="!loading">{{ editingActividad ? 'save' : 'add' }}</mat-icon>
+          <mat-icon *ngIf="loading" class="spinning">refresh</mat-icon>
+          {{ loading ? 'Guardando...' : (editingActividad ? 'Actualizar' : 'Crear') }}
+        </button>
+      </mat-card-actions>
+    </form>
+  </mat-card>
+
+  <!-- Lista de actividades -->
+  <mat-card class="activities-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>list</mat-icon>
+        Actividades Registradas
+        <span class="count-badge">{{ actividades.length }}</span>
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Loading -->
+      <div *ngIf="loading" class="loading-container">
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+        <p>Cargando actividades...</p>
+      </div>
+
+      <!-- Lista de actividades -->
+      <div *ngIf="!loading && actividades.length > 0" class="activities-list">
+        <div *ngFor="let actividad of actividades" class="activity-item">
+          <div class="activity-header">
+            <div class="activity-title">
+              <h4>{{ actividad.nombre }}</h4>
+              <div class="activity-meta">
+                <span class="tipo-chip" [style.background-color]="'#e3f2fd'">
+                  <mat-icon>category</mat-icon>
+                  {{ tiposActividad.find(t => t.value === actividad.tipo)?.label || actividad.tipo }}
+                </span>
+                <span class="km-chip" *ngIf="actividad.kilometro">
+                  <mat-icon>straighten</mat-icon>
+                  KM {{ actividad.kilometro }}
+                </span>
+              </div>
+            </div>
+            <div class="activity-actions">
+              <button mat-icon-button 
+                      (click)="updateProgress(actividad)"
+                      matTooltip="Gestionar Tareas"
+                      color="accent">
+                <mat-icon>task_alt</mat-icon>
+              </button>
+              <button mat-icon-button 
+                      (click)="editActividad(actividad)"
+                      matTooltip="Editar">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button 
+                      (click)="deleteActividad(actividad)"
+                      matTooltip="Eliminar"
+                      color="warn">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <div class="activity-content">
+            <p class="description">{{ actividad.descripcion }}</p>
+            
+            <div class="activity-details">
+              <div class="detail-item">
+                <mat-icon>flag</mat-icon>
+                <span class="estado-badge" 
+                      [style.background-color]="getEstadoColor(actividad.estado)"
+                      [style.color]="'white'">
+                  {{ estados.find(e => e.value === actividad.estado)?.label || actividad.estado }}
+                </span>
+              </div>
+              
+              <div class="detail-item">
+                <mat-icon>priority_high</mat-icon>
+                <span class="prioridad-badge" 
+                      [style.background-color]="getPrioridadColor(actividad.prioridad)"
+                      [style.color]="'white'">
+                  {{ prioridades.find(p => p.value === actividad.prioridad)?.label || actividad.prioridad }}
+                </span>
+              </div>
+              
+              <div class="detail-item" *ngIf="actividad.responsable">
+                <mat-icon>person</mat-icon>
+                <span>{{ actividad.responsable }}</span>
+              </div>
+              
+              <div class="detail-item">
+                <mat-icon>event</mat-icon>
+                <span>{{ actividad.fecha_inicio | date:'dd/MM/yyyy' }}</span>
+              </div>
+              
+              <div class="detail-item" *ngIf="actividad.ubicacion?.lat && actividad.ubicacion?.lng">
+                <mat-icon>location_on</mat-icon>
+                <span>{{ actividad.ubicacion.direccion || 'Lat: ' + actividad.ubicacion.lat + ', Lng: ' + actividad.ubicacion.lng }}</span>
+              </div>
+            </div>
+
+            <!-- Progreso basado en tareas -->
+            <div class="progress-section" *ngIf="actividad.progreso_porcentaje !== undefined">
+              <div class="progress-header">
+                <span>Progreso de Tareas</span>
+                <span class="progress-value">{{ getProgressText(actividad.progreso_porcentaje) }}</span>
+              </div>
+              <mat-progress-bar 
+                mode="determinate" 
+                [value]="actividad.progreso_porcentaje"
+                [color]="getProgressColor(actividad.progreso_porcentaje)">
+              </mat-progress-bar>
+              <div class="progress-info" *ngIf="actividad.progreso_porcentaje < 100">
+                <mat-icon>info</mat-icon>
+                <span>Haga clic en el ícono de tareas para completar actividades</span>
+              </div>
+            </div>
+
+            <!-- Observaciones -->
+            <div class="observations" *ngIf="actividad.observaciones">
+              <mat-icon>note</mat-icon>
+              <span>{{ actividad.observaciones }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estado vacío -->
+      <div *ngIf="!loading && actividades.length === 0" class="empty-state">
+        <mat-icon>assignment</mat-icon>
+        <h3>No hay actividades registradas</h3>
+        <p>{{ kilometro ? 'No hay actividades para este kilómetro' : 'No hay actividades para este frente' }}</p>
+        <button mat-raised-button color="primary" (click)="showCreateForm()">
+          <mat-icon>add</mat-icon>
+          Crear Primera Actividad
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

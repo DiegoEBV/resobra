@@ -1,0 +1,278 @@
+<div class="frente-form-container">
+  <h2 mat-dialog-title>
+    <mat-icon>{{ isEditMode ? 'edit' : 'add_location' }}</mat-icon>
+    {{ isEditMode ? 'Editar Frente' : 'Crear Nuevo Frente' }}
+  </h2>
+
+  <form [formGroup]="frenteForm" (ngSubmit)="onSubmit()" class="frente-form">
+    <mat-dialog-content>
+      <div class="form-row">
+        <!-- Nombre del frente -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Nombre del Frente</mat-label>
+          <input matInput 
+                 formControlName="nombre" 
+                 placeholder="Ej: Frente Norte - Excavación"
+                 maxlength="100">
+          <mat-icon matSuffix>label</mat-icon>
+          <mat-error *ngIf="isFieldInvalid('nombre')">
+            {{ getErrorMessage('nombre') }}
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <div class="form-row">
+        <!-- Descripción -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Descripción</mat-label>
+          <textarea matInput 
+                    formControlName="descripcion" 
+                    placeholder="Descripción detallada del frente de trabajo"
+                    rows="3"
+                    maxlength="500"></textarea>
+          <mat-icon matSuffix>description</mat-icon>
+        </mat-form-field>
+      </div>
+
+      <div class="form-row two-columns">
+        <!-- Obra -->
+        <mat-form-field appearance="outline">
+          <mat-label>Obra</mat-label>
+          <mat-select formControlName="obra_id">
+            <mat-option *ngFor="let obra of obras" [value]="obra.id">
+              {{ obra.nombre }}
+            </mat-option>
+          </mat-select>
+          <mat-icon matSuffix>business</mat-icon>
+          <mat-error *ngIf="isFieldInvalid('obra_id')">
+            {{ getErrorMessage('obra_id') }}
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Estado -->
+        <mat-form-field appearance="outline">
+          <mat-label>Estado</mat-label>
+          <mat-select formControlName="estado">
+            <mat-option *ngFor="let estado of estadosFrente" [value]="estado.value">
+              {{ estado.label }}
+            </mat-option>
+          </mat-select>
+          <mat-icon matSuffix>flag</mat-icon>
+          <mat-error *ngIf="isFieldInvalid('estado')">
+            {{ getErrorMessage('estado') }}
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <div class="form-row two-columns">
+        <!-- Fecha de inicio -->
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha de Inicio</mat-label>
+          <input matInput 
+                 [matDatepicker]="startPicker" 
+                 formControlName="fecha_inicio">
+          <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+          <mat-datepicker #startPicker></mat-datepicker>
+          <mat-error *ngIf="isFieldInvalid('fecha_inicio')">
+            {{ getErrorMessage('fecha_inicio') }}
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Fecha fin estimada -->
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha Fin Estimada</mat-label>
+          <input matInput 
+                 [matDatepicker]="endPicker" 
+                 formControlName="fecha_fin_estimada">
+          <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+          <mat-datepicker #endPicker></mat-datepicker>
+          <mat-error *ngIf="isFieldInvalid('fecha_fin_estimada')">
+            {{ getErrorMessage('fecha_fin_estimada') }}
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Sección de coordenadas -->
+      <div class="coordinates-section">
+        <h3 class="section-title">
+          <mat-icon>place</mat-icon>
+          Ubicación en el Mapa
+        </h3>
+        
+        <div class="form-row two-columns">
+          <!-- Latitud -->
+          <mat-form-field appearance="outline">
+            <mat-label>Latitud</mat-label>
+            <input matInput 
+                   type="number" 
+                   formControlName="ubicacion_lat" 
+                   placeholder="Ej: 6.2442"
+                   step="0.000001">
+            <mat-icon matSuffix>my_location</mat-icon>
+            <mat-error *ngIf="isFieldInvalid('ubicacion_lat')">
+              {{ getErrorMessage('ubicacion_lat') }}
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Longitud -->
+          <mat-form-field appearance="outline">
+            <mat-label>Longitud</mat-label>
+            <input matInput 
+                   type="number" 
+                   formControlName="ubicacion_lng" 
+                   placeholder="Ej: -75.5812"
+                   step="0.000001">
+            <mat-icon matSuffix>my_location</mat-icon>
+            <mat-error *ngIf="isFieldInvalid('ubicacion_lng')">
+              {{ getErrorMessage('ubicacion_lng') }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="coordinates-help">
+          <mat-icon>info</mat-icon>
+          <span>Haz clic en el mapa para seleccionar automáticamente las coordenadas</span>
+        </div>
+      </div>
+
+      <!-- Sección kilométrica -->
+      <div class="kilometric-section">
+        <h3 class="section-title">
+          <mat-icon>straighten</mat-icon>
+          Rango Kilométrico
+        </h3>
+        
+        <div class="form-row two-columns">
+          <!-- Kilómetro inicial -->
+          <mat-form-field appearance="outline">
+            <mat-label>Kilómetro Inicial</mat-label>
+            <input matInput 
+                   type="number" 
+                   formControlName="km_inicial" 
+                   min="0"
+                   step="0.1"
+                   placeholder="Ej: 0.0">
+            <mat-icon matSuffix>start</mat-icon>
+            <mat-error *ngIf="isFieldInvalid('km_inicial')">
+              {{ getErrorMessage('km_inicial') }}
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Kilómetro final -->
+          <mat-form-field appearance="outline">
+            <mat-label>Kilómetro Final</mat-label>
+            <input matInput 
+                   type="number" 
+                   formControlName="km_final" 
+                   min="0"
+                   step="0.1"
+                   placeholder="Ej: 5.0">
+            <mat-icon matSuffix>flag</mat-icon>
+            <mat-error *ngIf="isFieldInvalid('km_final')">
+              {{ getErrorMessage('km_final') }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Coordenadas de inicio -->
+        <div formGroupName="coordenadas_inicio">
+          <h4 class="subsection-title">
+            <mat-icon>place</mat-icon>
+            Coordenadas de Inicio
+          </h4>
+          <div class="form-row two-columns">
+            <mat-form-field appearance="outline">
+              <mat-label>Latitud Inicio</mat-label>
+              <input matInput 
+                     type="number" 
+                     formControlName="lat" 
+                     step="0.000001"
+                     placeholder="Ej: 6.2442">
+              <mat-icon matSuffix>my_location</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Longitud Inicio</mat-label>
+              <input matInput 
+                     type="number" 
+                     formControlName="lng" 
+                     step="0.000001"
+                     placeholder="Ej: -75.5812">
+              <mat-icon matSuffix>my_location</mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Coordenadas de fin -->
+        <div formGroupName="coordenadas_fin">
+          <h4 class="subsection-title">
+            <mat-icon>place</mat-icon>
+            Coordenadas de Fin
+          </h4>
+          <div class="form-row two-columns">
+            <mat-form-field appearance="outline">
+              <mat-label>Latitud Fin</mat-label>
+              <input matInput 
+                     type="number" 
+                     formControlName="lat" 
+                     step="0.000001"
+                     placeholder="Ej: 6.2500">
+              <mat-icon matSuffix>my_location</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Longitud Fin</mat-label>
+              <input matInput 
+                     type="number" 
+                     formControlName="lng" 
+                     step="0.000001"
+                     placeholder="Ej: -75.5900">
+              <mat-icon matSuffix>my_location</mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="kilometric-help">
+          <mat-icon>info</mat-icon>
+          <span>Los rangos kilométricos definen el tramo de carretera que abarca este frente</span>
+        </div>
+      </div>
+
+      <!-- Progreso general -->
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Progreso General (%)</mat-label>
+          <input matInput 
+                 type="number" 
+                 formControlName="progreso_general" 
+                 min="0" 
+                 max="100"
+                 placeholder="0">
+          <mat-icon matSuffix>trending_up</mat-icon>
+          <mat-error *ngIf="isFieldInvalid('progreso_general')">
+            {{ getErrorMessage('progreso_general') }}
+          </mat-error>
+        </mat-form-field>
+      </div>
+    </mat-dialog-content>
+
+    <mat-dialog-actions align="end">
+      <button mat-button 
+              type="button" 
+              (click)="onCancel()"
+              [disabled]="loading">
+        <mat-icon>cancel</mat-icon>
+        Cancelar
+      </button>
+      
+      <button mat-raised-button 
+              color="primary" 
+              type="submit"
+              [disabled]="loading || frenteForm.invalid">
+        <mat-icon *ngIf="!loading">{{ isEditMode ? 'save' : 'add' }}</mat-icon>
+        <mat-icon *ngIf="loading" class="spinning">refresh</mat-icon>
+        {{ loading ? 'Guardando...' : (isEditMode ? 'Actualizar' : 'Crear Frente') }}
+      </button>
+    </mat-dialog-actions>
+  </form>
+</div>

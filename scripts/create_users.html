@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crear Usuarios Predefinidos</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 10px 0;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    .error {
+      color: red;
+    }
+    .success {
+      color: green;
+    }
+  </style>
+</head>
+<body>
+  <h1>Crear Usuarios Predefinidos para ResobraApp</h1>
+  
+  <div>
+    <h2>Configuración</h2>
+    <p>URL de Supabase: <input type="text" id="supabaseUrl" value="https://ugecshlhptnveemmedov.supabase.co" style="width: 400px;"></p>
+    <p>Clave Anónima: <input type="text" id="supabaseKey" placeholder="Ingrese la clave anónima de Supabase" style="width: 400px;"></p>
+  </div>
+
+  <div>
+    <h2>Usuarios a crear</h2>
+    <ul>
+      <li><strong>Residente:</strong> RESIDENTE@CVH.COM / 123456</li>
+      <li><strong>Producción:</strong> PRODUCCION@CVH.COM / 123456</li>
+    </ul>
+  </div>
+
+  <button id="createUsersBtn">Crear Usuarios</button>
+  <button id="checkUsersBtn">Verificar Usuarios</button>
+
+  <div>
+    <h2>Resultados</h2>
+    <pre id="output">Los resultados se mostrarán aquí...</pre>
+  </div>
+
+  <script>
+    // Función para mostrar mensajes en el área de resultados
+    function log(message, isError = false) {
+      const output = document.getElementById('output');
+      const div = document.createElement('div');
+      div.textContent = message;
+      if (isError) div.className = 'error';
+      else div.className = 'success';
+      output.appendChild(div);
+    }
+
+    // Función para limpiar el área de resultados
+    function clearLog() {
+      document.getElementById('output').innerHTML = '';
+    }
+
+    // Función para crear el cliente de Supabase
+    function createSupabaseClient() {
+      const supabaseUrl = document.getElementById('supabaseUrl').value;
+      const supabaseKey = document.getElementById('supabaseKey').value;
+      
+      if (!supabaseUrl || !supabaseKey) {
+        log('Error: URL de Supabase y Clave Anónima son requeridas', true);
+        return null;
+      }
+      
+      return supabase.createClient(supabaseUrl, supabaseKey);
+    }
+
+    // Función para crear usuarios
+    async function createUsers() {
+      clearLog();
+      const supabase = createSupabaseClient();
+      if (!supabase) return;
+      
+      try {
+        log('Iniciando creación de usuarios...');
+        
+        // Crear usuario Residente
+        log('Creando usuario RESIDENTE@CVH.COM...');
+        const { data: residenteData, error: residenteError } = await supabase.auth.signUp({
+          email: 'RESIDENTE@CVH.COM',
+          password: '123456',
+          options: {
+            data: {
+              nombre: 'Residente',
+              rol: 'residente'
+            }
+          }
+        });
+        
+        if (residenteError) {
+          log(`Error al crear usuario residente: ${residenteError.message}`, true);
+        } else {
+          log(`Usuario residente creado con ID: ${residenteData.user.id}`);
+          
+          // Insertar en tabla users
+          const { error: insertError } = await supabase
+            .from('users')
+            .upsert({
+              id: residenteData.user.id,
+              email: 'RESIDENTE@CVH.COM',
+              nombre: 'Residente',
+              rol: 'residente'
+            });
+          
+          if (insertError) {
+            log(`Error al insertar en tabla users: ${insertError.message}`, true);
+          } else {
+            log('Usuario residente insertado en tabla users');
+          }
+        }
+        
+        // Crear usuario Producción
+        log('\nCreando usuario PRODUCCION@CVH.COM...');
+        const { data: produccionData, error: produccionError } = await supabase.auth.signUp({
+          email: 'PRODUCCION@CVH.COM',
+          password: '123456',
+          options: {
+            data: {
+              nombre: 'Producción',
+              rol: 'logistica'
+            }
+          }
+        });
+        
+        if (produccionError) {
+          log(`Error al crear usuario producción: ${produccionError.message}`, true);
+        } else {
+          log(`Usuario producción creado con ID: ${produccionData.user.id}`);
+          
+          // Insertar en tabla users
+          const { error: insertError } = await supabase
+            .from('users')
+            .upsert({
+              id: produccionData.user.id,
+              email: 'PRODUCCION@CVH.COM',
+              nombre: 'Producción',
+              rol: 'logistica'
+            });
+          
+          if (insertError) {
+            log(`Error al insertar en tabla users: ${insertError.message}`, true);
+          } else {
+            log('Usuario producción insertado en tabla users');
+          }
+        }
+        
+        // Verificar si hay obras
+        log('\nVerificando si existen obras...');
+        const { data: obras, error: obrasError } = await supabase
+          .from('obras')
+          .select('id')
+          .limit(1);
+        
+        if (obrasError) {
+          log(`Error al verificar obras: ${obrasError.message}`, true);
+          return;
+        }
+        
+        let obraId;
+        
+        if (!obras || obras.length === 0) {
+          log('No se encontraron obras. Creando obra de ejemplo...');
+          
+          // Crear obra de ejemplo
+          const { data: nuevaObra, error: nuevaObraError } = await supabase
+            .from('obras')
+            .insert({
+              nombre: 'Obra de Ejemplo',
+              descripcion: 'Obra creada automáticamente para pruebas',
+              ubicacion: 'Lima, Perú',
+              fecha_inicio: new Date().toISOString().split('T')[0],
+              estado: 'activa'
+            })
+            .select();
+          
+          if (nuevaObraError) {
+            log(`Error al crear obra de ejemplo: ${nuevaObraError.message}`, true);
+            return;
+          }
+          
+          obraId = nuevaObra[0].id;
+          log(`Obra de ejemplo creada con ID: ${obraId}`);
+        } else {
+          obraId = obras[0].id;
+          log(`Se encontró obra existente con ID: ${obraId}`);
+        }
+        
+        // Asignar usuarios a la obra
+        if (residenteData?.user?.id) {
+          log('\nAsignando usuario residente a la obra...');
+          const { error: asignacionError } = await supabase
+            .from('user_obras')
+            .upsert({
+              user_id: residenteData.user.id,
+              obra_id: obraId,
+              rol_obra: 'residente'
+            });
+          
+          if (asignacionError) {
+            log(`Error al asignar usuario residente a la obra: ${asignacionError.message}`, true);
+          } else {
+            log('Usuario residente asignado a la obra correctamente');
+          }
+        }
+        
+        if (produccionData?.user?.id) {
+          log('\nAsignando usuario producción a la obra...');
+          const { error: asignacionError } = await supabase
+            .from('user_obras')
+            .upsert({
+              user_id: produccionData.user.id,
+              obra_id: obraId,
+              rol_obra: 'logistica'
+            });
+          
+          if (asignacionError) {
+            log(`Error al asignar usuario producción a la obra: ${asignacionError.message}`, true);
+          } else {
+            log('Usuario producción asignado a la obra correctamente');
+          }
+        }
+        
+        log('\nProceso completado. Intente iniciar sesión con las credenciales proporcionadas.');
+        
+      } catch (error) {
+        log(`Error inesperado: ${error.message}`, true);
+      }
+    }
+
+    // Función para verificar usuarios existentes
+    async function checkUsers() {
+      clearLog();
+      const supabase = createSupabaseClient();
+      if (!supabase) return;
+      
+      try {
+        log('Verificando usuarios existentes...');
+        
+        // Verificar usuarios en la tabla users
+        const { data: users, error: usersError } = await supabase
+          .from('users')
+          .select('*');
+        
+        if (usersError) {
+          log(`Error al verificar usuarios: ${usersError.message}`, true);
+          return;
+        }
+        
+        if (!users || users.length === 0) {
+          log('No se encontraron usuarios en la tabla users');
+        } else {
+          log(`Se encontraron ${users.length} usuarios en la tabla users:`);
+          users.forEach(user => {
+            log(`- ${user.email} (${user.nombre}, ${user.rol})`);
+          });
+        }
+        
+        // Verificar asignaciones en user_obras
+        const { data: userObras, error: userObrasError } = await supabase
+          .from('user_obras')
+          .select(`
+            id,
+            user_id,
+            obra_id,
+            rol_obra,
+            users!inner (email, nombre),
+            obras!inner (nombre)
+          `);
+        
+        if (userObrasError) {
+          log(`\nError al verificar asignaciones: ${userObrasError.message}`, true);
+          return;
+        }
+        
+        if (!userObras || userObras.length === 0) {
+          log('\nNo se encontraron asignaciones en la tabla user_obras');
+        } else {
+          log(`\nSe encontraron ${userObras.length} asignaciones en la tabla user_obras:`);
+          userObras.forEach(asignacion => {
+            log(`- ${asignacion.users.email} (${asignacion.users.nombre}) asignado a ${asignacion.obras.nombre} como ${asignacion.rol_obra}`);
+          });
+        }
+        
+      } catch (error) {
+        log(`Error inesperado: ${error.message}`, true);
+      }
+    }
+
+    // Asignar eventos a los botones
+    document.getElementById('createUsersBtn').addEventListener('click', createUsers);
+    document.getElementById('checkUsersBtn').addEventListener('click', checkUsers);
+  </script>
+</body>
+</html>

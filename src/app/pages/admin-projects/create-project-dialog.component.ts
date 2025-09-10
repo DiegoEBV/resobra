@@ -8,7 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
-import { Project } from '../../models/interfaces';
+import { Obra } from '../../interfaces/database.interface';
 
 @Component({
   selector: 'app-create-project-dialog',
@@ -34,50 +34,45 @@ import { Project } from '../../models/interfaces';
     <mat-dialog-content>
       <form [formGroup]="projectForm" class="project-form">
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Nombre del Proyecto</mat-label>
-          <input matInput formControlName="name" placeholder="Ej: Edificio Residencial Los Pinos">
-          <mat-error *ngIf="projectForm.get('name')?.hasError('required')">
-            El nombre del proyecto es requerido
+          <mat-label>Nombre de la Obra</mat-label>
+          <input matInput formControlName="nombre" placeholder="Ej: Edificio Residencial Los Pinos">
+          <mat-error *ngIf="projectForm.get('nombre')?.hasError('required')">
+            El nombre de la obra es requerido
           </mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Ubicación</mat-label>
-          <input matInput formControlName="location" placeholder="Ej: Av. Principal 123, Ciudad">
-          <mat-error *ngIf="projectForm.get('location')?.hasError('required')">
+          <input matInput formControlName="ubicacion" placeholder="Ej: Av. Principal 123, Ciudad">
+          <mat-error *ngIf="projectForm.get('ubicacion')?.hasError('required')">
             La ubicación es requerida
           </mat-error>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Contratista</mat-label>
-          <input matInput formControlName="contractor" placeholder="Ej: Constructora ABC S.A.">
-          <mat-error *ngIf="projectForm.get('contractor')?.hasError('required')">
-            El contratista es requerido
-          </mat-error>
-        </mat-form-field>
 
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Supervisor</mat-label>
-          <input matInput formControlName="supervisor" placeholder="Ej: Ing. Juan Pérez">
-          <mat-error *ngIf="projectForm.get('supervisor')?.hasError('required')">
-            El supervisor es requerido
-          </mat-error>
-        </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Fecha de Inicio</mat-label>
-          <input matInput [matDatepicker]="picker" formControlName="start_date">
+          <input matInput [matDatepicker]="picker" formControlName="fecha_inicio">
           <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
           <mat-datepicker #picker></mat-datepicker>
-          <mat-error *ngIf="projectForm.get('start_date')?.hasError('required')">
+          <mat-error *ngIf="projectForm.get('fecha_inicio')?.hasError('required')">
             La fecha de inicio es requerida
           </mat-error>
         </mat-form-field>
 
+
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Fecha de Finalización Estimada (Opcional)</mat-label>
+          <input matInput [matDatepicker]="endPicker" formControlName="fecha_fin_estimada">
+          <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+          <mat-datepicker #endPicker></mat-datepicker>
+        </mat-form-field>
+
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Descripción (Opcional)</mat-label>
-          <textarea matInput formControlName="description" rows="3" placeholder="Descripción del proyecto..."></textarea>
+          <textarea matInput formControlName="descripcion" rows="3" placeholder="Descripción de la obra..."></textarea>
         </mat-form-field>
       </form>
     </mat-dialog-content>
@@ -106,12 +101,11 @@ export class CreateProjectDialogComponent {
     @Inject(MAT_DIALOG_DATA) public data: any
   ) {
     this.projectForm = this.fb.group({
-      name: ['', [Validators.required]],
-      location: ['', [Validators.required]],
-      contractor: ['', [Validators.required]],
-      supervisor: ['', [Validators.required]],
-      start_date: ['', [Validators.required]],
-      description: ['']
+      nombre: ['', [Validators.required]],
+      ubicacion: ['', [Validators.required]],
+      fecha_inicio: ['', [Validators.required]],
+      fecha_fin_estimada: [null],
+      descripcion: ['']
     });
   }
 
@@ -122,14 +116,24 @@ export class CreateProjectDialogComponent {
   onCreate(): void {
     if (this.projectForm.valid) {
       const formValue = this.projectForm.value;
-      const newProject: Omit<Project, 'id' | 'created_at' | 'updated_at'> = {
-        name: formValue.name,
-        location: formValue.location,
-        contractor: formValue.contractor,
-        supervisor: formValue.supervisor,
-        start_date: formValue.start_date
+      // Formatear fechas para Supabase
+      const formatDate = (date: any) => {
+        if (!date) return null;
+        if (date instanceof Date) {
+          return date.toISOString().split('T')[0];
+        }
+        return date;
       };
-      this.dialogRef.close(newProject);
+
+      const newObra: Omit<Obra, 'id' | 'created_at' | 'updated_at'> = {
+        nombre: formValue.nombre,
+        ubicacion: formValue.ubicacion,
+        fecha_inicio: formatDate(formValue.fecha_inicio),
+        estado: 'planificacion',
+        descripcion: formValue.descripcion || undefined,
+        fecha_fin_estimada: formatDate(formValue.fecha_fin_estimada)
+      };
+      this.dialogRef.close(newObra);
     }
   }
 }

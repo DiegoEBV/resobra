@@ -43,7 +43,7 @@ import { Project } from '../../models/interfaces';
 export class AdminProjectsComponent implements OnInit {
   projects: Project[] = [];
   filteredProjects: Project[] = [];
-  displayedColumns: string[] = ['name', 'location', 'contractor', 'supervisor', 'start_date', 'acciones'];
+  displayedColumns: string[] = ['nombre', 'location', 'contractor', 'supervisor', 'start_date', 'presupuesto_total', 'presupuesto_ejecutado', 'acciones'];
   searchTerm: string = '';
   isLoading: boolean = false;
   editingProject: Project | null = null;
@@ -60,7 +60,9 @@ export class AdminProjectsComponent implements OnInit {
       location: ['', [Validators.required]],
       contractor: ['', [Validators.required]],
       supervisor: ['', [Validators.required]],
-      start_date: ['', [Validators.required]]
+      start_date: ['', [Validators.required]],
+      presupuesto_total: ['', [Validators.required, Validators.min(1)]],
+      presupuesto_ejecutado: ['', [Validators.min(0)]]
     });
   }
 
@@ -138,7 +140,9 @@ export class AdminProjectsComponent implements OnInit {
       location: project.location || '',
       contractor: project.contractor || '',
       supervisor: project.supervisor || '',
-      start_date: project.start_date ? new Date(project.start_date) : null
+      start_date: project.start_date ? new Date(project.start_date) : null,
+      presupuesto_total: project.presupuesto_total || 0,
+      presupuesto_ejecutado: project.presupuesto_ejecutado || 0
     });
   }
 
@@ -155,7 +159,9 @@ export class AdminProjectsComponent implements OnInit {
         location: formValue.location,
         contractor: formValue.contractor,
         supervisor: formValue.supervisor,
-        start_date: formValue.start_date ? formValue.start_date.toISOString().split('T')[0] : null
+        start_date: formValue.start_date ? formValue.start_date.toISOString().split('T')[0] : null,
+        presupuesto_total: formValue.presupuesto_total,
+        presupuesto_ejecutado: formValue.presupuesto_ejecutado
       };
       
       this.projectsService.updateProject(this.editingProject.id, updates).subscribe({
@@ -196,6 +202,21 @@ export class AdminProjectsComponent implements OnInit {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
     return date.toLocaleDateString('es-ES');
+  }
+
+  formatCurrency(amount: number | null | undefined): string {
+    if (!amount && amount !== 0) return 'N/A';
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
+  }
+
+  getProgressPercentage(executed: number | null | undefined, total: number | null | undefined): number {
+    if (!executed || !total || total === 0) return 0;
+    return Math.round((executed / total) * 100);
   }
 
   private showMessage(message: string, type: 'success' | 'error'): void {
