@@ -5,7 +5,8 @@ import { AuthService } from './auth.service';
 
 export interface KPI {
   id?: string;
-  obra_id: string;
+  obra_id?: string; // Ahora opcional
+  actividad_id?: string; // Nuevo campo para actividades
   fecha: string;
   avance_fisico?: number;
   productividad?: number;
@@ -13,8 +14,20 @@ export interface KPI {
   calidad?: number;
   metricas_adicionales?: any;
   calculated_at?: string;
+  // Nuevos campos agregados
+  costo_ejecutado?: number;
+  costo_presupuestado?: number;
+  personal_asignado?: number;
+  maquinaria_utilizada?: string;
+  incidentes_seguridad?: number;
+  clima_condiciones?: string;
+  observaciones_tecnicas?: string;
+  estado?: string;
+  created_by?: string;
+  updated_at?: string;
   // Relaciones
   obra?: any;
+  actividad?: any; // Nueva relación con actividad
 }
 
 export interface KPIHistorial {
@@ -61,6 +74,8 @@ export interface AlertaKPI {
   calidad: number;
   fecha: string;
   obra_nombre?: string;
+  actividad_tipo?: string;
+  actividad_ubicacion?: string;
 }
 
 @Injectable({
@@ -102,7 +117,8 @@ export class KpisService {
       if (userObras && userObras.length > 0) {
         const obraIds = userObras.map(uo => uo.obra_id);
         
-        const { data, error } = await this.supabase.client
+        // Consulta simplificada para KPIs por obra
+        const { data: kpisObra, error: errorObra } = await this.supabase.client
           .from('kpis')
           .select(`
             *,
@@ -111,8 +127,56 @@ export class KpisService {
           .in('obra_id', obraIds)
           .order('fecha', { ascending: false });
 
-        if (error) throw error;
-        this.kpisSubject.next(data || []);
+        if (errorObra) throw errorObra;
+
+        // Consulta separada para KPIs por actividad
+        const { data: actividades, error: actError } = await this.supabase.client
+          .from('actividades')
+          .select('id')
+          .in('obra_id', obraIds);
+
+        let kpisActividad: any[] = [];
+        if (!actError && actividades && actividades.length > 0) {
+          const actividadIds = actividades.map(a => a.id);
+          
+          const { data: kpisAct, error: errorAct } = await this.supabase.client
+            .from('kpis')
+            .select(`
+              *,
+              actividad:actividades(id, tipo_actividad, ubicacion, responsable)
+            `)
+            .in('actividad_id', actividadIds)
+            .order('fecha', { ascending: false });
+
+          if (!errorAct) {
+            kpisActividad = kpisAct || [];
+          }
+        }
+
+        // Combinar resultados evitando duplicados
+        const kpisObraArray = kpisObra || [];
+        const kpisActividadArray = kpisActividad || [];
+        
+        // Crear un Map para evitar duplicados por ID
+        const kpisMap = new Map();
+        
+        // Agregar KPIs de obra
+        kpisObraArray.forEach(kpi => {
+          kpisMap.set(kpi.id, kpi);
+        });
+        
+        // Agregar KPIs de actividad (solo si no existen ya)
+        kpisActividadArray.forEach(kpi => {
+          if (!kpisMap.has(kpi.id)) {
+            kpisMap.set(kpi.id, kpi);
+          }
+        });
+        
+        // Convertir Map a array y ordenar por fecha
+        const allKpis = Array.from(kpisMap.values())
+          .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+        
+        this.kpisSubject.next(allKpis);
       }
     } catch (error) {
       console.error('Error loading KPIs:', error);
@@ -135,16 +199,45 @@ export class KpisService {
 
       if (userObras && userObras.length > 0) {
         const obraIds = userObras.map(uo => uo.obra_id);
+        const fechaLimite = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
         
-        const { data, error } = await this.supabase.client
+        // Consulta simplificada para dashboard
+        const { data: kpisObra, error: errorObra } = await this.supabase.client
           .from('kpis')
           .select('avance_fisico, productividad, calidad')
           .in('obra_id', obraIds)
-          .gte('fecha', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]); // Últimos 30 días
+          .gte('fecha', fechaLimite);
 
-        if (error) throw error;
+        if (errorObra) throw errorObra;
 
-        const dashboardData = this.processDashboardKPIs(data || []);
+        // Consulta para KPIs de actividades
+        const { data: actividades, error: actError } = await this.supabase.client
+          .from('actividades')
+          .select('id')
+          .in('obra_id', obraIds);
+
+        let kpisActividad: any[] = [];
+        if (!actError && actividades && actividades.length > 0) {
+          const actividadIds = actividades.map(a => a.id);
+          
+          const { data: kpisAct, error: errorAct } = await this.supabase.client
+            .from('kpis')
+            .select('avance_fisico, productividad, calidad')
+            .in('actividad_id', actividadIds)
+            .gte('fecha', fechaLimite);
+
+          if (!errorAct) {
+            kpisActividad = kpisAct || [];
+          }
+        }
+
+        // Combinar y procesar datos
+        const kpisObraArray = kpisObra || [];
+        const kpisActividadArray = kpisActividad || [];
+        
+        // Combinar todos los KPIs
+        const allKpis = [...kpisObraArray, ...kpisActividadArray];
+        const dashboardData = this.processDashboardKPIs(allKpis);
         this.dashboardKPIsSubject.next(dashboardData);
       }
     } catch (error) {
@@ -223,7 +316,8 @@ export class KpisService {
       if (userObras && userObras.length > 0) {
         const obraIds = userObras.map(uo => uo.obra_id);
         
-        const { data, error } = await this.supabase.client
+        // Consulta simplificada para alertas
+        const { data: kpisObra, error: errorObra } = await this.supabase.client
           .from('kpis')
           .select(`
             id,
@@ -235,20 +329,53 @@ export class KpisService {
           `)
           .in('obra_id', obraIds)
           .order('fecha', { ascending: false })
-          .limit(10);
+          .limit(5);
 
-        if (error) throw error;
+        if (errorObra) throw errorObra;
 
-        const alertas = (data || []).map((kpi: any) => ({
+        // Consulta para KPIs de actividades
+        const { data: actividades, error: actError } = await this.supabase.client
+          .from('actividades')
+          .select('id')
+          .in('obra_id', obraIds);
+
+        let kpisActividad: any[] = [];
+        if (!actError && actividades && actividades.length > 0) {
+          const actividadIds = actividades.map(a => a.id);
+          
+          const { data: kpisAct, error: errorAct } = await this.supabase.client
+            .from('kpis')
+            .select(`
+              id,
+              avance_fisico,
+              productividad,
+              calidad,
+              fecha,
+              actividad:actividades(tipo_actividad, ubicacion)
+            `)
+            .in('actividad_id', actividadIds)
+            .order('fecha', { ascending: false })
+            .limit(5);
+
+          if (!errorAct) {
+            kpisActividad = kpisAct || [];
+          }
+        }
+
+        // Combinar y procesar alertas
+        const allKpis = [...(kpisObra || []), ...kpisActividad];
+        const alertas = allKpis.map((kpi: any) => ({
           id: kpi.id,
           avance_fisico: kpi.avance_fisico,
           productividad: kpi.productividad,
           calidad: kpi.calidad,
           fecha: kpi.fecha,
-          obra_nombre: kpi.obra?.nombre || 'Sin asignar'
+          obra_nombre: kpi.obra?.nombre || 'Sin asignar',
+          actividad_tipo: kpi.actividad?.tipo_actividad || null,
+          actividad_ubicacion: kpi.actividad?.ubicacion || null
         }));
 
-        this.alertasSubject.next(alertas);
+        this.alertasSubject.next(alertas.slice(0, 10));
       }
     } catch (error) {
       console.error('Error loading alertas:', error);
@@ -271,7 +398,8 @@ export class KpisService {
         .insert([kpiData])
         .select(`
           *,
-          obra:obras(id, nombre)
+          obra:obras(id, nombre),
+          actividad:actividades(id, tipo_actividad, ubicacion, responsable)
         `)
         .single();
 
@@ -292,11 +420,8 @@ export class KpisService {
     try {
       const updateData = {
         ...updates,
-        calculated_at: new Date().toISOString()
+        updated_at: new Date().toISOString()
       };
-
-      // Los KPIs se actualizan directamente sin cálculo de estado
-      // ya que la tabla no tiene campos de estado
 
       const { data, error } = await this.supabase.client
         .from('kpis')
@@ -304,7 +429,8 @@ export class KpisService {
         .eq('id', id)
         .select(`
           *,
-          obra:obras(id, nombre)
+          obra:obras(id, nombre),
+          actividad:actividades(id, tipo_actividad, ubicacion, responsable)
         `)
         .single();
 
@@ -328,16 +454,59 @@ export class KpisService {
   // Eliminar KPI
   async deleteKPI(id: string): Promise<void> {
     try {
+      // Validar que el ID no esté vacío o sea inválido
+      if (!id || typeof id !== 'string' || id.trim() === '') {
+        throw new Error('ID de KPI inválido o vacío');
+      }
+
+      console.log('🗑️ Eliminando KPI con ID:', id);
+      
+      // Verificar que el KPI existe antes de intentar eliminarlo
+      const { data: existingKPI, error: checkError } = await this.supabase.client
+        .from('kpis')
+        .select('id, obra_id, actividad_id, created_by')
+        .eq('id', id.trim())
+        .single();
+
+      if (checkError) {
+        console.error('Error verificando KPI:', checkError);
+        if (checkError.code === 'PGRST116') {
+          throw new Error('KPI no encontrado - puede haber sido eliminado previamente');
+        }
+        throw new Error(`No se pudo verificar el KPI: ${checkError.message}`);
+      }
+
+      if (!existingKPI) {
+        throw new Error('El KPI no existe o ya fue eliminado');
+      }
+
+      console.log('KPI encontrado:', existingKPI);
+
+      // Verificar permisos del usuario
+      const user = await this.authService.getCurrentUser();
+      if (!user) {
+        throw new Error('Usuario no autenticado');
+      }
+
+      // Intentar eliminar el KPI
       const { error } = await this.supabase.client
         .from('kpis')
         .delete()
-        .eq('id', id);
+        .eq('id', id.trim());
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error en eliminación:', error);
+        if (error.code === '42501') {
+          throw new Error('No tiene permisos para eliminar este KPI');
+        }
+        throw new Error(`Error al eliminar KPI: ${error.message}`);
+      }
+
+      console.log('✅ KPI eliminado exitosamente');
 
       // Actualizar listas locales
       await this.refresh();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting KPI:', error);
       throw error;
     }
@@ -398,11 +567,13 @@ export class KpisService {
       if (userObras && userObras.length > 0) {
         const obraIds = userObras.map(uo => uo.obra_id);
         
+        // Consulta simplificada
         const { data, error } = await this.supabase.client
           .from('kpis')
           .select(`
             *,
-            obra:obras(id, nombre)
+            obra:obras(id, nombre),
+            actividad:actividades(id, tipo_actividad, ubicacion, responsable)
           `)
           .in('obra_id', obraIds)
           .order('fecha', { ascending: false });
@@ -495,7 +666,7 @@ export class KpisService {
           .select('id')
           .eq('obra_id', obraId)
           .gte('fecha', hoy)
-          .lt('fecha', hoy + 'T23:59:59')
+          .lt('fecha', `${hoy}T23:59:59`)
           .single();
 
         const kpiData = {
@@ -554,6 +725,120 @@ export class KpisService {
     } catch (error) {
       console.error('Error calculando KPIs automáticos para todas las obras:', error);
     }
+  }
+
+  // Obtener actividades de una obra para selección en formulario
+  async getActividadesByObra(obraId: string): Promise<any[]> {
+    try {
+      const { data, error } = await this.supabase.client
+        .from('actividades')
+        .select('id, tipo_actividad, ubicacion, responsable, estado')
+        .eq('obra_id', obraId)
+        .order('fecha', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error getting actividades by obra:', error);
+      return [];
+    }
+  }
+
+  // Obtener KPIs específicos de una actividad
+  async getKPIsByActividad(actividadId: string): Promise<KPI[]> {
+    try {
+      const { data, error } = await this.supabase.client
+        .from('kpis')
+        .select(`
+          *,
+          obra:obras(id, nombre),
+          actividad:actividades(id, tipo_actividad, ubicacion, responsable)
+        `)
+        .eq('actividad_id', actividadId)
+        .order('fecha', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error getting KPIs by actividad:', error);
+      return [];
+    }
+  }
+
+  // Calcular KPIs automáticamente para una actividad específica
+  async calculateAutomaticKPIsForActividad(actividadId: string): Promise<void> {
+    try {
+      console.log('Calculando KPIs automáticos para actividad:', actividadId);
+      
+      // Obtener datos de la actividad
+      const { data: actividad, error: actError } = await this.supabase.client
+        .from('actividades')
+        .select('*')
+        .eq('id', actividadId)
+        .single();
+
+      if (actError) throw actError;
+
+      if (actividad) {
+        // Calcular métricas automáticas basadas en la actividad
+        const avanceFisico = actividad.progreso_porcentaje || 0;
+        const productividad = this.calculateProductividadFromActividad(actividad);
+        const calidad = this.calculateCalidadFromActividad(actividad);
+        
+        // Verificar si ya existe un KPI para esta actividad hoy
+        const hoy = new Date().toISOString().split('T')[0];
+        const { data: existingKPI } = await this.supabase.client
+          .from('kpis')
+          .select('id')
+          .eq('actividad_id', actividadId)
+          .gte('fecha', hoy)
+          .lt('fecha', `${hoy}T23:59:59`)
+          .single();
+
+        const kpiData = {
+          actividad_id: actividadId,
+          fecha: new Date().toISOString(),
+          avance_fisico: avanceFisico,
+          productividad: productividad,
+          calidad: calidad,
+          desviacion_cronograma: this.calculateDesviacionFromActividad(actividad),
+          calculated_at: new Date().toISOString()
+        };
+
+        if (existingKPI) {
+          // Actualizar KPI existente
+          await this.updateKPI(existingKPI.id, kpiData);
+          console.log('KPI automático actualizado para actividad:', actividadId);
+        } else {
+          // Crear nuevo KPI
+          await this.createKPI(kpiData);
+          console.log('KPI automático creado para actividad:', actividadId);
+        }
+      }
+    } catch (error) {
+      console.error('Error calculando KPIs automáticos para actividad:', error);
+    }
+  }
+
+  // Métodos auxiliares para cálculo de métricas por actividad
+  private calculateProductividadFromActividad(actividad: any): number {
+    // Lógica para calcular productividad basada en datos de la actividad
+    const baseProductividad = actividad.progreso_porcentaje || 0;
+    const tiempoFactor = actividad.estado === 'finalizado' ? 1.1 : 0.9;
+    return Math.min(100, Math.round(baseProductividad * tiempoFactor));
+  }
+
+  private calculateCalidadFromActividad(actividad: any): number {
+    // Lógica para calcular calidad basada en datos de la actividad
+    const baseCalidad = 80; // Valor base
+    const estadoFactor = actividad.estado === 'finalizado' ? 1.2 : 1.0;
+    return Math.min(100, Math.round(baseCalidad * estadoFactor));
+  }
+
+  private calculateDesviacionFromActividad(actividad: any): number {
+    // Lógica para calcular desviación de cronograma
+    // Por ahora retorna 0, se puede implementar comparando fechas planificadas vs reales
+    return 0;
   }
 
   // Refrescar todos los datos

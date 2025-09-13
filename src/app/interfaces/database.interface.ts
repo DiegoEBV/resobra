@@ -23,6 +23,12 @@ export interface Frente {
     lat: number;
     lng: number;
   };
+  // Puntos de control intermedios para curvas
+  coordenadas_intermedias?: {
+    lat: number;
+    lng: number;
+    kilometraje: number;
+  }[];
   created_at: string;
   updated_at: string;
   obra?: {

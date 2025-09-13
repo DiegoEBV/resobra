@@ -7,98 +7,237 @@
   <!-- Formulario de KPIs -->
   <mat-card class="form-card">
     <mat-card-header>
-      <mat-card-title>{{ editingKpi ? 'Editar KPI' : 'Nuevo KPI' }}</mat-card-title>
+      <mat-card-title>
+        <mat-icon>analytics</mat-icon>
+        {{ editingKpi ? 'Editar KPI' : 'Nuevo KPI' }}
+      </mat-card-title>
+      <mat-card-subtitle>Complete todos los campos para un registro detallado del rendimiento</mat-card-subtitle>
     </mat-card-header>
     
     <mat-card-content>
-      <form [formGroup]="kpiForm" (ngSubmit)="onSubmit()" class="kpi-form">
-        <div class="form-row">
-          <mat-form-field appearance="outline">
-            <mat-label>Obra</mat-label>
-            <mat-select formControlName="obra_id" required>
-              <mat-option *ngFor="let obra of obras" [value]="obra.id">
-                {{ obra.nombre }}
-              </mat-option>
-            </mat-select>
-            <mat-error *ngIf="kpiForm.get('obra_id')?.hasError('required')">
-              La obra es requerida
-            </mat-error>
-          </mat-form-field>
+      <form [formGroup]="kpiForm" (ngSubmit)="$event.preventDefault()" class="kpi-form">
+        
+        <!-- Sección: Información General -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>info</mat-icon>
+            Información General
+          </h3>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Obra</mat-label>
+              <mat-select formControlName="obra_id" required (selectionChange)="onObraChange($event.value)">
+                <mat-option *ngFor="let obra of obras" [value]="obra.id">
+                  {{ obra.nombre }}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="kpiForm.get('obra_id')?.hasError('required')">
+                La obra es requerida
+              </mat-error>
+            </mat-form-field>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Fecha</mat-label>
-            <input matInput [matDatepicker]="picker" formControlName="fecha" required>
-            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-            <mat-datepicker #picker></mat-datepicker>
-            <mat-error *ngIf="kpiForm.get('fecha')?.hasError('required')">
-              La fecha es requerida
-            </mat-error>
-          </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Actividad (Opcional)</mat-label>
+              <mat-select formControlName="actividad_id">
+                <mat-option value="">-- Sin actividad específica --</mat-option>
+                <mat-option *ngFor="let actividad of actividades" [value]="actividad.id">
+                  {{ actividad.tipo_actividad }} - {{ actividad.ubicacion }}
+                </mat-option>
+              </mat-select>
+              <mat-hint>Seleccione una actividad específica o deje vacío para KPI general de la obra</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Fecha</mat-label>
+              <input matInput [matDatepicker]="picker" formControlName="fecha" required>
+              <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+              <mat-datepicker #picker></mat-datepicker>
+              <mat-error *ngIf="kpiForm.get('fecha')?.hasError('required')">
+                La fecha es requerida
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Estado</mat-label>
+              <mat-select formControlName="estado" required>
+                <mat-option value="activo">Activo</mat-option>
+                <mat-option value="revision">En Revisión</mat-option>
+                <mat-option value="aprobado">Aprobado</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
         </div>
 
-        <div class="form-row">
-          <mat-form-field appearance="outline">
-            <mat-label>Avance Físico (%)</mat-label>
-            <input matInput type="number" formControlName="avance_fisico" min="0" max="100" required>
-            <mat-error *ngIf="kpiForm.get('avance_fisico')?.hasError('required')">
-              El avance físico es requerido
-            </mat-error>
-            <mat-error *ngIf="kpiForm.get('avance_fisico')?.hasError('min') || kpiForm.get('avance_fisico')?.hasError('max')">
-              Debe estar entre 0 y 100
-            </mat-error>
-          </mat-form-field>
+        <!-- Sección: Métricas de Rendimiento -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>trending_up</mat-icon>
+            Métricas de Rendimiento
+          </h3>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Avance Físico (%)</mat-label>
+              <input matInput type="number" formControlName="avance_fisico" min="0" max="100" required>
+              <mat-hint>Porcentaje de avance físico de la obra</mat-hint>
+              <mat-error *ngIf="kpiForm.get('avance_fisico')?.hasError('required')">
+                El avance físico es requerido
+              </mat-error>
+              <mat-error *ngIf="kpiForm.get('avance_fisico')?.hasError('min') || kpiForm.get('avance_fisico')?.hasError('max')">
+                Debe estar entre 0 y 100
+              </mat-error>
+            </mat-form-field>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Productividad (%)</mat-label>
-            <input matInput type="number" formControlName="productividad" min="0" max="100" required>
-            <mat-error *ngIf="kpiForm.get('productividad')?.hasError('required')">
-              La productividad es requerida
-            </mat-error>
-            <mat-error *ngIf="kpiForm.get('productividad')?.hasError('min') || kpiForm.get('productividad')?.hasError('max')">
-              Debe estar entre 0 y 100
-            </mat-error>
-          </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Productividad (%)</mat-label>
+              <input matInput type="number" formControlName="productividad" min="0" required>
+              <mat-hint>Eficiencia del equipo de trabajo</mat-hint>
+              <mat-error *ngIf="kpiForm.get('productividad')?.hasError('required')">
+                La productividad es requerida
+              </mat-error>
+              <mat-error *ngIf="kpiForm.get('productividad')?.hasError('min')">
+                Debe ser mayor a 0
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Personal Asignado</mat-label>
+              <input matInput type="number" formControlName="personal_asignado" min="0" required>
+              <mat-hint>Número de trabajadores asignados</mat-hint>
+              <mat-error *ngIf="kpiForm.get('personal_asignado')?.hasError('required')">
+                El personal asignado es requerido
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Maquinaria Utilizada</mat-label>
+              <textarea matInput formControlName="maquinaria_utilizada" rows="2" 
+                        placeholder="Ej: Excavadora CAT 320, Volqueta 10m³, Compactadora..."></textarea>
+              <mat-hint>Descripción de equipos y maquinaria</mat-hint>
+            </mat-form-field>
+          </div>
         </div>
 
-        <div class="form-row">
-          <mat-form-field appearance="outline">
-            <mat-label>Calidad (%)</mat-label>
-            <input matInput type="number" formControlName="calidad" min="0" max="100" required>
-            <mat-error *ngIf="kpiForm.get('calidad')?.hasError('required')">
-              La calidad es requerida
-            </mat-error>
-            <mat-error *ngIf="kpiForm.get('calidad')?.hasError('min') || kpiForm.get('calidad')?.hasError('max')">
-              Debe estar entre 0 y 100
-            </mat-error>
-          </mat-form-field>
+        <!-- Sección: Calidad y Seguridad -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>security</mat-icon>
+            Calidad y Seguridad
+          </h3>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Calidad (%)</mat-label>
+              <input matInput type="number" formControlName="calidad" min="0" max="100" required>
+              <mat-hint>Índice de calidad de los trabajos ejecutados</mat-hint>
+              <mat-error *ngIf="kpiForm.get('calidad')?.hasError('required')">
+                La calidad es requerida
+              </mat-error>
+              <mat-error *ngIf="kpiForm.get('calidad')?.hasError('min') || kpiForm.get('calidad')?.hasError('max')">
+                Debe estar entre 0 y 100
+              </mat-error>
+            </mat-form-field>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Desviación Cronograma (días)</mat-label>
-            <input matInput type="number" formControlName="desviacion_cronograma" required>
-            <mat-hint>Valores negativos = adelanto, positivos = retraso</mat-hint>
-            <mat-error *ngIf="kpiForm.get('desviacion_cronograma')?.hasError('required')">
-              La desviación del cronograma es requerida
-            </mat-error>
-          </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Incidentes de Seguridad</mat-label>
+              <input matInput type="number" formControlName="incidentes_seguridad" min="0">
+              <mat-hint>Número de incidentes reportados</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Condiciones Climáticas</mat-label>
+              <mat-select formControlName="clima_condiciones">
+                <mat-option value="soleado">Soleado</mat-option>
+                <mat-option value="nublado">Nublado</mat-option>
+                <mat-option value="lluvioso">Lluvioso</mat-option>
+                <mat-option value="ventoso">Ventoso</mat-option>
+                <mat-option value="adverso">Adverso</mat-option>
+              </mat-select>
+              <mat-hint>Condiciones durante el período</mat-hint>
+            </mat-form-field>
+          </div>
         </div>
 
-        <div class="form-row full-width">
-          <mat-form-field appearance="outline">
-            <mat-label>Métricas Adicionales (Opcional)</mat-label>
-            <textarea matInput formControlName="metricas_adicionales" rows="3" 
-                      placeholder="Observaciones, notas adicionales, etc."></textarea>
-          </mat-form-field>
+        <!-- Sección: Cronograma y Costos -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>schedule</mat-icon>
+            Cronograma y Costos
+          </h3>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Desviación Cronograma (días)</mat-label>
+              <input matInput type="number" formControlName="desviacion_cronograma" required>
+              <mat-hint>Valores negativos = adelanto, positivos = retraso</mat-hint>
+              <mat-error *ngIf="kpiForm.get('desviacion_cronograma')?.hasError('required')">
+                La desviación del cronograma es requerida
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Costo Ejecutado</mat-label>
+              <input matInput type="number" formControlName="costo_ejecutado" min="0" required>
+              <span matPrefix>$ &nbsp;</span>
+              <mat-hint>Costo real ejecutado hasta la fecha</mat-hint>
+              <mat-error *ngIf="kpiForm.get('costo_ejecutado')?.hasError('required')">
+                El costo ejecutado es requerido
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Costo Presupuestado</mat-label>
+              <input matInput type="number" formControlName="costo_presupuestado" min="0" required>
+              <span matPrefix>$ &nbsp;</span>
+              <mat-hint>Costo presupuestado para el período</mat-hint>
+              <mat-error *ngIf="kpiForm.get('costo_presupuestado')?.hasError('required')">
+                El costo presupuestado es requerido
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Sección: Observaciones -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>note</mat-icon>
+            Observaciones y Notas
+          </h3>
+          <div class="form-row full-width">
+            <mat-form-field appearance="outline">
+              <mat-label>Observaciones Técnicas</mat-label>
+              <textarea matInput formControlName="observaciones_tecnicas" rows="3" 
+                        placeholder="Describa aspectos técnicos relevantes, dificultades encontradas, soluciones implementadas..."></textarea>
+              <mat-hint>Información técnica detallada del período</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row full-width">
+            <mat-form-field appearance="outline">
+              <mat-label>Métricas Adicionales</mat-label>
+              <textarea matInput formControlName="metricas_adicionales" rows="2" 
+                        placeholder="Información adicional, métricas especiales, comentarios generales..."></textarea>
+              <mat-hint>Información complementaria opcional</mat-hint>
+            </mat-form-field>
+          </div>
         </div>
 
         <div class="form-actions">
-          <button mat-raised-button color="primary" type="submit" 
-                  [disabled]="!kpiForm.valid || loading">
-            <mat-spinner *ngIf="loading" diameter="20"></mat-spinner>
-            {{ editingKpi ? 'Actualizar' : 'Crear' }} KPI
+          <button type="button" mat-raised-button color="accent" (click)="applyAutomaticCalculations()" [disabled]="!kpiForm.get('avance_fisico')?.value">
+            <mat-icon>auto_fix_high</mat-icon>
+            Calcular Sugerencias
           </button>
+          <button mat-raised-button color="primary" type="button" 
+                    [disabled]="!kpiForm.valid || loading || submitting"
+                    (click)="onSubmit()">
+              <mat-icon *ngIf="!submitting">save</mat-icon>
+              <mat-spinner *ngIf="submitting" diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+              <span *ngIf="submitting">Guardando...</span>
+              <span *ngIf="!submitting">{{ editingKpi ? 'Actualizar KPI' : 'Crear KPI' }}</span>
+            </button>
           
           <button mat-button type="button" (click)="resetForm()" 
                   *ngIf="editingKpi" [disabled]="loading">
+            <mat-icon>cancel</mat-icon>
             Cancelar
           </button>
         </div>
@@ -106,91 +245,201 @@
     </mat-card-content>
   </mat-card>
 
-  <!-- Tabla de KPIs existentes -->
+  <!-- Tabla de KPIs -->
   <mat-card class="table-card">
     <mat-card-header>
-      <mat-card-title>KPIs Registrados</mat-card-title>
+      <mat-card-title>
+        <mat-icon>table_chart</mat-icon>
+        KPIs Registrados
+      </mat-card-title>
+      <mat-card-subtitle>Visualización detallada de todos los indicadores de rendimiento</mat-card-subtitle>
     </mat-card-header>
     
     <mat-card-content>
-      <div *ngIf="loading && kpis.length === 0" class="loading-container">
-        <mat-spinner></mat-spinner>
-        <p>Cargando KPIs...</p>
+      <!-- Filtros y búsqueda -->
+      <div class="table-filters" *ngIf="kpis.length > 0">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Buscar KPIs</mat-label>
+          <input matInput (keyup)="applyFilter($event)" placeholder="Buscar por obra, fecha...">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+        
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Filtrar por Estado</mat-label>
+          <mat-select (selectionChange)="filterByStatus($event.value)">
+            <mat-option value="">Todos</mat-option>
+            <mat-option value="activo">Activo</mat-option>
+            <mat-option value="revision">En Revisión</mat-option>
+            <mat-option value="aprobado">Aprobado</mat-option>
+          </mat-select>
+        </mat-form-field>
       </div>
 
-      <div *ngIf="!loading && kpis.length === 0" class="empty-state">
-        <mat-icon>assessment</mat-icon>
-        <h3>No hay KPIs registrados</h3>
-        <p>Comience creando su primer KPI usando el formulario anterior</p>
-      </div>
-
-      <div *ngIf="kpis.length > 0" class="table-container">
-        <table mat-table [dataSource]="kpis" class="kpis-table">
-          <!-- Fecha Column -->
-          <ng-container matColumnDef="fecha">
-            <th mat-header-cell *matHeaderCellDef>Fecha</th>
-            <td mat-cell *matCellDef="let kpi">{{ kpi.fecha | date:'dd/MM/yyyy' }}</td>
-          </ng-container>
-
-          <!-- Obra Column -->
+      <div class="table-container" *ngIf="!loading; else loadingTemplate">
+        <table mat-table [dataSource]="dataSource" class="kpi-table" matSort *ngIf="kpis.length > 0; else noDataTemplate">
+          
+          <!-- Columna Obra -->
           <ng-container matColumnDef="obra">
-            <th mat-header-cell *matHeaderCellDef>Obra</th>
-            <td mat-cell *matCellDef="let kpi">{{ getObraName(kpi.obra_id) }}</td>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Obra</th>
+            <td mat-cell *matCellDef="let kpi">{{ getObraNombre(kpi.obra_id) }}</td>
           </ng-container>
 
-          <!-- Avance Físico Column -->
-          <ng-container matColumnDef="avance_fisico">
-            <th mat-header-cell *matHeaderCellDef>Avance Físico</th>
+          <!-- Columna Actividad -->
+          <ng-container matColumnDef="actividad">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Actividad</th>
             <td mat-cell *matCellDef="let kpi">
-              <span class="percentage">{{ kpi.metricas_adicionales?.avance_fisico || 0 }}%</span>
-            </td>
-          </ng-container>
-
-          <!-- Productividad Column -->
-          <ng-container matColumnDef="productividad">
-            <th mat-header-cell *matHeaderCellDef>Productividad</th>
-            <td mat-cell *matCellDef="let kpi">
-              <span class="percentage">{{ kpi.metricas_adicionales?.productividad || 0 }}%</span>
-            </td>
-          </ng-container>
-
-          <!-- Calidad Column -->
-          <ng-container matColumnDef="calidad">
-            <th mat-header-cell *matHeaderCellDef>Calidad</th>
-            <td mat-cell *matCellDef="let kpi">
-              <span class="percentage">{{ kpi.metricas_adicionales?.calidad || 0 }}%</span>
-            </td>
-          </ng-container>
-
-          <!-- Desviación Cronograma Column -->
-          <ng-container matColumnDef="desviacion_cronograma">
-            <th mat-header-cell *matHeaderCellDef>Desv. Cronograma</th>
-            <td mat-cell *matCellDef="let kpi">
-              <span [class]="(kpi.metricas_adicionales?.desviacion_cronograma || 0) > 0 ? 'delay' : 'advance'">
-                {{ kpi.metricas_adicionales?.desviacion_cronograma || 0 }} días
+              <span class="actividad-info" [ngClass]="{'general-kpi': !kpi.actividad_id}">
+                <mat-icon>{{ kpi.actividad_id ? 'construction' : 'dashboard' }}</mat-icon>
+                {{ getActividadNombre(kpi.actividad_id) }}
               </span>
             </td>
           </ng-container>
 
-          <!-- Acciones Column -->
-          <ng-container matColumnDef="acciones">
+          <!-- Columna Fecha -->
+          <ng-container matColumnDef="fecha">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Fecha</th>
+            <td mat-cell *matCellDef="let kpi">{{ kpi.fecha | date:'dd/MM/yyyy' }}</td>
+          </ng-container>
+
+          <!-- Columna Estado -->
+          <ng-container matColumnDef="estado">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Estado</th>
+            <td mat-cell *matCellDef="let kpi">
+              <span class="status-badge" [ngClass]="'status-' + kpi.estado">
+                <mat-icon>{{ getStatusIcon(kpi.estado) }}</mat-icon>
+                {{ kpi.estado | titlecase }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Columna Avance Físico -->
+          <ng-container matColumnDef="avance_fisico">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Avance Físico</th>
+            <td mat-cell *matCellDef="let kpi">
+              <div class="progress-cell">
+                <span class="progress-text">{{ kpi.avance_fisico }}%</span>
+                <mat-progress-bar mode="determinate" [value]="kpi.avance_fisico" 
+                                  [color]="getProgressColor(kpi.avance_fisico)"></mat-progress-bar>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Columna Productividad -->
+          <ng-container matColumnDef="productividad">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Productividad</th>
+            <td mat-cell *matCellDef="let kpi">
+              <span class="metric-value" [ngClass]="getMetricClass(kpi.productividad, 80)">
+                {{ kpi.productividad }}%
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Columna Calidad -->
+          <ng-container matColumnDef="calidad">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Calidad</th>
+            <td mat-cell *matCellDef="let kpi">
+              <span class="metric-value" [ngClass]="getMetricClass(kpi.calidad, 85)">
+                {{ kpi.calidad }}%
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Columna Personal -->
+          <ng-container matColumnDef="personal_asignado">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Personal</th>
+            <td mat-cell *matCellDef="let kpi">
+              <span class="personnel-count">
+                <mat-icon>people</mat-icon>
+                {{ kpi.personal_asignado }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Columna Costos -->
+          <ng-container matColumnDef="costos">
+            <th mat-header-cell *matHeaderCellDef>Costos</th>
+            <td mat-cell *matCellDef="let kpi">
+              <div class="cost-info">
+                <div class="cost-executed">${{ kpi.costo_ejecutado | number:'1.0-0' }}</div>
+                <div class="cost-budget">${{ kpi.costo_presupuestado | number:'1.0-0' }}</div>
+                <div class="cost-variance" [ngClass]="getCostVarianceClass(kpi.costo_ejecutado, kpi.costo_presupuestado)">
+                  {{ getCostVariancePercent(kpi.costo_ejecutado, kpi.costo_presupuestado) }}%
+                </div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Columna Desviación -->
+          <ng-container matColumnDef="desviacion_cronograma">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Cronograma</th>
+            <td mat-cell *matCellDef="let kpi">
+              <span class="schedule-deviation" [ngClass]="getScheduleClass(kpi.desviacion_cronograma)">
+                <mat-icon>{{ getScheduleIcon(kpi.desviacion_cronograma) }}</mat-icon>
+                {{ kpi.desviacion_cronograma }} días
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Columna Seguridad -->
+          <ng-container matColumnDef="incidentes_seguridad">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Seguridad</th>
+            <td mat-cell *matCellDef="let kpi">
+              <span class="safety-incidents" [ngClass]="getSafetyClass(kpi.incidentes_seguridad)">
+                <mat-icon>{{ getSafetyIcon(kpi.incidentes_seguridad) }}</mat-icon>
+                {{ kpi.incidentes_seguridad || 0 }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Columna Acciones -->
+          <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef>Acciones</th>
             <td mat-cell *matCellDef="let kpi">
-              <button mat-icon-button color="primary" (click)="editKpi(kpi)" 
-                      [disabled]="loading" matTooltip="Editar">
-                <mat-icon>edit</mat-icon>
-              </button>
-              <button mat-icon-button color="warn" (click)="deleteKpi(kpi)" 
-                      [disabled]="loading" matTooltip="Eliminar">
-                <mat-icon>delete</mat-icon>
-              </button>
+              <div class="action-buttons">
+                <button mat-icon-button color="primary" 
+                        (click)="editKpi(kpi)" 
+                        [disabled]="loading"
+                        matTooltip="Editar KPI">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                
+                <button mat-icon-button color="accent" 
+                        (click)="viewDetails(kpi)" 
+                        [disabled]="loading"
+                        matTooltip="Ver Detalles">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+                
+                <button mat-icon-button color="warn" 
+                        (click)="deleteKpi(kpi)" 
+                        [disabled]="loading"
+                        matTooltip="Eliminar KPI">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
             </td>
           </ng-container>
 
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="kpi-row"></tr>
         </table>
+
+        <!-- Template cuando no hay datos -->
+        <ng-template #noDataTemplate>
+          <div class="no-data">
+            <mat-icon>analytics</mat-icon>
+            <h3>No hay KPIs registrados</h3>
+            <p>Comience creando su primer KPI para monitorear el rendimiento</p>
+          </div>
+        </ng-template>
       </div>
+
+      <!-- Template de carga -->
+      <ng-template #loadingTemplate>
+        <div class="loading-spinner">
+          <mat-spinner diameter="50"></mat-spinner>
+        </div>
+      </ng-template>
     </mat-card-content>
   </mat-card>
 </div>

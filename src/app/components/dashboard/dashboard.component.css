@@ -36,16 +36,7 @@
   font-weight: 300;
 }
 
-.demo-badge {
-  background-color: rgba(255, 193, 7, 0.9);
-  color: #333;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
-  margin-left: 8px;
-  display: inline-block;
-}
+
 
 .header-actions {
   display: flex;
@@ -264,12 +255,22 @@
 /* Charts Grid */
 .charts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 24px;
+}
+
+.chart-card {
+  overflow: hidden;
+  transition: all 0.3s ease;
 }
 
 .chart-card.full-width {
   grid-column: 1 / -1;
+}
+
+.chart-card mat-card-content {
+  padding: 20px !important;
+  overflow: hidden;
 }
 
 .chart-container {
@@ -278,6 +279,7 @@
   width: 100%;
   min-height: 250px;
   max-height: 500px;
+  overflow: hidden;
 }
 
 /* KPIs Card */
@@ -485,6 +487,15 @@
 }
 
 /* Material Design Overrides */
+.mat-mdc-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  border-radius: 12px !important;
+}
+
+.mat-mdc-progress-bar {
+  --mdc-linear-progress-track-height: 6px;
+}
+
 mat-card {
   border-radius: 12px !important;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08) !important;
@@ -512,66 +523,189 @@ mat-card-subtitle {
 }
 
 /* Responsive Design */
+/* Tablets (768px - 1024px) */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .charts-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+  }
+  
+  .chart-container {
+    height: 320px;
+    min-height: 220px;
+    max-height: 400px;
+  }
+  
+  .chart-card mat-card-content {
+    padding: 18px !important;
+  }
+}
+
+/* Mobile Landscape and Tablets (481px - 768px) */
 @media (max-width: 768px) {
   .dashboard-container {
     padding: 16px;
+    overflow-x: hidden;
   }
   
   .dashboard-header {
     flex-direction: column;
     gap: 16px;
     text-align: center;
+    padding: 20px 16px;
+    margin-bottom: 24px;
+  }
+  
+  .header-actions {
+    justify-content: center;
+    flex-wrap: wrap;
   }
   
   .welcome-title {
-    font-size: 24px;
+    font-size: 22px;
+  }
+  
+  .welcome-subtitle {
+    font-size: 14px;
   }
   
   .stats-grid {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 16px;
   }
   
+  .stat-card mat-card-content {
+    padding: 16px !important;
+  }
+  
+  .stat-icon {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .stat-icon mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+  
+  .stat-value {
+    font-size: 28px;
+  }
+  
+  .stat-label {
+    font-size: 13px;
+  }
+  
   .charts-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 16px;
   }
   
   .chart-container {
     height: 280px;
     min-height: 200px;
-    max-height: 350px;
+    max-height: 320px;
+  }
+  
+  .chart-card {
+    margin-bottom: 12px;
+  }
+  
+  .chart-card mat-card-content {
+    padding: 16px !important;
   }
   
   .kpis-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .kpi-item {
+    padding: 16px;
   }
   
   .actions-grid {
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+  }
+  
+  .action-btn {
+    padding: 16px 12px !important;
+    min-height: 70px;
   }
   
   .progress-info {
     flex-direction: column;
     text-align: center;
-    gap: 8px;
+    gap: 12px;
+  }
+  
+  .progress-value {
+    font-size: 40px;
   }
   
   .progress-description {
     text-align: center;
+    font-size: 13px;
   }
 }
 
+/* Mobile Portrait (320px - 480px) */
 @media (max-width: 480px) {
   .dashboard-container {
     padding: 12px;
+    overflow-x: hidden;
+  }
+  
+  .dashboard-header {
+    padding: 16px 12px;
+    margin-bottom: 20px;
+  }
+  
+  .welcome-title {
+    font-size: 20px;
+  }
+  
+  .welcome-subtitle {
+    font-size: 13px;
+  }
+  
+  .header-actions {
+    gap: 8px;
   }
   
   .stats-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .stat-card mat-card-content {
+    padding: 14px !important;
+    gap: 12px;
+  }
+  
+  .stat-icon {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .stat-icon mat-icon {
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+  }
+  
+  .stat-value {
+    font-size: 24px;
+  }
+  
+  .stat-label {
+    font-size: 12px;
   }
   
   .charts-grid {
+    grid-template-columns: 1fr;
     gap: 12px;
   }
   
@@ -585,17 +719,85 @@ mat-card-subtitle {
     padding: 12px !important;
   }
   
+  .chart-card mat-card-title {
+    font-size: 16px !important;
+  }
+  
+  .kpis-grid {
+    gap: 12px;
+  }
+  
+  .kpi-item {
+    padding: 14px;
+  }
+  
+  .kpi-name {
+    font-size: 14px;
+  }
+  
+  .kpi-current {
+    font-size: 20px;
+  }
+  
+  .kpi-target {
+    font-size: 11px;
+  }
+  
   .actions-grid {
     grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  .action-btn {
+    padding: 14px 10px !important;
+    min-height: 60px;
+  }
+  
+  .action-btn mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+  
+  .action-btn span {
+    font-size: 13px;
+  }
+  
+  .progress-value {
+    font-size: 36px;
+  }
+  
+  .progress-description {
+    font-size: 12px;
   }
   
   .alert-item-card {
     flex-direction: column;
     text-align: center;
+    padding: 12px;
   }
   
   .alert-meta {
     justify-content: center;
+  }
+  
+  .alert-title {
+    font-size: 14px;
+  }
+  
+  .alert-description {
+    font-size: 12px;
+  }
+  
+  /* Improve touch targets */
+  button {
+    min-height: 44px;
+  }
+  
+  /* Prevent horizontal scroll */
+  * {
+    max-width: 100%;
+    box-sizing: border-box;
   }
 }
 

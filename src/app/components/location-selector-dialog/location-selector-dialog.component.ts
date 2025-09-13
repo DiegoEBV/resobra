@@ -180,8 +180,8 @@ export class LocationSelectorDialogComponent implements OnInit, AfterViewInit, O
     @Inject(MAT_DIALOG_DATA) public data: LocationSelectorData
   ) {
     this.coordinatesForm = this.fb.group({
-      lat: [data.currentLat || -17.783327],
-      lng: [data.currentLng || -63.182140],
+      lat: [data.currentLat || -12.0464],
+      lng: [data.currentLng || -77.0428],
       direccion: ['']
     });
   }
@@ -221,8 +221,8 @@ export class LocationSelectorDialogComponent implements OnInit, AfterViewInit, O
   }
   
   private initializeMap(): void {
-    const lat = this.coordinatesForm.get('lat')?.value || -17.783327;
-    const lng = this.coordinatesForm.get('lng')?.value || -63.182140;
+    const lat = this.coordinatesForm.get('lat')?.value || -12.0464;
+    const lng = this.coordinatesForm.get('lng')?.value || -77.0428;
     
     this.map = L.map('location-map').setView([lat, lng], 15);
     

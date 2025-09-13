@@ -716,9 +716,9 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
     
     // Solo aplicar ubicación por defecto si no hay coordenadas válidas
     if (!currentLat || !currentLng || (currentLat === 0 && currentLng === 0)) {
-      // Coordenadas por defecto (Santa Cruz, Bolivia)
-      const defaultLat = -17.783327;
-      const defaultLng = -63.182140;
+      // Coordenadas por defecto (Lima, Perú)
+      const defaultLat = -12.0464;
+      const defaultLng = -77.0428;
       
       this.updateLocation(defaultLat, defaultLng);
       
@@ -765,8 +765,8 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
       
       // Simular coordenadas del rango kilométrico basado en el frente
       // En una implementación real, esto vendría de los datos del frente
-      const baseLatitude = this.currentLatitude || -17.783327;
-      const baseLongitude = this.currentLongitude || -63.182140;
+      const baseLatitude = this.currentLatitude || -12.0464;
+    const baseLongitude = this.currentLongitude || -77.0428;
       
       // Calcular puntos del rango (simulación lineal)
       const latOffset = 0.001; // Aproximadamente 100m por cada km

@@ -94,6 +94,10 @@ export class ObrasService {
     try {
       console.log('📋 ObrasService: Cargando todas las obras desde Supabase');
       
+      // Verificar autenticación
+      const user = await this.authService.getCurrentUser();
+      console.log('👤 ObrasService: Usuario actual:', user ? user.email : 'No autenticado');
+      
       const { data, error } = await this.supabase.client
         .from('obras')
         .select('*')
@@ -101,14 +105,20 @@ export class ObrasService {
 
       if (error) {
         console.error('❌ Error getting all obras:', error);
+        console.error('❌ Error code:', error.code);
+        console.error('❌ Error message:', error.message);
+        console.error('❌ Error details:', error.details);
         throw error;
       }
 
       const obras = data as Obra[] || [];
       console.log('✅ ObrasService: Obras cargadas desde Supabase:', obras.length);
+      console.log('📊 ObrasService: Datos de obras:', obras);
       return obras;
     } catch (error) {
       console.error('❌ Error in getAllObras:', error);
+      console.error('❌ Error type:', typeof error);
+      console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack');
       throw error;
     }
   }

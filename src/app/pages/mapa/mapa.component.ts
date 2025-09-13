@@ -551,11 +551,11 @@ export class MapaComponent implements OnInit, AfterViewInit, OnDestroy {
   private createKilometricRoute(frente: Frente, kilometros: Kilometro[]): void {
     if (!frente.coordenadas_inicio || !frente.coordenadas_fin) return;
 
-    const startPoint = [frente.coordenadas_inicio.lat, frente.coordenadas_inicio.lng] as [number, number];
-    const endPoint = [frente.coordenadas_fin.lat, frente.coordenadas_fin.lng] as [number, number];
+    // Obtener todos los puntos de la ruta (incluyendo intermedios)
+    const routePoints = this.getRoutePoints(frente);
 
-    // Crear línea base del frente
-    const routeLine = L.polyline([startPoint, endPoint], {
+    // Crear línea base del frente siguiendo todos los puntos de control
+    const routeLine = L.polyline(routePoints, {
       color: '#cccccc',
       weight: 8,
       opacity: 0.7
@@ -563,27 +563,44 @@ export class MapaComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.kilometroLayers.addLayer(routeLine);
 
-    // Crear segmentos coloreados para cada kilómetro
+    // Crear segmentos coloreados para cada kilómetro usando interpolación por curva
     kilometros.sort((a, b) => a.kilometro - b.kilometro).forEach((kilometro, index) => {
-      const progress = index / (kilometros.length - 1 || 1);
-      const segmentStart = this.interpolatePoint(startPoint, endPoint, progress);
-      const segmentEnd = this.interpolatePoint(startPoint, endPoint, (index + 1) / (kilometros.length || 1));
+      // Usar interpolación por curva para obtener la posición exacta del kilómetro
+      const kmPosition = this.interpolateAlongCurve(frente, kilometro.kilometro);
+      
+      if (!kmPosition) return;
 
-      // Crear segmento coloreado
-      const segment = L.polyline([segmentStart, segmentEnd], {
-        color: kilometro.color,
-        weight: 6,
-        opacity: 0.9
-      });
+      // Calcular posición del siguiente kilómetro para crear el segmento
+      let nextKmPosition: [number, number] | null = null;
+      if (index < kilometros.length - 1) {
+        nextKmPosition = this.interpolateAlongCurve(frente, kilometros[index + 1].kilometro);
+      } else {
+        // Para el último kilómetro, usar el punto final
+        if (frente.coordenadas_fin) {
+          nextKmPosition = [frente.coordenadas_fin.lat, frente.coordenadas_fin.lng];
+        }
+      }
 
-      // Agregar popup con información del kilómetro
-      const popupContent = this.createKilometroPopup(kilometro, frente);
-      segment.bindPopup(popupContent);
+      if (nextKmPosition) {
+        // Crear segmento coloreado siguiendo la curva
+        const segmentPoints = this.getSegmentPoints(frente, kilometro.kilometro, 
+          index < kilometros.length - 1 ? kilometros[index + 1].kilometro : frente.km_final!);
+        
+        const segment = L.polyline(segmentPoints, {
+          color: kilometro.color,
+          weight: 6,
+          opacity: 0.9
+        });
 
-      this.kilometroLayers.addLayer(segment);
+        // Agregar popup con información del kilómetro
+        const popupContent = this.createKilometroPopup(kilometro, frente);
+        segment.bindPopup(popupContent);
 
-      // Agregar marcador en el punto del kilómetro
-      const kmMarker = L.circleMarker(segmentStart, {
+        this.kilometroLayers.addLayer(segment);
+      }
+
+      // Agregar marcador en el punto exacto del kilómetro
+      const kmMarker = L.circleMarker(kmPosition, {
         radius: 8,
         fillColor: kilometro.color,
         color: '#ffffff',
@@ -592,15 +609,198 @@ export class MapaComponent implements OnInit, AfterViewInit, OnDestroy {
         fillOpacity: 0.8
       });
 
+      const popupContent = this.createKilometroPopup(kilometro, frente);
       kmMarker.bindPopup(popupContent);
       this.kilometroLayers.addLayer(kmMarker);
     });
+
+    // Agregar marcadores para puntos de control intermedios (solo en modo de edición)
+    if (frente.coordenadas_intermedias && frente.coordenadas_intermedias.length > 0) {
+      frente.coordenadas_intermedias.forEach((punto, index) => {
+        const controlMarker = L.circleMarker([punto.lat, punto.lng], {
+          radius: 6,
+          fillColor: '#ff9800',
+          color: '#ffffff',
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.8
+        });
+
+        controlMarker.bindPopup(`
+          <div class="control-point-popup">
+            <h4>Punto de Control ${index + 1}</h4>
+            <p><strong>Kilometraje:</strong> ${punto.kilometraje}</p>
+            <p><strong>Coordenadas:</strong> ${punto.lat.toFixed(6)}, ${punto.lng.toFixed(6)}</p>
+          </div>
+        `);
+
+        this.kilometroLayers.addLayer(controlMarker);
+      });
+    }
+  }
+
+  /**
+   * Obtiene los puntos que forman un segmento de la ruta entre dos kilometrajes
+   * @param frente Frente con coordenadas
+   * @param startKm Kilometraje inicial del segmento
+   * @param endKm Kilometraje final del segmento
+   * @returns Array de coordenadas del segmento
+   */
+  private getSegmentPoints(frente: Frente, startKm: number, endKm: number): [number, number][] {
+    const points: [number, number][] = [];
+    
+    // Obtener todos los puntos de control
+    const allPoints = this.getRoutePoints(frente);
+    
+    if (!frente.km_inicial || !frente.km_final) return points;
+    
+    // Si no hay puntos intermedios, usar interpolación simple
+    if (!frente.coordenadas_intermedias || frente.coordenadas_intermedias.length === 0) {
+      const startPos = this.interpolateAlongCurve(frente, startKm);
+      const endPos = this.interpolateAlongCurve(frente, endKm);
+      if (startPos && endPos) {
+        points.push(startPos, endPos);
+      }
+      return points;
+    }
+
+    // Crear array de todos los puntos de control
+    const controlPoints: { lat: number; lng: number; kilometraje: number }[] = [];
+    
+    if (frente.coordenadas_inicio && frente.km_inicial) {
+      controlPoints.push({
+        lat: frente.coordenadas_inicio.lat, 
+        lng: frente.coordenadas_inicio.lng, 
+        kilometraje: frente.km_inicial
+      });
+    }
+    
+    controlPoints.push(...frente.coordenadas_intermedias);
+    if (frente.coordenadas_fin && frente.km_final) {
+      controlPoints.push({
+        lat: frente.coordenadas_fin.lat,
+        lng: frente.coordenadas_fin.lng,
+        kilometraje: frente.km_final
+      });
+    }
+    
+    controlPoints.sort((a, b) => a.kilometraje - b.kilometraje);
+
+    // Agregar punto inicial del segmento
+    const startPos = this.interpolateAlongCurve(frente, startKm);
+    if (startPos) points.push(startPos);
+
+    // Agregar puntos de control que estén dentro del rango del segmento
+    controlPoints.forEach(point => {
+      if (point.kilometraje > startKm && point.kilometraje < endKm) {
+        points.push([point.lat, point.lng]);
+      }
+    });
+
+    // Agregar punto final del segmento
+    const endPos = this.interpolateAlongCurve(frente, endKm);
+    if (endPos) points.push(endPos);
+
+    return points;
   }
 
   private interpolatePoint(start: [number, number], end: [number, number], progress: number): [number, number] {
     const lat = start[0] + (end[0] - start[0]) * progress;
     const lng = start[1] + (end[1] - start[1]) * progress;
     return [lat, lng];
+  }
+
+  /**
+   * Interpola puntos a lo largo de una curva definida por puntos de control intermedios
+   * @param frente Frente con coordenadas de inicio, fin y puntos intermedios
+   * @param targetKilometraje Kilometraje objetivo para interpolar
+   * @returns Coordenadas interpoladas en el kilometraje objetivo
+   */
+  private interpolateAlongCurve(frente: Frente, targetKilometraje: number): [number, number] | null {
+    if (!frente.coordenadas_inicio || !frente.coordenadas_fin) return null;
+    if (!frente.km_inicial || !frente.km_final) return null;
+
+    // Crear array de todos los puntos de control ordenados por kilometraje
+    const controlPoints: { lat: number; lng: number; kilometraje: number }[] = [];
+    
+    // Agregar punto inicial
+    controlPoints.push({ 
+      lat: frente.coordenadas_inicio.lat, 
+      lng: frente.coordenadas_inicio.lng, 
+      kilometraje: frente.km_inicial 
+    });
+
+    // Agregar puntos intermedios si existen
+    if (frente.coordenadas_intermedias && frente.coordenadas_intermedias.length > 0) {
+      controlPoints.push(...frente.coordenadas_intermedias);
+    }
+
+    // Agregar punto final
+    controlPoints.push({
+      lat: frente.coordenadas_fin.lat,
+      lng: frente.coordenadas_fin.lng,
+      kilometraje: frente.km_final
+    });
+
+    // Ordenar puntos por kilometraje
+    controlPoints.sort((a, b) => a.kilometraje - b.kilometraje);
+
+    // Encontrar el segmento que contiene el kilometraje objetivo
+    for (let i = 0; i < controlPoints.length - 1; i++) {
+      const startPoint = controlPoints[i];
+      const endPoint = controlPoints[i + 1];
+
+      if (targetKilometraje >= startPoint.kilometraje && targetKilometraje <= endPoint.kilometraje) {
+        // Calcular progreso dentro del segmento
+        const segmentLength = endPoint.kilometraje - startPoint.kilometraje;
+        const progress = segmentLength > 0 ? (targetKilometraje - startPoint.kilometraje) / segmentLength : 0;
+
+        // Interpolar linealmente dentro del segmento
+        return this.interpolatePoint(
+          [startPoint.lat, startPoint.lng],
+          [endPoint.lat, endPoint.lng],
+          progress
+        );
+      }
+    }
+
+    // Si no se encuentra el segmento, usar interpolación lineal simple como fallback
+    const totalLength = frente.km_final - frente.km_inicial;
+    const progress = totalLength > 0 ? (targetKilometraje - frente.km_inicial) / totalLength : 0;
+    return this.interpolatePoint(
+      [frente.coordenadas_inicio.lat, frente.coordenadas_inicio.lng],
+      [frente.coordenadas_fin.lat, frente.coordenadas_fin.lng],
+      progress
+    );
+  }
+
+  /**
+   * Obtiene todos los puntos de la ruta incluyendo puntos intermedios
+   * @param frente Frente con coordenadas
+   * @returns Array de coordenadas que definen la ruta completa
+   */
+  private getRoutePoints(frente: Frente): [number, number][] {
+    if (!frente.coordenadas_inicio || !frente.coordenadas_fin) return [];
+
+    const points: [number, number][] = [];
+    
+    // Agregar punto inicial
+    points.push([frente.coordenadas_inicio.lat, frente.coordenadas_inicio.lng]);
+
+    // Agregar puntos intermedios ordenados por kilometraje
+    if (frente.coordenadas_intermedias && frente.coordenadas_intermedias.length > 0) {
+      const sortedIntermediates = [...frente.coordenadas_intermedias]
+        .sort((a, b) => a.kilometraje - b.kilometraje);
+      
+      sortedIntermediates.forEach(point => {
+        points.push([point.lat, point.lng]);
+      });
+    }
+
+    // Agregar punto final
+    points.push([frente.coordenadas_fin.lat, frente.coordenadas_fin.lng]);
+
+    return points;
   }
 
   private createKilometroPopup(kilometro: Kilometro, frente: Frente): string {

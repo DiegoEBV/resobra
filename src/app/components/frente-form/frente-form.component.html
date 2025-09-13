@@ -179,6 +179,14 @@
           <h4 class="subsection-title">
             <mat-icon>place</mat-icon>
             Coordenadas de Inicio
+            <button mat-icon-button 
+                    type="button"
+                    color="primary"
+                    (click)="openLocationSelectorForStart()"
+                    matTooltip="Seleccionar en el mapa"
+                    class="map-selector-btn">
+              <mat-icon>map</mat-icon>
+            </button>
           </h4>
           <div class="form-row two-columns">
             <mat-form-field appearance="outline">
@@ -208,6 +216,14 @@
           <h4 class="subsection-title">
             <mat-icon>place</mat-icon>
             Coordenadas de Fin
+            <button mat-icon-button 
+                    type="button"
+                    color="primary"
+                    (click)="openLocationSelectorForEnd()"
+                    matTooltip="Seleccionar en el mapa"
+                    class="map-selector-btn">
+              <mat-icon>map</mat-icon>
+            </button>
           </h4>
           <div class="form-row two-columns">
             <mat-form-field appearance="outline">

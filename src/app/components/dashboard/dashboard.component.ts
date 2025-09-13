@@ -133,6 +133,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.loadDashboardData();
     // Forzar recarga de KPIs para asegurar datos actualizados
     this.refreshKPIsData();
+    // Ejecutar diagnóstico de debug
+    this.runDebugDiagnostic();
+  }
+
+  // Ejecutar diagnóstico de debug
+  private async runDebugDiagnostic(): Promise<void> {
+    try {
+      console.log('🔧 [DASHBOARD] Ejecutando diagnóstico de debug...');
+      await this.actividadesService.debugUserData();
+    } catch (error) {
+      console.error('❌ [DASHBOARD] Error en diagnóstico:', error);
+    }
   }
 
   // Refrescar datos de KPIs

@@ -160,6 +160,12 @@ export const routes: Routes = [
     title: 'Configuración'
   },
   {
+    path: 'debug',
+    loadComponent: () => import('./components/debug/debug.component').then(m => m.DebugComponent),
+    canActivate: [AuthGuard],
+    title: 'Diagnóstico de Debug'
+  },
+  {
     path: '**',
     redirectTo: '/dashboard',
     pathMatch: 'full'

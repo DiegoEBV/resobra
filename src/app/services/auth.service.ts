@@ -3,6 +3,7 @@ import { BehaviorSubject, Observable, from, firstValueFrom } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { SupabaseService } from './supabase.service';
 import { User, Session } from '@supabase/supabase-js';
+import { LockMonitorService } from './lock-monitor.service';
 
 export interface UserProfile {
   id: string;
@@ -20,103 +21,119 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   private currentProfileSubject = new BehaviorSubject<UserProfile | null>(null);
   private sessionSubject = new BehaviorSubject<Session | null>(null);
+  private lockMonitor = new LockMonitorService();
 
   public currentUser$ = this.currentUserSubject.asObservable();
   public currentProfile$ = this.currentProfileSubject.asObservable();
   public session$ = this.sessionSubject.asObservable();
   public isAuthenticated$ = this.currentUser$.pipe(map(user => !!user));
   constructor(private supabase: SupabaseService) {
-    // Limpiar posibles locks de autenticación al inicializar
-    this.clearAuthLocks();
-    
-    // Escuchar cambios en la autenticación
-    this.supabase.auth.onAuthStateChange((event, session) => {
-      console.log('🔐 Auth state change:', event, session?.user?.email || 'no user');
-      this.sessionSubject.next(session);
-      this.currentUserSubject.next(session?.user || null);
-      
-      if (session?.user) {
-        this.loadUserProfile(session.user.id);
-      } else {
-        this.currentProfileSubject.next(null);
+    // Suscribirse a cambios en el estado de locks
+    this.lockMonitor.lockStatus$.subscribe(locksCleaned => {
+      if (locksCleaned) {
+        console.log('🔄 AuthService: Locks limpiados, reintentando operaciones...');
+        // Opcional: reintentar la última operación fallida
       }
     });
-
-    // Cargar sesión inicial
+    
     this.loadInitialSession();
   }
 
-  // Método para limpiar locks de autenticación (solo locks problemáticos, no sesiones válidas)
-  private async clearAuthLocks() {
+  // Limpiar locks de autenticación de manera agresiva
+  private async clearAuthLocks(): Promise<void> {
     try {
-      // Solo limpiar claves específicas de locks, no las sesiones
-      const lockKeysToRemove = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        // Solo eliminar claves que contengan 'lock' o sean específicamente problemáticas
-        if (key && (key.includes('lock') || key.includes('navigator-lock') || key.includes('auth-lock'))) {
-          lockKeysToRemove.push(key);
-        }
-      }
+      console.log('🧹 Limpiando locks de autenticación...');
       
-      lockKeysToRemove.forEach(key => {
-        console.log('🧹 Limpiando clave de lock:', key);
-        localStorage.removeItem(key);
-      });
+      // Usar el servicio de monitoreo para limpieza coordinada
+      await this.lockMonitor.forceCleanLocks();
       
-      // También limpiar sessionStorage de locks específicos
-      const sessionLockKeysToRemove = [];
-      for (let i = 0; i < sessionStorage.length; i++) {
-        const key = sessionStorage.key(i);
-        if (key && (key.includes('lock') || key.includes('navigator-lock') || key.includes('auth-lock'))) {
-          sessionLockKeysToRemove.push(key);
-        }
-      }
-      
-      sessionLockKeysToRemove.forEach(key => {
-        console.log('🧹 Limpiando clave de session lock:', key);
-        sessionStorage.removeItem(key);
-      });
-      
+      console.log('✅ Locks de autenticación limpiados');
     } catch (error) {
-      console.warn('Error limpiando locks de auth:', error);
+      console.warn('⚠️ Error limpiando locks:', error);
     }
   }
 
+  // Cargar sesión inicial con manejo robusto de locks
   private async loadInitialSession(): Promise<void> {
-    try {
-      console.log('🔄 Cargando sesión inicial...');
-      const { data: { session }, error } = await this.supabase.auth.getSession();
-      
-      if (error) {
-        console.error('❌ Error obteniendo sesión:', error);
-        // Si hay error de lock, intentar limpiar y reintentar
-        if (error.message?.includes('NavigatorLockAcquireTimeoutError')) {
-          console.log('🔧 Detectado error de lock, limpiando y reintentando...');
-          await this.clearAuthLocks();
-          // Esperar un poco antes de reintentar
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          return this.loadInitialSession();
+    const maxRetries = 3;
+    let attempt = 0;
+    
+    while (attempt < maxRetries) {
+      try {
+        console.log(`🔄 Intento ${attempt + 1}/${maxRetries} de carga de sesión inicial...`);
+        
+        const sessionPromise = this.supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Session timeout')), 10000)
+        );
+        
+        const { data: { session }, error } = await Promise.race([
+          sessionPromise,
+          timeoutPromise
+        ]) as any;
+        
+        if (error) {
+          console.warn(`⚠️ Error loading initial session (attempt ${attempt + 1}):`, error);
+          
+          // Si es un error de NavigatorLockAcquireTimeoutError, limpiar locks y reintentar
+          if (error.message && (
+            error.message.includes('NavigatorLockAcquireTimeoutError') ||
+            error.message.includes('lock') ||
+            error.message.includes('timeout')
+          )) {
+            console.log('🔓 Detected lock-related error, clearing locks and retrying...');
+            await this.clearAuthLocks();
+            
+            // Esperar con exponential backoff
+            const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
+            console.log(`⏳ Esperando ${delay}ms antes del siguiente intento...`);
+            await this.delay(delay);
+            
+            attempt++;
+            continue;
+          }
+          
+          // Para otros errores, salir del bucle
+          console.error('❌ Error no relacionado con locks:', error);
+          return;
+        }
+
+        // Éxito - procesar la sesión
+        console.log('✅ Sesión cargada exitosamente');
+        this.sessionSubject.next(session);
+        this.currentUserSubject.next(session?.user || null);
+        
+        if (session?.user) {
+          await this.loadUserProfile(session.user.id);
         }
         return;
-      }
-      
-      if (session) {
-        console.log('✅ Sesión encontrada para:', session.user.email);
-        this.sessionSubject.next(session);
-        this.currentUserSubject.next(session.user);
-        await this.loadUserProfile(session.user.id);
-      } else {
-        console.log('ℹ️ No hay sesión activa');
-      }
-    } catch (error) {
-      console.error('❌ Error cargando sesión inicial:', error);
-      // Si es un error de lock, limpiar storage
-      if (error instanceof Error && error.message?.includes('NavigatorLockAcquireTimeoutError')) {
-        console.log('🔧 Limpiando locks debido a error...');
-        await this.clearAuthLocks();
+        
+      } catch (error: any) {
+        console.warn(`⚠️ Error en intento ${attempt + 1}:`, error);
+        
+        // Si es timeout o error de lock, reintentar
+        if (error.message && (
+          error.message.includes('timeout') ||
+          error.message.includes('NavigatorLockAcquireTimeoutError') ||
+          error.message.includes('lock')
+        )) {
+          await this.clearAuthLocks();
+          
+          const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
+          console.log(`⏳ Esperando ${delay}ms antes del siguiente intento...`);
+          await this.delay(delay);
+          
+          attempt++;
+          continue;
+        }
+        
+        // Para otros errores, salir del bucle
+        console.error('❌ Error no recuperable:', error);
+        return;
       }
     }
+    
+    console.error('❌ Se agotaron todos los intentos de carga de sesión');
   }
 
   private async loadUserProfile(userId: string) {
@@ -144,23 +161,21 @@ export class AuthService {
     }
   }
 
-  // Iniciar sesión
+  // Iniciar sesión con manejo robusto de locks
   signIn(email: string, password: string): Observable<{ user: User | null; error: any }> {
-    return from(
-      this.supabase.auth.signInWithPassword({ email, password })
-    ).pipe(
+    return from(this.signInWithRetry(email, password)).pipe(
       map(({ data, error }) => {
         // Si el login es exitoso, cargar el perfil del usuario
         if (data?.user && !error) {
-          console.log('Login exitoso para:', email);
+          console.log('✅ Login exitoso para:', email);
           this.loadUserProfile(data.user.id);
           return { user: data.user, error: null };
         }
         
         // Manejar errores específicos de Supabase
         if (error) {
-          console.log('Error de autenticación:', error);
-          console.log('Mensaje de error:', error.message);
+          console.log('❌ Error de autenticación:', error);
+          console.log('📝 Mensaje de error:', error.message);
           
           // Traducir errores comunes
           let translatedError = error;
@@ -183,6 +198,12 @@ export class AuthService {
                 message: 'Demasiados intentos de acceso. Intente nuevamente en unos minutos.',
                 __isAuthError: true
               } as any;
+            } else if (error.message.includes('NavigatorLockAcquireTimeoutError') || error.message.includes('lock')) {
+              translatedError = { 
+                ...error, 
+                message: 'Error temporal del sistema. Intente nuevamente en unos segundos.',
+                __isAuthError: true
+              } as any;
             } else {
               translatedError = { 
                 ...error, 
@@ -198,6 +219,79 @@ export class AuthService {
         return { user: data?.user || null, error };
       })
     );
+  }
+
+  // Método auxiliar para signIn con retry logic
+  private async signInWithRetry(email: string, password: string, maxRetries: number = 3): Promise<{ data: any; error: any }> {
+    let attempt = 0;
+    
+    while (attempt < maxRetries) {
+      try {
+        console.log(`🔄 Intento de login ${attempt + 1}/${maxRetries} para: ${email}`);
+        
+        // Crear promesa con timeout personalizado
+        const signInPromise = this.supabase.auth.signInWithPassword({ email, password });
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Login timeout')), 15000)
+        );
+        
+        const result = await Promise.race([signInPromise, timeoutPromise]) as any;
+        
+        // Si hay error de lock, limpiar y reintentar
+        if (result.error && result.error.message && (
+          result.error.message.includes('NavigatorLockAcquireTimeoutError') ||
+          result.error.message.includes('lock') ||
+          result.error.message.includes('timeout')
+        )) {
+          console.log(`🔓 Error de lock detectado en intento ${attempt + 1}, limpiando locks...`);
+          await this.clearAuthLocks();
+          
+          // Esperar con exponential backoff
+          const delay = Math.min(2000 * Math.pow(2, attempt), 8000);
+          console.log(`⏳ Esperando ${delay}ms antes del siguiente intento...`);
+          await this.delay(delay);
+          
+          attempt++;
+          continue;
+        }
+        
+        // Si no hay error de lock, devolver el resultado
+        console.log(`✅ Login completado en intento ${attempt + 1}`);
+        return result;
+        
+      } catch (error: any) {
+        console.warn(`⚠️ Error en intento de login ${attempt + 1}:`, error);
+        
+        // Si es timeout o error de lock, reintentar
+        if (error.message && (
+          error.message.includes('timeout') ||
+          error.message.includes('NavigatorLockAcquireTimeoutError') ||
+          error.message.includes('lock')
+        )) {
+          await this.clearAuthLocks();
+          
+          const delay = Math.min(2000 * Math.pow(2, attempt), 8000);
+          console.log(`⏳ Esperando ${delay}ms antes del siguiente intento...`);
+          await this.delay(delay);
+          
+          attempt++;
+          continue;
+        }
+        
+        // Para otros errores, devolver inmediatamente
+        console.error('❌ Error no recuperable en login:', error);
+        return { data: null, error };
+      }
+    }
+    
+    console.error('❌ Se agotaron todos los intentos de login');
+    return { 
+      data: null, 
+      error: { 
+        message: 'Error temporal del sistema. Intente nuevamente en unos minutos.',
+        __isAuthError: true
+      }
+    };
   }
 
   // Método auxiliar para buscar un usuario por email
@@ -283,9 +377,9 @@ export class AuthService {
     }
   }
 
-  // Cerrar sesión
+  // Cerrar sesión con limpieza de locks
   signOut(): Observable<{ error: any }> {
-    return from(this.supabase.auth.signOut()).pipe(
+    return from(this.signOutWithCleanup()).pipe(
       tap(() => {
         this.currentUserSubject.next(null);
         this.currentProfileSubject.next(null);
@@ -293,6 +387,44 @@ export class AuthService {
       }),
       map(({ error }) => ({ error }))
     );
+  }
+
+  // Método auxiliar para signOut con limpieza
+  private async signOutWithCleanup(): Promise<{ error: any }> {
+    try {
+      console.log('🚪 Iniciando cierre de sesión...');
+      
+      // Limpiar locks antes del signOut
+      await this.clearAuthLocks();
+      
+      // Crear promesa con timeout
+      const signOutPromise = this.supabase.auth.signOut();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('SignOut timeout')), 10000)
+      );
+      
+      const result = await Promise.race([signOutPromise, timeoutPromise]) as any;
+      
+      // Limpiar locks después del signOut también
+      await this.clearAuthLocks();
+      
+      console.log('✅ Cierre de sesión completado');
+      return result;
+      
+    } catch (error: any) {
+      console.warn('⚠️ Error durante cierre de sesión:', error);
+      
+      // Limpiar locks incluso si hay error
+      await this.clearAuthLocks();
+      
+      // Si es timeout, considerar como éxito parcial
+      if (error.message && error.message.includes('timeout')) {
+        console.log('⏰ Timeout en signOut, pero limpiando estado local...');
+        return { error: null };
+      }
+      
+      return { error };
+    }
   }
 
   // Obtener usuario actual

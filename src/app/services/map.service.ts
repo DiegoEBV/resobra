@@ -109,7 +109,7 @@ export class MapService {
   // Inicializar mapa
   initializeMap(containerId: string, options?: L.MapOptions): L.Map {
     const defaultOptions: L.MapOptions = {
-      center: [-16.5000, -68.1500], // La Paz, Bolivia como centro por defecto
+      center: [-12.0464, -77.0428], // Lima, Perú como centro por defecto
       zoom: 13,
       zoomControl: true,
       attributionControl: true

@@ -1,7 +1,7 @@
 import { Component, OnInit, Inject, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -11,7 +11,9 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule, DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE, NativeDateAdapter } from '@angular/material/core';
 import { Platform } from '@angular/cdk/platform';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActividadesService, Frente } from '../../services/actividades.service';
+import { LocationSelectorDialogComponent, LocationResult } from '../location-selector-dialog/location-selector-dialog.component';
 
 export interface FrenteFormData {
   frente?: Frente;
@@ -33,7 +35,8 @@ export interface FrenteFormData {
     MatIconModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatTooltipModule
   ],
   providers: [
     {
@@ -79,6 +82,7 @@ export class FrenteFormComponent implements OnInit {
     private fb: FormBuilder,
     private actividadesService: ActividadesService,
     private snackBar: MatSnackBar,
+    private dialog: MatDialog,
     public dialogRef: MatDialogRef<FrenteFormComponent>,
     @Inject(MAT_DIALOG_DATA) public data: FrenteFormData
   ) {
@@ -150,9 +154,21 @@ export class FrenteFormComponent implements OnInit {
 
   private async loadObras(): Promise<void> {
     try {
+      console.log('🔍 [FrenteForm] loadObras() - Iniciando carga de obras');
+      console.log('🔍 [FrenteForm] Llamando a actividadesService.getUserObras()');
+      
       this.obras = await this.actividadesService.getUserObras();
+      
+      console.log('📊 [FrenteForm] Resultado recibido de getUserObras():', this.obras);
+      console.log('📈 [FrenteForm] Cantidad de obras cargadas:', this.obras?.length || 0);
+      
+      if (!this.obras || this.obras.length === 0) {
+        console.warn('⚠️ [FrenteForm] No se encontraron obras para el usuario');
+      } else {
+        console.log('✅ [FrenteForm] Obras cargadas exitosamente:', this.obras.map(o => ({ id: o.id, nombre: o.nombre })));
+      }
     } catch (error) {
-      console.error('Error loading obras:', error);
+      console.error('❌ [FrenteForm] Error loading obras:', error);
       this.snackBar.open('Error al cargar las obras', 'Cerrar', {
         duration: 3000,
         panelClass: ['error-snackbar']
@@ -260,5 +276,67 @@ export class FrenteFormComponent implements OnInit {
   isFieldInvalid(fieldName: string): boolean {
     const control = this.frenteForm.get(fieldName);
     return !!(control && control.invalid && (control.dirty || control.touched));
+  }
+
+  openLocationSelectorForStart(): void {
+    const currentLat = this.frenteForm.get('coordenadas_inicio.lat')?.value;
+    const currentLng = this.frenteForm.get('coordenadas_inicio.lng')?.value;
+
+    const dialogRef = this.dialog.open(LocationSelectorDialogComponent, {
+      width: '80vw',
+      height: '80vh',
+      maxWidth: '1200px',
+      maxHeight: '800px',
+      data: {
+        currentLat: currentLat,
+        currentLng: currentLng
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((result: LocationResult) => {
+      if (result) {
+        this.frenteForm.patchValue({
+          coordenadas_inicio: {
+            lat: result.lat,
+            lng: result.lng
+          }
+        });
+        this.snackBar.open('Coordenadas de inicio seleccionadas correctamente', 'Cerrar', {
+          duration: 3000,
+          panelClass: ['success-snackbar']
+        });
+      }
+    });
+  }
+
+  openLocationSelectorForEnd(): void {
+    const currentLat = this.frenteForm.get('coordenadas_fin.lat')?.value;
+    const currentLng = this.frenteForm.get('coordenadas_fin.lng')?.value;
+
+    const dialogRef = this.dialog.open(LocationSelectorDialogComponent, {
+      width: '80vw',
+      height: '80vh',
+      maxWidth: '1200px',
+      maxHeight: '800px',
+      data: {
+        currentLat: currentLat,
+        currentLng: currentLng
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((result: LocationResult) => {
+      if (result) {
+        this.frenteForm.patchValue({
+          coordenadas_fin: {
+            lat: result.lat,
+            lng: result.lng
+          }
+        });
+        this.snackBar.open('Coordenadas de fin seleccionadas correctamente', 'Cerrar', {
+          duration: 3000,
+          panelClass: ['success-snackbar']
+        });
+      }
+    });
   }
 }
