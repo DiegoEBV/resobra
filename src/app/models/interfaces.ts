@@ -20,6 +20,9 @@ export interface Project {
   contractor?: string;
   supervisor?: string;
   start_date?: string;
+  presupuesto_total?: number;
+  presupuesto_ejecutado?: number;
+  fecha_fin_planificada?: string;
   created_at?: string;
   updated_at?: string;
 }

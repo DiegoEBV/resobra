@@ -1,0 +1,48 @@
+/* Estilos personalizados para el componente de login */
+
+/* Fondo blanco para el contenedor principal */
+.login-container {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+}
+
+.mat-mdc-card {
+  border-radius: 12px;
+  padding: 2rem;
+}
+
+.mat-mdc-form-field {
+  width: 100%;
+}
+
+.mat-mdc-raised-button {
+  border-radius: 8px;
+  height: 48px;
+}
+
+.mat-mdc-icon-button {
+  color: rgba(0, 0, 0, 0.54);
+}
+
+/* Animaciones suaves */
+.mat-mdc-card {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.mat-mdc-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Estilos para el spinner */
+.mat-mdc-progress-spinner {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .mat-mdc-card {
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+}

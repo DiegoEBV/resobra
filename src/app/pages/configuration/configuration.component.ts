@@ -84,11 +84,14 @@ export class ConfigurationComponent implements OnInit, OnDestroy {
   loadSelectedItems(): void {
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
       const stored = localStorage.getItem('selectedItems');
+      console.log('DEBUG: Stored selectedItems:', stored);
       if (stored) {
         this.selectedItems = JSON.parse(stored);
+        console.log('DEBUG: Parsed selectedItems:', this.selectedItems);
       }
     }
     
+    console.log('DEBUG: Final selectedItems length:', this.selectedItems.length);
     if (this.selectedItems.length === 0) {
       this.snackBar.open('No hay partidas seleccionadas. Regresa a la página principal.', 'Cerrar', {
         duration: 5000
@@ -98,11 +101,13 @@ export class ConfigurationComponent implements OnInit, OnDestroy {
   
   loadProjects(): void {
     this.isLoadingProjects = true;
+    console.log('DEBUG: Loading projects...');
     this.projectsService.getAllProjects()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (projects) => {
           this.projects = projects;
+          console.log('DEBUG: Loaded projects:', projects);
           this.isLoadingProjects = false;
         },
         error: (error) => {
@@ -194,19 +199,27 @@ export class ConfigurationComponent implements OnInit, OnDestroy {
   }
   
   canContinue(): boolean {
-    return this.selectedProject !== null && this.selectedItems.length > 0;
+    const canContinue = this.selectedProject !== null && this.selectedItems.length > 0;
+    console.log('DEBUG: canContinue() - selectedProject:', this.selectedProject);
+    console.log('DEBUG: canContinue() - selectedItems.length:', this.selectedItems.length);
+    console.log('DEBUG: canContinue() result:', canContinue);
+    return canContinue;
   }
   
   continueToGeneration(): void {
+    console.log('DEBUG: continueToGeneration() called');
     if (!this.canContinue()) {
+      console.log('DEBUG: Cannot continue - showing error message');
       this.snackBar.open('Selecciona un proyecto para continuar', 'Cerrar', { duration: 3000 });
       return;
     }
     
+    console.log('DEBUG: Continuing to generation with project:', this.selectedProject);
     // Store selected project for next page
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
       localStorage.setItem('selectedProject', JSON.stringify(this.selectedProject));
     }
+    console.log('DEBUG: Navigating to /generation');
     this.router.navigate(['/generation']);
   }
   

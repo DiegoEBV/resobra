@@ -1,0 +1,455 @@
+<div class="actividades-container">
+  
+  <!-- Header con título y botón de nueva actividad -->
+  <div class="header-section">
+    <div class="title-section">
+      <h1>Registro de Actividades</h1>
+      <p class="subtitle">Gestión y seguimiento de actividades de construcción</p>
+    </div>
+    <div class="actions-section">
+      <button mat-raised-button color="primary" routerLink="/actividades/nueva">
+        <mat-icon>add</mat-icon>
+        Nueva Actividad
+      </button>
+      <button mat-icon-button (click)="loadActividades()" matTooltip="Actualizar">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <mat-card class="filters-card">
+    <mat-card-content>
+      <div class="filters-row">
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Estado</mat-label>
+          <mat-select [(value)]="estadoFiltro" (selectionChange)="filterByEstado()">
+            <mat-option value="">Todos los estados</mat-option>
+            <mat-option *ngFor="let estado of estados" [value]="estado.value">
+              {{ estado.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Tipo de Actividad</mat-label>
+          <mat-select [(value)]="tipoFiltro" (selectionChange)="filterByTipo()">
+            <mat-option value="">Todos los tipos</mat-option>
+            <mat-option *ngFor="let tipo of tipos" [value]="tipo.value">
+              {{ tipo.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Tabla de actividades -->
+  <mat-card class="table-card">
+    <mat-card-content>
+      <div class="table-container" *ngIf="!isLoading; else loadingTemplate">
+        <table mat-table [dataSource]="dataSource" matSort class="actividades-table">
+          
+          <!-- Columna Tipo Actividad -->
+          <ng-container matColumnDef="tipo_actividad">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Tipo</th>
+            <td mat-cell *matCellDef="let actividad">
+              <mat-chip-set>
+                <mat-chip>{{ actividad.tipo_actividad | titlecase }}</mat-chip>
+              </mat-chip-set>
+            </td>
+          </ng-container>
+
+          <!-- Columna Estado -->
+          <ng-container matColumnDef="estado">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Estado</th>
+            <td mat-cell *matCellDef="let actividad">
+              <mat-chip-set>
+                <mat-chip 
+                  [color]="getEstadoColor(actividad.estado)"
+                  selected>
+                  {{ getEstadoLabel(actividad.estado) }}
+                </mat-chip>
+              </mat-chip-set>
+            </td>
+          </ng-container>
+
+          <!-- Columna Progreso -->
+          <ng-container matColumnDef="progreso">
+            <th mat-header-cell *matHeaderCellDef>Progreso</th>
+            <td mat-cell *matCellDef="let actividad">
+              <div class="progress-container">
+                <mat-progress-bar 
+                  mode="determinate" 
+                  [value]="actividad.progreso || 0"
+                  [color]="getProgresoColor(actividad.progreso || 0)">
+                </mat-progress-bar>
+                <span class="progress-text">{{ actividad.progreso || 0 }}%</span>
+                <small class="task-count">{{ actividad.tareasCompletadas || 0 }}/{{ actividad.totalTareas || 0 }} tareas</small>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Columna Fecha -->
+          <ng-container matColumnDef="fecha_inicio">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Fecha</th>
+            <td mat-cell *matCellDef="let actividad">
+              {{ actividad.fecha_inicio | date:'dd/MM/yyyy' }}
+            </td>
+          </ng-container>
+
+          <!-- Columna Ubicación -->
+          <ng-container matColumnDef="ubicacion">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Ubicación</th>
+            <td mat-cell *matCellDef="let actividad">
+              {{ actividad.ubicacion || 'No especificada' }}
+            </td>
+          </ng-container>
+
+          <!-- Columna Responsable -->
+          <ng-container matColumnDef="responsable">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Responsable</th>
+            <td mat-cell *matCellDef="let actividad">
+              {{ actividad.responsable || 'No asignado' }}
+            </td>
+          </ng-container>
+
+          <!-- Columna Acciones -->
+          <ng-container matColumnDef="acciones">
+            <th mat-header-cell *matHeaderCellDef>Acciones</th>
+            <td mat-cell *matCellDef="let actividad">
+              <button mat-icon-button 
+                      color="primary"
+                      matTooltip="Ver detalles y tareas"
+                      (click)="verDetalle(actividad)">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              <button mat-icon-button 
+                      color="accent"
+                      matTooltip="Editar actividad"
+                      (click)="editarActividad(actividad)">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button 
+                      color="warn"
+                      matTooltip="Eliminar actividad"
+                      (click)="deleteActividad(actividad.id)">
+                <mat-icon>delete</mat-icon>
+              </button>
+
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+        
+        <!-- Mensaje cuando no hay datos -->
+        <div class="no-data" *ngIf="dataSource.data.length === 0">
+          <mat-icon>assignment</mat-icon>
+          <h3>No hay actividades registradas</h3>
+          <p>Comienza creando tu primera actividad</p>
+          <button mat-raised-button color="primary" routerLink="/actividades/nueva">
+            <mat-icon>add</mat-icon>
+            Nueva Actividad
+          </button>
+        </div>
+      </div>
+      
+      <!-- Template de carga -->
+      <ng-template #loadingTemplate>
+        <div class="loading-container">
+          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+          <p>Cargando actividades...</p>
+        </div>
+      </ng-template>
+      
+      <!-- Paginador -->
+      <mat-paginator 
+        [pageSizeOptions]="[5, 10, 25, 100]"
+        [pageSize]="10"
+        showFirstLastButtons
+        *ngIf="!isLoading && dataSource.data.length > 0">
+      </mat-paginator>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<style>
+/* Estilos del componente de actividades */
+
+.actividades-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: #f8fafc;
+  min-height: 100vh;
+}
+
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  padding: 24px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.title-section h1 {
+  margin: 0;
+  color: #1e3a8a;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.subtitle {
+  margin: 8px 0 0 0;
+  color: #64748b;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.actions-section {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.filters-card {
+  margin-bottom: 24px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.filters-card .mat-mdc-card-content {
+  padding: 24px;
+}
+
+.filters-row {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.filter-field {
+  min-width: 220px;
+}
+
+.filter-field .mat-mdc-form-field {
+  background: #f0f9ff;
+}
+
+.table-card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+.table-card .mat-mdc-card-content {
+  padding: 0;
+}
+
+.actividades-table {
+  width: 100%;
+  background: #ffffff;
+}
+
+.mat-mdc-header-cell {
+  font-weight: 600;
+  color: #1e3a8a;
+  background: #f0f9ff;
+  border-bottom: 2px solid #3b82f6;
+  font-size: 14px;
+  padding: 16px 12px;
+}
+
+.mat-mdc-cell {
+  padding: 16px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #1e293b;
+}
+
+.mat-mdc-row:hover {
+  background: #f0f9ff;
+}
+
+.progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 140px;
+}
+
+.progress-text {
+  font-weight: 600;
+  font-size: 13px;
+  text-align: center;
+  color: #1e3a8a;
+}
+
+.task-count {
+  font-size: 11px;
+  color: #64748b;
+  text-align: center;
+  font-weight: 500;
+}
+
+.mat-mdc-progress-bar {
+  height: 10px;
+  border-radius: 6px;
+  background: #e2e8f0;
+}
+
+.mat-mdc-progress-bar .mdc-linear-progress__bar-inner {
+  border-radius: 6px;
+}
+
+/* Chips personalizados */
+.mat-mdc-chip {
+  font-weight: 500;
+  font-size: 12px;
+  border-radius: 20px;
+}
+
+.mat-mdc-chip.mat-primary {
+  background: #3b82f6;
+  color: #ffffff;
+}
+
+.mat-mdc-chip.mat-accent {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.mat-mdc-chip.mat-warn {
+  background: #f59e0b;
+  color: #ffffff;
+}
+
+/* Botones */
+.mat-mdc-raised-button.mat-primary {
+  background: #1e40af;
+  color: white;
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(30, 58, 138, 0.2);
+}
+
+.mat-mdc-raised-button.mat-primary:hover {
+  background: #6783e0;
+  box-shadow: 0 4px 8px rgba(30, 58, 138, 0.3);
+}
+
+.mat-mdc-icon-button.mat-primary {
+  color: #3b82f6;
+}
+
+.mat-mdc-icon-button.mat-accent {
+  color: #10b981;
+}
+
+.mat-mdc-icon-button.mat-warn {
+  color: #ef4444;
+}
+
+.no-data {
+  text-align: center;
+  padding: 60px 40px;
+  color: #64748b;
+  background: #f0f9ff;
+  border-radius: 12px;
+  margin: 24px;
+}
+
+.no-data h3 {
+  color: #1e3a8a;
+  font-weight: 600;
+  margin: 16px 0 8px 0;
+}
+
+.no-data p {
+  margin: 8px 0 24px 0;
+  font-size: 16px;
+}
+
+.no-data mat-icon {
+  font-size: 64px;
+  width: 64px;
+  height: 64px;
+  color: #3b82f6;
+  margin-bottom: 16px;
+  opacity: 0.7;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 40px;
+  gap: 20px;
+  background: #f0f9ff;
+  border-radius: 12px;
+  margin: 24px;
+}
+
+.loading-container p {
+  color: #64748b;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.mat-mdc-progress-bar.mat-primary .mdc-linear-progress__bar-inner {
+  background: #3b82f6;
+}
+
+/* Paginador */
+.mat-mdc-paginator {
+  background: #f0f9ff;
+  border-top: 1px solid #e2e8f0;
+  color: #1e293b;
+}
+
+
+
+@media (max-width: 768px) {
+  .actividades-container {
+    padding: 16px;
+  }
+  
+  .header-section {
+    flex-direction: column;
+    gap: 20px;
+    align-items: stretch;
+    padding: 20px;
+  }
+  
+  .title-section h1 {
+    font-size: 24px;
+  }
+  
+  .filters-row {
+    flex-direction: column;
+  }
+  
+  .filter-field {
+    min-width: auto;
+  }
+  
+  .progress-container {
+    min-width: 120px;
+  }
+  
+  .mat-mdc-header-cell,
+  .mat-mdc-cell {
+    padding: 12px 8px;
+  }
+}
+</style>

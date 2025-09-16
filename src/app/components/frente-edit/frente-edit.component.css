@@ -1,0 +1,301 @@
+.frente-edit-container {
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.frente-edit-card {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+.frente-edit-card mat-card-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  margin: -24px -24px 24px -24px;
+  padding: 24px;
+  border-radius: 8px 8px 0 0;
+}
+
+.frente-edit-card mat-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: white;
+  margin: 0;
+}
+
+.frente-edit-card mat-card-subtitle {
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 8px;
+}
+
+.frente-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.form-section {
+  margin-top: 24px;
+  padding: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #fafafa;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px 0;
+  color: #1976d2;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.half-width {
+  flex: 1;
+}
+
+.mat-mdc-form-field {
+  width: 100%;
+}
+
+.mat-mdc-form-field-appearance-outline .mat-mdc-form-field-outline {
+  border-radius: 8px;
+}
+
+.mat-mdc-form-field-appearance-outline .mat-mdc-form-field-outline-thick {
+  border-width: 2px;
+}
+
+.mat-mdc-card-actions {
+  padding: 16px 24px;
+  gap: 12px;
+}
+
+.mat-mdc-raised-button {
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.mat-mdc-button {
+  border-radius: 6px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .frente-edit-container {
+    padding: 16px;
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .half-width {
+    width: 100%;
+  }
+  
+  .form-section {
+    padding: 12px;
+  }
+}
+
+/* Loading state */
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Error states */
+.mat-mdc-form-field.mat-form-field-invalid .mat-mdc-form-field-outline-thick {
+  border-color: #f44336;
+}
+
+/* Success states */
+.success-snackbar {
+  background-color: #4caf50 !important;
+  color: white !important;
+}
+
+.error-snackbar {
+  background-color: #f44336 !important;
+  color: white !important;
+}
+
+/* Custom icon styling */
+mat-icon {
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.mat-mdc-form-field-subscript-wrapper {
+  margin-top: 4px;
+}
+
+/* Estilos para el mapa interactivo */
+.map-container {
+  height: 400px;
+  width: 100%;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  margin-top: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.map-instructions {
+  background-color: #e3f2fd;
+  border: 1px solid #2196f3;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.map-instructions p {
+  margin: 0 0 8px 0;
+  color: #1976d2;
+  font-weight: 500;
+}
+
+.map-instructions ol {
+  margin: 0;
+  padding-left: 20px;
+  color: #424242;
+}
+
+.map-instructions li {
+  margin-bottom: 4px;
+}
+
+.clear-map-btn {
+  margin-left: auto;
+  color: #f44336;
+}
+
+.clear-map-btn:hover {
+  background-color: rgba(244, 67, 54, 0.1);
+}
+
+/* Estilos para puntos intermedios */
+.intermediate-points-panel {
+  margin-top: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.intermediate-point-item {
+  border-bottom: 1px solid #e0e0e0;
+  padding: 16px 0;
+}
+
+.intermediate-point-item:last-child {
+  border-bottom: none;
+}
+
+.point-details {
+  flex: 1;
+  margin-left: 16px;
+}
+
+.point-coordinates {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.coord-field {
+  flex: 1;
+  min-width: 120px;
+}
+
+.km-field {
+  flex: 0 0 100px;
+  min-width: 100px;
+}
+
+.remove-point-btn {
+  color: #f44336;
+  margin-left: 8px;
+}
+
+.remove-point-btn:hover {
+  background-color: rgba(244, 67, 54, 0.1);
+}
+
+/* Responsive para mapa y puntos intermedios */
+@media (max-width: 768px) {
+  .map-container {
+    height: 300px;
+  }
+  
+  .point-coordinates {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .coord-field,
+  .km-field {
+    flex: none;
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .intermediate-point-item {
+    padding: 12px 0;
+  }
+  
+  .point-details {
+    margin-left: 12px;
+  }
+}
+
+/* Estilos para leaflet en el contexto del componente */
+.map-container .leaflet-container {
+  height: 100%;
+  width: 100%;
+  border-radius: 6px;
+}
+
+.map-container .leaflet-control-zoom {
+  border-radius: 6px;
+}
+
+.map-container .leaflet-bar {
+  border-radius: 6px;
+}
+
+/* Personalización de marcadores */
+.start-marker {
+  background-color: #4caf50;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.end-marker {
+  background-color: #f44336;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.intermediate-marker {
+  background-color: #ff9800;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}

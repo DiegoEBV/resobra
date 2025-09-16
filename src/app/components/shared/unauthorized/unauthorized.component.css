@@ -1,0 +1,46 @@
+/* Estilos personalizados para el componente de acceso no autorizado */
+
+.mat-mdc-card {
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.mat-mdc-raised-button {
+  border-radius: 8px;
+  height: 48px;
+}
+
+.mat-mdc-button {
+  border-radius: 8px;
+  height: 44px;
+}
+
+/* Animaciones */
+.mat-mdc-card {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hover effects */
+.mat-mdc-raised-button:hover {
+  transform: translateY(-1px);
+  transition: transform 0.2s ease-in-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .mat-mdc-card {
+    padding: 1rem;
+    margin: 1rem;
+  }
+}

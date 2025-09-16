@@ -1,0 +1,709 @@
+/* Contenedor principal */
+.mapa-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #fafafa;
+}
+
+/* Barra de herramientas superior */
+.toolbar-card {
+  margin: 0;
+  border-radius: 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 1000;
+}
+
+.toolbar-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: #333;
+}
+
+/* Contenedor principal */
+.main-container {
+  flex: 1;
+  overflow: hidden;
+}
+
+.sidenav-container {
+  height: 100%;
+}
+
+/* Panel lateral */
+.filters-sidenav {
+  width: 350px;
+  border-right: 1px solid #e0e0e0;
+  background-color: #fff;
+}
+
+.sidenav-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidenav-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #1976d2;
+  color: #fff;
+}
+
+.sidenav-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.sidenav-header button {
+  color: #fff;
+}
+
+/* Sección de filtros */
+.filters-section {
+  padding: 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.filters-section h4 {
+  margin: 0 0 16px 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.full-width {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+/* Sección de frentes */
+.frentes-section {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.frentes-section h4 {
+  margin: 0;
+  padding: 16px 16px 8px 16px;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.frentes-section mat-nav-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Items de frente */
+.frente-item {
+  border-bottom: 1px solid #e0e0e0;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.frente-item:hover {
+  background-color: rgba(0,0,0,0.04);
+}
+
+.frente-item.selected {
+  background-color: rgba(25, 118, 210, 0.12);
+  border-left: 4px solid #1976d2;
+}
+
+.estado-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  margin-right: 8px;
+}
+
+.estado-activo {
+  background-color: #e8f5e8;
+  color: #2e7d32;
+}
+
+.estado-pausado {
+  background-color: #fff3e0;
+  color: #f57c00;
+}
+
+.estado-completado {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.estado-planificado {
+  background-color: #f5f5f5;
+  color: #616161;
+}
+
+.kilometraje {
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 4px;
+}
+
+/* Estados de carga y sin resultados */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  text-align: center;
+}
+
+.loading-container p {
+  margin-top: 16px;
+  color: #666;
+}
+
+.no-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  text-align: center;
+  color: #666;
+}
+
+.no-results mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+/* Contenido del mapa */
+.map-content {
+  position: relative;
+  height: 100%;
+}
+
+.map-container {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.leaflet-map {
+  height: 100%;
+  width: 100%;
+  z-index: 1;
+}
+
+.map-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.map-loading-overlay p {
+  margin-top: 16px;
+  color: #666;
+}
+
+/* Tarjeta de información del frente */
+.frente-info-card {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 320px;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.frente-info-card mat-card-header {
+  position: relative;
+}
+
+.close-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+.frente-details {
+  margin-bottom: 16px;
+}
+
+.detail-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 0.875rem;
+}
+
+.detail-row mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: #666;
+  margin-top: 2px;
+}
+
+.actividades-stats {
+  border-top: 1px solid #e0e0e0;
+  padding-top: 16px;
+}
+
+.actividades-stats h4 {
+  margin: 0 0 12px 0;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 12px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+}
+
+.stat-number {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1976d2;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 4px;
+}
+
+/* Estilos para marcadores personalizados */
+:host ::ng-deep .custom-div-icon {
+  background: transparent;
+  border: none;
+}
+
+:host ::ng-deep .custom-marker {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  background-color: #fff;
+  border: 3px solid #1976d2;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  transition: transform 0.2s ease;
+}
+
+:host ::ng-deep .custom-marker:hover {
+  transform: scale(1.1);
+}
+
+:host ::ng-deep .custom-marker.activo {
+  border-color: #4caf50;
+}
+
+:host ::ng-deep .custom-marker.pausado {
+  border-color: #ff9800;
+}
+
+:host ::ng-deep .custom-marker.completado {
+  border-color: #2196f3;
+}
+
+:host ::ng-deep .custom-marker.planificado {
+  border-color: #9e9e9e;
+}
+
+:host ::ng-deep .marker-icon {
+  font-size: 20px;
+  color: #333;
+}
+
+:host ::ng-deep .activity-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: #f44336;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+  border: 2px solid white;
+}
+
+/* Estilos para popups de Leaflet */
+:host ::ng-deep .leaflet-popup-content {
+  margin: 8px 12px;
+  line-height: 1.4;
+}
+
+:host ::ng-deep .frente-popup h3 {
+  margin: 0 0 8px 0;
+  color: #1976d2;
+}
+
+:host ::ng-deep .frente-popup p {
+  margin: 4px 0;
+  font-size: 0.875rem;
+}
+
+:host ::ng-deep .actividades-summary {
+  background-color: #f5f5f5;
+  padding: 8px;
+  border-radius: 4px;
+  margin: 8px 0;
+}
+
+:host ::ng-deep .actividades-summary h4 {
+  margin: 0 0 4px 0;
+  font-size: 0.875rem;
+}
+
+:host ::ng-deep .actividades-summary p {
+  margin: 2px 0;
+  font-size: 0.75rem;
+}
+
+/* Estilos para creación de frentes */
+.creating-frente-overlay {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.creating-frente-card {
+  pointer-events: all;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  border-radius: 8px;
+}
+
+.creating-frente-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+}
+
+.creating-frente-content mat-icon {
+  font-size: 2rem;
+  width: 2rem;
+  height: 2rem;
+}
+
+.creating-frente-content h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.creating-frente-content p {
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* Estilos para botones de la barra de herramientas */
+.toolbar-right button[mat-raised-button] {
+  margin-right: 8px;
+}
+
+.toolbar-right mat-menu {
+  margin-top: 8px;
+}
+
+/* Estilos para acciones del frente */
+.frente-info-card mat-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 16px;
+}
+
+.frente-info-card mat-card-actions button {
+  flex: 1;
+  min-width: 120px;
+}
+
+/* Animaciones para marcadores temporales */
+.temp-marker {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .filters-sidenav {
+    width: 100%;
+  }
+  
+  .toolbar-content {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+  
+  .toolbar-left,
+  .toolbar-right {
+    justify-content: center;
+  }
+  
+  .toolbar-right {
+    flex-wrap: wrap;
+  }
+  
+  .frente-info-card {
+    position: relative;
+    bottom: auto;
+    right: auto;
+    width: 100%;
+    margin: 8px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .creating-frente-overlay {
+    left: 10px;
+    right: 10px;
+    transform: none;
+  }
+  
+  .frente-info-card mat-card-actions {
+    flex-direction: column;
+  }
+  
+  .frente-info-card mat-card-actions button {
+    width: 100%;
+  }
+  
+  .page-title {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .filters-sidenav {
+    width: 100vw;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  
+  .stat-item {
+    padding: 8px 4px;
+  }
+  
+  .stat-number {
+    font-size: 1.25rem;
+  }
+}
+
+/* Tema oscuro */
+@media (prefers-color-scheme: dark) {
+  .mapa-container {
+    background-color: #121212;
+  }
+  
+  .toolbar-card {
+    background-color: #1e1e1e;
+    color: #fff;
+  }
+  
+  .filters-sidenav {
+    background-color: #1e1e1e;
+    border-right-color: #333;
+  }
+  
+  .sidenav-header {
+    background-color: #1976d2;
+    border-bottom-color: #333;
+  }
+  
+  .filters-section {
+    border-bottom-color: #333;
+  }
+  
+  .frente-item {
+    border-bottom-color: #333;
+  }
+  
+  .frente-item:hover {
+    background-color: rgba(255,255,255,0.08);
+  }
+  
+  .frente-info-card {
+    background-color: #1e1e1e;
+    color: #fff;
+  }
+  
+  .actividades-stats {
+    border-top-color: #333;
+  }
+  
+  .stat-item {
+    background-color: #2a2a2a;
+  }
+  
+  :host ::ng-deep .custom-marker {
+    background-color: #1e1e1e;
+  }
+  
+  :host ::ng-deep .marker-icon {
+    color: #fff;
+  }
+}
+
+/* Alto contraste */
+@media (prefers-contrast: high) {
+  .estado-chip {
+    border: 2px solid currentColor;
+  }
+  
+  .frente-item.selected {
+    border-left-width: 6px;
+  }
+  
+  :host ::ng-deep .custom-marker {
+    border-width: 4px;
+  }
+}
+
+/* Animaciones */
+.frente-item {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.frente-info-card {
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Mejoras de accesibilidad */
+.frente-item:focus {
+  outline: 2px solid #1976d2;
+  outline-offset: 2px;
+}
+
+button:focus {
+  outline: 2px solid #1976d2;
+  outline-offset: 2px;
+}
+
+/* Reducir movimiento para usuarios sensibles */
+@media (prefers-reduced-motion: reduce) {
+  .frente-item,
+  .frente-info-card,
+  :host ::ng-deep .custom-marker {
+    animation: none;
+    transition: none;
+  }
+  
+  :host ::ng-deep .custom-marker:hover {
+    transform: none;
+  }
+}

@@ -1,0 +1,303 @@
+<div class="evaluaciones-container">
+  <!-- Header -->
+  <div class="header-section">
+    <h1>Sistema de Evaluación de Personal</h1>
+    <button mat-raised-button color="primary" (click)="refreshData()" [disabled]="loading">
+      <mat-icon>refresh</mat-icon>
+      Actualizar
+    </button>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Cargando evaluaciones...</p>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!loading">
+    <mat-tab-group [(selectedIndex)]="selectedTab">
+      
+      <!-- Tab 1: Nueva Evaluación -->
+      <mat-tab label="Nueva Evaluación">
+        <div class="tab-content">
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Crear Nueva Evaluación</mat-card-title>
+              <mat-card-subtitle>Complete el formulario para evaluar a un empleado</mat-card-subtitle>
+            </mat-card-header>
+            
+            <mat-card-content>
+              <form [formGroup]="evaluacionForm" (ngSubmit)="onSubmitEvaluacion()">
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Empleado a Evaluar</mat-label>
+                    <mat-select formControlName="evaluado_id" required>
+                      <mat-option *ngFor="let empleado of empleados" [value]="empleado.id">
+                        {{empleado.nombre}} - {{empleado.puesto}}
+                      </mat-option>
+                    </mat-select>
+                    <mat-error>Seleccione un empleado</mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Rúbrica de Evaluación</mat-label>
+                    <mat-select formControlName="rubrica_id" (selectionChange)="onRubricaChange()" required>
+                      <mat-option *ngFor="let rubrica of rubricas" [value]="rubrica.id">
+                        {{rubrica.nombre}} - {{rubrica.tipo_personal}}
+                      </mat-option>
+                    </mat-select>
+                    <mat-error>Seleccione una rúbrica</mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Período de Evaluación</mat-label>
+                    <input matInput formControlName="periodo" placeholder="Ej: Q1 2024" required>
+                    <mat-error>Ingrese el período</mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Fecha de Evaluación</mat-label>
+                    <input matInput [matDatepicker]="picker" formControlName="fecha_evaluacion" required>
+                    <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                    <mat-datepicker #picker></mat-datepicker>
+                    <mat-error>Seleccione una fecha</mat-error>
+                  </mat-form-field>
+                </div>
+
+                <!-- Criterios de Evaluación -->
+                <div *ngIf="selectedRubrica" class="criterios-section">
+                  <h3>Criterios de Evaluación</h3>
+                  <div class="criterios-grid">
+                    <mat-card *ngFor="let criterio of selectedRubrica.criterios" class="criterio-card">
+                      <mat-card-header>
+                        <mat-card-title>{{criterio.nombre}}</mat-card-title>
+                        <mat-card-subtitle>Peso: {{criterio.peso}}%</mat-card-subtitle>
+                      </mat-card-header>
+                      
+                      <mat-card-content>
+                        <p>{{criterio.descripcion}}</p>
+                        
+                        <div class="calificacion-section">
+                          <label>Calificación (0-100):</label>
+                          <input type="range" 
+                            min="0" 
+                            max="100" 
+                            step="5"
+                            [value]="getCalificacion(criterio.id)"
+                            (input)="onCalificacionChange(criterio.id, $any($event.target).value || 0)"
+                            class="calificacion-slider">
+                          <div class="calificacion-display">
+                            <span class="puntos">{{getCalificacion(criterio.id)}} puntos</span>
+                          </div>
+                        </div>
+                      </mat-card-content>
+                    </mat-card>
+                  </div>
+                  
+                  <!-- Puntuación Total -->
+                  <div class="puntuacion-total">
+                    <mat-card>
+                      <mat-card-content>
+                        <h3>Puntuación Total</h3>
+                        <div class="total-score" [style.color]="getPuntuacionColor(getPuntuacionTotal())">
+                          {{getPuntuacionTotal()}} / 100
+                        </div>
+                      </mat-card-content>
+                    </mat-card>
+                  </div>
+                </div>
+
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Comentarios Generales</mat-label>
+                  <textarea matInput formControlName="comentarios_generales" rows="4" 
+                           placeholder="Observaciones adicionales sobre el desempeño..."></textarea>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Estado</mat-label>
+                  <mat-select formControlName="estado">
+                    <mat-option *ngFor="let estado of estadosEvaluacion" [value]="estado.value">
+                      {{estado.label}}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <div class="form-actions">
+                  <button mat-button type="button" (click)="resetForm()">Limpiar</button>
+                  <button mat-raised-button color="primary" type="submit" 
+                          [disabled]="!evaluacionForm.valid || !selectedRubrica || loading">
+                    <mat-icon>save</mat-icon>
+                    Guardar Evaluación
+                  </button>
+                </div>
+              </form>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+
+      <!-- Tab 2: Historial de Evaluaciones -->
+      <mat-tab label="Historial">
+        <div class="tab-content">
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Historial de Evaluaciones</mat-card-title>
+              <mat-card-subtitle>Todas las evaluaciones realizadas</mat-card-subtitle>
+            </mat-card-header>
+            
+            <mat-card-content>
+              <!-- Filtros -->
+              <div class="filters-section">
+                <mat-form-field appearance="outline">
+                  <mat-label>Buscar</mat-label>
+                  <input matInput (keyup)="applyFilter($event)" placeholder="Buscar por empleado...">
+                  <mat-icon matSuffix>search</mat-icon>
+                </mat-form-field>
+              </div>
+
+              <!-- Tabla de Evaluaciones -->
+              <div class="table-container">
+                <table mat-table [dataSource]="evaluacionesDataSource" matSort class="evaluaciones-table">
+                  
+                  <ng-container matColumnDef="evaluado">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Empleado</th>
+                    <td mat-cell *matCellDef="let evaluacion">{{evaluacion.evaluado_nombre}}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="periodo">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Período</th>
+                    <td mat-cell *matCellDef="let evaluacion">{{evaluacion.periodo}}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="puntuacion_total">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Puntuación</th>
+                    <td mat-cell *matCellDef="let evaluacion">
+                      <span [style.color]="getPuntuacionColor(evaluacion.puntuacion_total)">
+                        {{evaluacion.puntuacion_total}}/100
+                      </span>
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="estado">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Estado</th>
+                    <td mat-cell *matCellDef="let evaluacion">
+                      <mat-chip [style.background-color]="getEstadoColor(evaluacion.estado)" 
+                               [style.color]="'white'">
+                        {{getEstadoLabel(evaluacion.estado)}}
+                      </mat-chip>
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="fecha_evaluacion">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Fecha</th>
+                    <td mat-cell *matCellDef="let evaluacion">{{evaluacion.fecha_evaluacion | date:'dd/MM/yyyy'}}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="acciones">
+                    <th mat-header-cell *matHeaderCellDef>Acciones</th>
+                    <td mat-cell *matCellDef="let evaluacion">
+                      <button mat-icon-button color="primary" 
+                              matTooltip="Ver detalles">
+                        <mat-icon>visibility</mat-icon>
+                      </button>
+                      <button mat-icon-button color="accent" 
+                              matTooltip="Editar"
+                              *ngIf="evaluacion.estado === 'borrador'">
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                    </td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="evaluacionesColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: evaluacionesColumns;"></tr>
+                </table>
+
+                <mat-paginator [pageSizeOptions]="[5, 10, 20]" 
+                              showFirstLastButtons 
+                              aria-label="Seleccionar página de evaluaciones">
+                </mat-paginator>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+
+      <!-- Tab 3: Resumen de Desempeño -->
+      <mat-tab label="Resumen">
+        <div class="tab-content">
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Resumen de Desempeño</mat-card-title>
+              <mat-card-subtitle>Vista consolidada del rendimiento del personal</mat-card-subtitle>
+            </mat-card-header>
+            
+            <mat-card-content>
+              <div class="table-container">
+                <table mat-table [dataSource]="resumenDataSource" matSort class="resumen-table">
+                  
+                  <ng-container matColumnDef="empleado">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Empleado</th>
+                    <td mat-cell *matCellDef="let resumen">{{resumen.empleado_nombre}}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="puesto">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Puesto</th>
+                    <td mat-cell *matCellDef="let resumen">{{resumen.puesto}}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="promedio_general">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Promedio</th>
+                    <td mat-cell *matCellDef="let resumen">
+                      <span [style.color]="getPuntuacionColor(resumen.promedio_general)">
+                        {{resumen.promedio_general | number:'1.1-1'}}
+                      </span>
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="evaluaciones_completadas">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Evaluaciones</th>
+                    <td mat-cell *matCellDef="let resumen">{{resumen.evaluaciones_completadas}}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="ultima_evaluacion">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Última Evaluación</th>
+                    <td mat-cell *matCellDef="let resumen">{{resumen.ultima_evaluacion | date:'dd/MM/yyyy'}}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="tendencia">
+                    <th mat-header-cell *matHeaderCellDef>Tendencia</th>
+                    <td mat-cell *matCellDef="let resumen">
+                      <mat-icon [style.color]="getTendenciaColor(resumen.tendencia)">
+                        {{getTendenciaIcon(resumen.tendencia)}}
+                      </mat-icon>
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="acciones">
+                    <th mat-header-cell *matHeaderCellDef>Acciones</th>
+                    <td mat-cell *matCellDef="let resumen">
+                      <button mat-icon-button color="primary" 
+                              matTooltip="Ver historial completo">
+                        <mat-icon>history</mat-icon>
+                      </button>
+                      <button mat-icon-button color="accent" 
+                              matTooltip="Nueva evaluación">
+                        <mat-icon>add_circle</mat-icon>
+                      </button>
+                    </td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="resumenColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: resumenColumns;"></tr>
+                </table>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+</div>

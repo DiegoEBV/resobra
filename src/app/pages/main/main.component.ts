@@ -291,7 +291,7 @@ export class MainComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.router.navigate(['/configuration']);
+    this.router.navigate(['/configuracion']);
   }
 
   private saveSelectedItems() {

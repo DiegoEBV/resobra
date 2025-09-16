@@ -24,13 +24,13 @@ mat-dialog-title {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--bitepoint-teal) !important;
+  color: #2D9596 !important;
   font-weight: 600;
   font-size: 1.5rem;
   margin-bottom: 16px;
   
   mat-icon {
-    color: var(--bitepoint-teal);
+    color: #2D9596;
     font-size: 1.5rem;
   }
 }
@@ -47,7 +47,7 @@ mat-dialog-actions {
   padding: 16px 24px;
   gap: 8px;
   justify-content: flex-end;
-  border-top: 1px solid var(--bitepoint-gray-200);
+  border-top: 1px solid #E5E7EB;
   margin-top: 16px;
 }
 
@@ -55,37 +55,37 @@ mat-dialog-actions {
 .mat-mdc-form-field {
   &.mat-form-field-appearance-outline {
     .mat-mdc-form-field-outline {
-      color: var(--bitepoint-gray-300);
+      color: #D1D5DB;
     }
     
     &.mat-focused .mat-mdc-form-field-outline-thick {
-      color: var(--bitepoint-teal);
+      color: #2D9596;
     }
     
     .mat-mdc-form-field-label {
-      color: var(--bitepoint-gray-600);
+      color: #6B7280;
     }
     
     &.mat-focused .mat-mdc-form-field-label {
-      color: var(--bitepoint-teal);
+      color: #2D9596;
     }
   }
   
   .mat-mdc-input-element {
-    color: var(--bitepoint-gray-900);
+    color: #111827;
     
     &::placeholder {
-      color: var(--bitepoint-gray-400);
+      color: #9CA3AF;
     }
   }
 }
 
 // Botones del diálogo
 .mat-mdc-button {
-  color: var(--bitepoint-gray-600);
+  color: #6B7280;
   
   &:hover {
-    background-color: var(--bitepoint-gray-100);
+    background-color: #F3F4F6;
   }
   
   mat-icon {
@@ -94,18 +94,18 @@ mat-dialog-actions {
 }
 
 .mat-mdc-raised-button {
-  background-color: var(--bitepoint-teal) !important;
+  background-color: #2D9596 !important;
   color: white !important;
   font-weight: 500;
   
   &:hover:not([disabled]) {
-    background-color: var(--bitepoint-teal-dark) !important;
+    background-color: #1F6B6C !important;
     box-shadow: 0 4px 8px rgba(13, 148, 136, 0.3);
   }
   
   &:disabled {
-    background-color: var(--bitepoint-gray-300) !important;
-    color: var(--bitepoint-gray-500) !important;
+    background-color: #D1D5DB !important;
+    color: #6B7280 !important;
   }
   
   mat-icon {
@@ -121,7 +121,7 @@ mat-dialog-actions {
 
 // Estilos para el datepicker
 .mat-datepicker-toggle {
-  color: var(--bitepoint-teal);
+  color: #2D9596;
 }
 
 // Estilos para textarea

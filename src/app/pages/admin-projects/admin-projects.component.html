@@ -38,13 +38,16 @@
   <mat-card *ngIf="!isLoading" class="shadow-lg border-0 rounded-xl">
     <mat-card-content class="p-6">
       <div class="overflow-x-auto bg-white rounded-lg shadow-sm">
-        <table mat-table [dataSource]="filteredProjects" class="w-full">
+        <table mat-table [dataSource]="filteredProjects" class="w-full bg-white shadow-lg rounded-lg overflow-hidden">
           <!-- Name Column -->
-          <ng-container matColumnDef="name">
+          <ng-container matColumnDef="nombre">
             <th mat-header-cell *matHeaderCellDef class="bg-bitepoint-teal text-white font-semibold py-4 px-6 text-left">Nombre</th>
             <td mat-cell *matCellDef="let project" class="py-4 px-6 border-b border-gray-200">
               <div *ngIf="editingProject?.id !== project.id; else editNameTemplate">
-                <span class="font-medium text-gray-900">{{project.name}}</span>
+                <div class="flex items-center">
+                  <mat-icon class="mr-2 text-bitepoint-teal">business</mat-icon>
+                  <span class="font-medium text-gray-900">{{project.name}}</span>
+                </div>
               </div>
               <ng-template #editNameTemplate>
                 <div [formGroup]="editForm">
@@ -123,6 +126,51 @@
                     <input matInput [matDatepicker]="picker" formControlName="start_date" class="text-sm">
                     <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
                     <mat-datepicker #picker></mat-datepicker>
+                  </mat-form-field>
+                </div>
+              </ng-template>
+            </td>
+          </ng-container>
+
+          <!-- Budget Total Column -->
+          <ng-container matColumnDef="presupuesto_total">
+            <th mat-header-cell *matHeaderCellDef class="bg-bitepoint-teal text-white font-semibold py-4 px-6 text-left">Presupuesto Total</th>
+            <td mat-cell *matCellDef="let project" class="py-4 px-6 border-b border-gray-200">
+              <div *ngIf="editingProject?.id !== project.id; else editBudgetTotalTemplate">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                  <mat-icon class="mr-1 text-sm">attach_money</mat-icon>
+                  {{formatCurrency(project.presupuesto_total)}}
+                </span>
+              </div>
+              <ng-template #editBudgetTotalTemplate>
+                <div [formGroup]="editForm">
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input matInput formControlName="presupuesto_total" type="number" class="text-sm">
+                  </mat-form-field>
+                </div>
+              </ng-template>
+            </td>
+          </ng-container>
+
+          <!-- Budget Executed Column -->
+          <ng-container matColumnDef="presupuesto_ejecutado">
+            <th mat-header-cell *matHeaderCellDef class="bg-bitepoint-teal text-white font-semibold py-4 px-6 text-left">Presupuesto Ejecutado</th>
+            <td mat-cell *matCellDef="let project" class="py-4 px-6 border-b border-gray-200">
+              <div *ngIf="editingProject?.id !== project.id; else editBudgetExecutedTemplate">
+                <div class="flex flex-col">
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                    <mat-icon class="mr-1 text-sm">trending_up</mat-icon>
+                    {{formatCurrency(project.presupuesto_ejecutado)}}
+                  </span>
+                  <div class="mt-1 text-xs text-gray-500">
+                    {{getProgressPercentage(project.presupuesto_ejecutado, project.presupuesto_total)}}% ejecutado
+                  </div>
+                </div>
+              </div>
+              <ng-template #editBudgetExecutedTemplate>
+                <div [formGroup]="editForm">
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input matInput formControlName="presupuesto_ejecutado" type="number" class="text-sm">
                   </mat-form-field>
                 </div>
               </ng-template>

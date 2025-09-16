@@ -6,45 +6,99 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class SupabaseService {
-  private supabase!: SupabaseClient;
-  private isInitialized = false;
+  private supabase: SupabaseClient;
 
   constructor() {
-    try {
-      this.supabase = createClient(
-        environment.supabase.url,
-        environment.supabase.anonKey,
-        {
-          auth: {
-            persistSession: false,
-            autoRefreshToken: false
-          },
-          global: {
-            fetch: (url, options = {}) => {
-              return fetch(url, {
-                ...options,
-                signal: AbortSignal.timeout(10000) // 10 second timeout
-              });
-            }
+    // Crear un storage en memoria para evitar completamente los problemas de NavigatorLockManager
+    const memoryStorage = new Map<string, string>();
+    
+    const customStorage = {
+      getItem: (key: string): string | null => {
+        try {
+          // Intentar primero localStorage, si falla usar memoria
+          const value = localStorage.getItem(key);
+          if (value !== null) {
+            memoryStorage.set(key, value);
+            return value;
           }
+          return memoryStorage.get(key) || null;
+        } catch (error) {
+          console.warn('localStorage no disponible, usando memoria:', error);
+          return memoryStorage.get(key) || null;
         }
-      );
-      this.isInitialized = true;
-      console.log('Supabase client initialized successfully');
-    } catch (error: any) {
-      console.error('Error initializing Supabase client:', error);
-      this.isInitialized = false;
-    }
+      },
+      setItem: (key: string, value: string): void => {
+        try {
+          localStorage.setItem(key, value);
+          memoryStorage.set(key, value);
+        } catch (error) {
+          console.warn('localStorage no disponible, guardando en memoria:', error);
+          memoryStorage.set(key, value);
+        }
+      },
+      removeItem: (key: string): void => {
+        try {
+          localStorage.removeItem(key);
+          memoryStorage.delete(key);
+        } catch (error) {
+          console.warn('localStorage no disponible, eliminando de memoria:', error);
+          memoryStorage.delete(key);
+        }
+      }
+    };
+
+    // Configuración de autenticación personalizada para evitar NavigatorLockManager
+    const authConfig = {
+      storage: customStorage,
+      storageKey: 'sb-auth-token-resobra',
+      autoRefreshToken: false, // Deshabilitar auto-refresh para evitar locks
+      persistSession: false, // Deshabilitar persistencia para evitar locks
+      detectSessionInUrl: false, // Deshabilitar detección de URL para evitar locks
+      flowType: 'pkce' as const
+    };
+
+    this.supabase = createClient(
+      environment.supabase.url,
+      environment.supabase.anonKey,
+      {
+        auth: authConfig
+      }
+    );
   }
 
   get client() {
-    if (!this.isInitialized) {
-      throw new Error('Supabase client not initialized');
-    }
     return this.supabase;
   }
 
-  get initialized() {
-    return this.isInitialized;
+  // Auth methods
+  get auth() {
+    return this.supabase.auth;
+  }
+
+  // Database methods
+  get db() {
+    return this.supabase;
+  }
+
+  // Storage methods
+  get storage() {
+    return this.supabase.storage;
+  }
+
+  // Real-time subscriptions
+  get realtime() {
+    return this.supabase.realtime;
+  }
+
+  // Get current user ID
+  async getCurrentUserId(): Promise<string | null> {
+    const { data: { user } } = await this.supabase.auth.getUser();
+    return user?.id || null;
+  }
+
+  // Get current user
+  async getCurrentUser() {
+    const { data: { user } } = await this.supabase.auth.getUser();
+    return user;
   }
 }

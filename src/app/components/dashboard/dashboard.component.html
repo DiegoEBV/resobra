@@ -1,0 +1,536 @@
+<div class="dashboard-container">
+  <!-- Header del Dashboard -->
+  <div class="dashboard-header">
+    <div class="welcome-section">
+      <h1 class="welcome-title">
+        {{ getGreeting() }}, {{ userProfile?.nombre || currentUser?.email || 'Usuario' }}
+      </h1>
+      <p class="welcome-subtitle">
+        {{ userProfile?.rol === 'residente' ? 'Residente de Obra' : 'Produccion' }}
+      </p>
+    </div>
+    
+    <div class="header-actions">
+      <button mat-icon-button (click)="refreshData()" matTooltip="Actualizar datos">
+        <mat-icon>refresh</mat-icon>
+      </button>
+      
+      <button mat-icon-button [matMenuTriggerFor]="alertMenu" 
+              [matBadge]="alertas.length" 
+              [matBadgeHidden]="alertas.length === 0"
+              matBadgeColor="warn"
+              matTooltip="Alertas">
+        <mat-icon>notifications</mat-icon>
+      </button>
+      
+      <mat-menu #alertMenu="matMenu" class="alert-menu">
+        <div class="alert-header" mat-menu-item disabled>
+          <strong>Alertas Activas ({{ alertas.length }})</strong>
+        </div>
+        <mat-divider></mat-divider>
+        
+        <div *ngIf="alertas.length === 0" mat-menu-item disabled class="no-alerts">
+          <mat-icon>check_circle</mat-icon>
+          <span>No hay alertas activas</span>
+        </div>
+        
+        <div *ngFor="let alerta of alertas.slice(0, 5)" mat-menu-item class="alert-item">
+          <div class="alert-content">
+            <div class="alert-title">Alerta de KPI</div>
+            <div class="alert-description">Avance Físico: {{ alerta.avance_fisico }}% | Calidad: {{ alerta.calidad }}%</div>
+            <div class="alert-time">{{ alerta.fecha | date:'short' }}</div>
+          </div>
+          <button mat-icon-button (click)="resolveAlert(alerta)" class="resolve-btn">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        
+        <mat-divider *ngIf="alertas.length > 0"></mat-divider>
+        <div mat-menu-item routerLink="/alertas" *ngIf="alertas.length > 5">
+          <span>Ver todas las alertas</span>
+        </div>
+      </mat-menu>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    <p>Cargando datos del dashboard...</p>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!isLoading" class="dashboard-content">
+    
+    <!-- Estadísticas Específicas por Rol -->
+    
+    <!-- Vista para RESIDENTE -->
+    <div *ngIf="userProfile?.rol === 'residente'" class="stats-grid">
+      <mat-card class="stat-card primary">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon>engineering</mat-icon>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">{{ stats.actividadesCampo }}</div>
+            <div class="stat-label">Actividades de Campo</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card success">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon>rate_review</mat-icon>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">{{ stats.evaluacionesPersonal }}</div>
+            <div class="stat-label">Evaluaciones Realizadas</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card info">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon>construction</mat-icon>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">{{ stats.progresoObra }}%</div>
+            <div class="stat-label">Progreso de Obra</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card warning">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon>security</mat-icon>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">{{ stats.incidentesSeguridad }}</div>
+            <div class="stat-label">Incidentes de Seguridad</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Vista para LOGÍSTICA -->
+    <div *ngIf="userProfile?.rol === 'logistica'" class="stats-grid">
+      <mat-card class="stat-card primary">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon>business</mat-icon>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">{{ stats.obrasActivas }}</div>
+            <div class="stat-label">Obras Activas</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card success">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon>attach_money</mat-icon>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">${{ stats.presupuestoEjecutado | number:'1.0-0' }}</div>
+            <div class="stat-label">Presupuesto Ejecutado</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card info">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon>inventory</mat-icon>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">{{ stats.recursosAsignados }}</div>
+            <div class="stat-label">Recursos Asignados</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card warning">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon>schedule</mat-icon>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">{{ stats.proyectosRetrasados }}</div>
+            <div class="stat-label">Proyectos Retrasados</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Progreso General -->
+    <mat-card class="progress-card">
+      <mat-card-header>
+        <mat-card-title>Progreso General del Proyecto</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="progress-info">
+          <div class="progress-value">{{ getOverallProgress() }}%</div>
+          <div class="progress-description">
+            {{ stats.actividadesCompletadas }} de {{ stats.totalActividades }} actividades completadas
+          </div>
+        </div>
+        <mat-progress-bar 
+          [value]="getOverallProgress()" 
+          [color]="getProgressColor()"
+          class="progress-bar">
+        </mat-progress-bar>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Gráficos Específicos por Rol -->
+    
+    <!-- Gráficos para RESIDENTE -->
+    <div *ngIf="userProfile?.rol === 'residente'" class="charts-grid">
+      
+      <!-- Gráfico de Actividades de Campo -->
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-card-title>Actividades de Campo</mat-card-title>
+          <mat-card-subtitle>Estado de actividades en terreno</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="chart-container">
+            <canvas id="campoChart"></canvas>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Gráfico de Evaluaciones de Personal -->
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-card-title>Evaluaciones de Personal</mat-card-title>
+          <mat-card-subtitle>Desempeño del equipo de trabajo</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="chart-container">
+            <canvas id="evaluacionChart"></canvas>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Gráfico de Progreso de Obra -->
+      <mat-card class="chart-card full-width">
+        <mat-card-header>
+          <mat-card-title>Progreso Semanal de Obra</mat-card-title>
+          <mat-card-subtitle>Avance de construcción por semana</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="chart-container">
+            <canvas id="progresoChart"></canvas>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Gráficos para LOGÍSTICA -->
+    <div *ngIf="userProfile?.rol === 'logistica'" class="charts-grid">
+      
+      <!-- Gráfico de Gestión de Obras -->
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-card-title>Estado de Obras</mat-card-title>
+          <mat-card-subtitle>Distribución por estado de proyectos</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="chart-container">
+            <canvas id="obrasChart"></canvas>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Gráfico de Análisis de Costos -->
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-card-title>Análisis de Costos</mat-card-title>
+          <mat-card-subtitle>Presupuesto vs Ejecutado</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="chart-container">
+            <canvas id="costosChart"></canvas>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Gráfico de Planificación -->
+      <mat-card class="chart-card full-width">
+        <mat-card-header>
+          <mat-card-title>Cronograma de Proyectos</mat-card-title>
+          <mat-card-subtitle>Planificación vs Ejecución mensual</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="chart-container">
+            <canvas id="planificacionChart"></canvas>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- KPIs Específicos por Rol -->
+    
+    <!-- KPIs para RESIDENTE -->
+    <mat-card class="kpis-card" *ngIf="dashboardKPIs && userProfile?.rol === 'residente'">
+      <mat-card-header>
+        <mat-card-title>Indicadores de Campo</mat-card-title>
+        <mat-card-subtitle>KPIs relevantes para actividades de obra</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="kpis-grid">
+          <div class="kpi-item">
+            <div class="kpi-header">
+              <mat-icon class="kpi-icon">verified</mat-icon>
+              <span class="kpi-title">Calidad de Obra</span>
+            </div>
+            <div class="kpi-value">
+              <span class="value">{{ dashboardKPIs.calidad.promedio }}%</span>
+              <mat-icon class="trend-icon" [class]="'trend-' + dashboardKPIs.calidad.tendencia">
+                {{ getTrendIcon(dashboardKPIs.calidad.tendencia) }}
+              </mat-icon>
+            </div>
+            <div class="kpi-progress">
+              <mat-progress-bar mode="determinate" [value]="dashboardKPIs.calidad.promedio" [color]="getProgressColor(dashboardKPIs.calidad.promedio)"></mat-progress-bar>
+            </div>
+          </div>
+          <div class="kpi-item">
+            <div class="kpi-header">
+              <mat-icon class="kpi-icon">security</mat-icon>
+              <span class="kpi-title">Seguridad</span>
+            </div>
+            <div class="kpi-value">
+              <span class="value">{{ dashboardKPIs.seguridad.promedio }}%</span>
+              <mat-icon class="trend-icon" [class]="'trend-' + dashboardKPIs.seguridad.tendencia">
+                {{ getTrendIcon(dashboardKPIs.seguridad.tendencia) }}
+              </mat-icon>
+            </div>
+            <div class="kpi-progress">
+              <mat-progress-bar mode="determinate" [value]="dashboardKPIs.seguridad.promedio" [color]="getProgressColor(dashboardKPIs.seguridad.promedio)"></mat-progress-bar>
+            </div>
+          </div>
+          <div class="kpi-item">
+            <div class="kpi-header">
+              <mat-icon class="kpi-icon">speed</mat-icon>
+              <span class="kpi-title">Productividad</span>
+            </div>
+            <div class="kpi-value">
+              <span class="value">{{ dashboardKPIs.rendimiento.promedio }}%</span>
+              <mat-icon class="trend-icon" [class]="'trend-' + dashboardKPIs.rendimiento.tendencia">
+                {{ getTrendIcon(dashboardKPIs.rendimiento.tendencia) }}
+              </mat-icon>
+            </div>
+            <div class="kpi-progress">
+              <mat-progress-bar mode="determinate" [value]="dashboardKPIs.rendimiento.promedio" [color]="getProgressColor(dashboardKPIs.rendimiento.promedio)"></mat-progress-bar>
+            </div>
+          </div>
+          <div class="kpi-item">
+            <div class="kpi-header">
+              <mat-icon class="kpi-icon">schedule</mat-icon>
+              <span class="kpi-title">Cumplimiento</span>
+            </div>
+            <div class="kpi-value">
+              <span class="value">{{ dashboardKPIs.tiempo.promedio }}%</span>
+              <mat-icon class="trend-icon" [class]="'trend-' + dashboardKPIs.tiempo.tendencia">
+                {{ getTrendIcon(dashboardKPIs.tiempo.tendencia) }}
+              </mat-icon>
+            </div>
+            <div class="kpi-progress">
+              <mat-progress-bar mode="determinate" [value]="dashboardKPIs.tiempo.promedio" [color]="getProgressColor(dashboardKPIs.tiempo.promedio)"></mat-progress-bar>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- KPIs para LOGÍSTICA -->
+    <mat-card class="kpis-card" *ngIf="dashboardKPIs && userProfile?.rol === 'logistica'">
+      <mat-card-header>
+        <mat-card-title>Indicadores de Gestión</mat-card-title>
+        <mat-card-subtitle>KPIs relevantes para planificación y recursos</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="kpis-grid">
+          <div class="kpi-item">
+            <div class="kpi-header">
+              <mat-icon class="kpi-icon">attach_money</mat-icon>
+              <span class="kpi-title">Control de Costos</span>
+            </div>
+            <div class="kpi-value">
+              <span class="value">{{ dashboardKPIs.costo.promedio }}%</span>
+              <mat-icon class="trend-icon" [class]="'trend-' + dashboardKPIs.costo.tendencia">
+                {{ getTrendIcon(dashboardKPIs.costo.tendencia) }}
+              </mat-icon>
+            </div>
+            <div class="kpi-progress">
+              <mat-progress-bar mode="determinate" [value]="dashboardKPIs.costo.promedio" [color]="getProgressColor(dashboardKPIs.costo.promedio)"></mat-progress-bar>
+            </div>
+          </div>
+          <div class="kpi-item">
+            <div class="kpi-header">
+              <mat-icon class="kpi-icon">schedule</mat-icon>
+              <span class="kpi-title">Cronograma</span>
+            </div>
+            <div class="kpi-value">
+              <span class="value">{{ dashboardKPIs.tiempo.promedio }}%</span>
+              <mat-icon class="trend-icon" [class]="'trend-' + dashboardKPIs.tiempo.tendencia">
+                {{ getTrendIcon(dashboardKPIs.tiempo.tendencia) }}
+              </mat-icon>
+            </div>
+            <div class="kpi-progress">
+              <mat-progress-bar mode="determinate" [value]="dashboardKPIs.tiempo.promedio" [color]="getProgressColor(dashboardKPIs.tiempo.promedio)"></mat-progress-bar>
+            </div>
+          </div>
+          <div class="kpi-item">
+            <div class="kpi-header">
+              <mat-icon class="kpi-icon">speed</mat-icon>
+              <span class="kpi-title">Eficiencia</span>
+            </div>
+            <div class="kpi-value">
+              <span class="value">{{ dashboardKPIs.rendimiento.promedio }}%</span>
+              <mat-icon class="trend-icon" [class]="'trend-' + dashboardKPIs.rendimiento.tendencia">
+                {{ getTrendIcon(dashboardKPIs.rendimiento.tendencia) }}
+              </mat-icon>
+            </div>
+            <div class="kpi-progress">
+              <mat-progress-bar mode="determinate" [value]="dashboardKPIs.rendimiento.promedio" [color]="getProgressColor(dashboardKPIs.rendimiento.promedio)"></mat-progress-bar>
+            </div>
+          </div>
+          <div class="kpi-item">
+            <div class="kpi-header">
+              <mat-icon class="kpi-icon">inventory</mat-icon>
+              <span class="kpi-title">Recursos</span>
+            </div>
+            <div class="kpi-value">
+              <span class="value">{{ dashboardKPIs.calidad.promedio }}%</span>
+              <mat-icon class="trend-icon" [class]="'trend-' + dashboardKPIs.calidad.tendencia">
+                {{ getTrendIcon(dashboardKPIs.calidad.tendencia) }}
+              </mat-icon>
+            </div>
+            <div class="kpi-progress">
+              <mat-progress-bar mode="determinate" [value]="dashboardKPIs.calidad.promedio" [color]="getProgressColor(dashboardKPIs.calidad.promedio)"></mat-progress-bar>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Acciones Rápidas Específicas por Rol -->
+    
+    <!-- Acciones para RESIDENTE -->
+    <mat-card class="actions-card" *ngIf="userProfile?.rol === 'residente'">
+      <mat-card-header>
+        <mat-card-title>Acciones de Campo</mat-card-title>
+        <mat-card-subtitle>Funciones para actividades de obra</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="actions-grid">
+          <button mat-raised-button color="primary" class="action-button" routerLink="/actividades">
+            <mat-icon>add_task</mat-icon>
+            <span>Registrar Actividad</span>
+          </button>
+          <button mat-raised-button color="accent" class="action-button" routerLink="/evaluaciones">
+            <mat-icon>assessment</mat-icon>
+            <span>Evaluar Personal</span>
+          </button>
+          <button mat-raised-button color="warn" class="action-button" routerLink="/mapa">
+            <mat-icon>map</mat-icon>
+            <span>Ubicar Frentes</span>
+          </button>
+          <button mat-raised-button class="action-button" routerLink="/reportes">
+            <mat-icon>analytics</mat-icon>
+            <span>Reportes de Obra</span>
+          </button>
+          <button mat-raised-button class="action-button" routerLink="/actividades">
+            <mat-icon>camera_alt</mat-icon>
+            <span>Subir Evidencias</span>
+          </button>
+          <button mat-raised-button class="action-button" routerLink="/evaluaciones">
+            <mat-icon>security</mat-icon>
+            <span>Control Seguridad</span>
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Acciones para LOGÍSTICA -->
+    <mat-card class="actions-card" *ngIf="userProfile?.rol === 'logistica'">
+      <mat-card-header>
+        <mat-card-title>Acciones de Gestión</mat-card-title>
+        <mat-card-subtitle>Funciones para planificación y control</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="actions-grid">
+          <button mat-raised-button color="primary" class="action-button" routerLink="/obras">
+            <mat-icon>business</mat-icon>
+            <span>Gestionar Obras</span>
+          </button>
+          <button mat-raised-button color="accent" class="action-button" routerLink="/reportes">
+            <mat-icon>analytics</mat-icon>
+            <span>Análisis de Costos</span>
+          </button>
+          <button mat-raised-button color="warn" class="action-button" routerLink="/actividades">
+            <mat-icon>schedule</mat-icon>
+            <span>Planificación</span>
+          </button>
+          <button mat-raised-button class="action-button" routerLink="/mapa">
+            <mat-icon>map</mat-icon>
+            <span>Vista General</span>
+          </button>
+          <button mat-raised-button class="action-button" routerLink="/reportes">
+            <mat-icon>inventory</mat-icon>
+            <span>Control Recursos</span>
+          </button>
+          <button mat-raised-button class="action-button" routerLink="/obras">
+            <mat-icon>trending_up</mat-icon>
+            <span>KPIs Globales</span>
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Alertas Recientes -->
+    <mat-card class="alerts-card" *ngIf="alertas.length > 0">
+      <mat-card-header>
+        <mat-card-title>Alertas Recientes</mat-card-title>
+        <mat-card-subtitle>Requieren tu atención</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="alerts-list">
+          <div *ngFor="let alerta of alertas.slice(0, 3)" class="alert-item-card">
+            <div class="alert-icon">
+              <mat-icon class="alert-warning">warning</mat-icon>
+            </div>
+            <div class="alert-content">
+              <div class="alert-title">{{ alerta.obra_nombre || 'KPI de Obra' }}</div>
+              <div class="alert-description">Avance: {{ alerta.avance_fisico }}% | Productividad: {{ alerta.productividad }}% | Calidad: {{ alerta.calidad }}%</div>
+              <div class="alert-meta">
+                <span class="alert-time">{{ alerta.fecha | date:'short' }}</span>
+                <mat-chip color="warn" selected size="small">
+                  Revisar
+                </mat-chip>
+              </div>
+            </div>
+            <div class="alert-actions">
+              <button mat-icon-button (click)="resolveAlert(alerta)" matTooltip="Ver detalles">
+                <mat-icon>visibility</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="alerts-footer" *ngIf="alertas.length > 3">
+          <button mat-button routerLink="/alertas">
+            Ver todas las alertas ({{ alertas.length }})
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+  </div>

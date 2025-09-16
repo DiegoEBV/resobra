@@ -40,11 +40,6 @@ export class ItemsService {
 
   // Obtener todas las partidas
   getAllItems(): Observable<Item[]> {
-    if (!this.supabase.initialized) {
-      console.warn('Supabase not initialized, returning empty array');
-      return from(Promise.resolve([]));
-    }
-
     return from(
       this.supabase.client
         .from('items')
@@ -63,19 +58,6 @@ export class ItemsService {
 
   // Obtener partidas agrupadas por especialidad
   getItemsBySpecialty(): Observable<{ [key in Specialty]: Item[] }> {
-    if (!this.supabase.initialized) {
-      console.warn('Supabase not initialized, returning empty groups');
-      const emptyGroups: { [key in Specialty]: Item[] } = {
-        'arquitectura': [],
-        'estructura': [],
-        'instalaciones_sanitarias': [],
-        'instalaciones_electricas': [],
-        'instalaciones_mecanicas': [],
-        'comunicaciones': []
-      };
-      return from(Promise.resolve(emptyGroups));
-    }
-
     return from(
       this.supabase.client
         .from('items')

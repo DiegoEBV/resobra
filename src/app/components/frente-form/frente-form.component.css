@@ -1,0 +1,313 @@
+.frente-form-container {
+  min-width: 500px;
+  max-width: 700px;
+  padding: 0;
+}
+
+.frente-form {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header styles */
+h2[mat-dialog-title] {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 24px 24px 0 24px;
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: #1976d2;
+}
+
+h2[mat-dialog-title] mat-icon {
+  font-size: 1.8rem;
+  width: 1.8rem;
+  height: 1.8rem;
+}
+
+/* Content area */
+mat-dialog-content {
+  padding: 24px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* Form layout */
+.form-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.form-row.two-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+/* Form fields */
+mat-form-field {
+  width: 100%;
+}
+
+mat-form-field.full-width {
+  grid-column: 1 / -1;
+}
+
+/* Coordinates section */
+.coordinates-section {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+  border-left: 4px solid #1976d2;
+}
+
+/* Kilometric section */
+.kilometric-section {
+  background: #f0f8f0;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+  border-left: 4px solid #4caf50;
+}
+
+.subsection-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 16px 0 12px 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #388e3c;
+}
+
+.subsection-title mat-icon {
+  font-size: 1.1rem;
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.kilometric-help {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px;
+  background: #e8f5e8;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: #2e7d32;
+}
+
+.kilometric-help mat-icon {
+  font-size: 1.1rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  color: #4caf50;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px 0;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #1976d2;
+}
+
+.section-title mat-icon {
+  font-size: 1.3rem;
+  width: 1.3rem;
+  height: 1.3rem;
+}
+
+.coordinates-help {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px;
+  background: #e3f2fd;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: #1565c0;
+}
+
+.coordinates-help mat-icon {
+  font-size: 1.1rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  color: #1976d2;
+}
+
+/* Dialog actions */
+mat-dialog-actions {
+  padding: 16px 24px 24px 24px;
+  gap: 12px;
+}
+
+mat-dialog-actions button {
+  min-width: 120px;
+  height: 40px;
+}
+
+mat-dialog-actions button mat-icon {
+  margin-right: 8px;
+  font-size: 1.2rem;
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+/* Loading animation */
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error states */
+mat-error {
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+
+/* Form field icons */
+mat-form-field mat-icon[matSuffix] {
+  color: #666;
+  font-size: 1.2rem;
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+/* Textarea specific styles */
+textarea.mat-input-element {
+  resize: vertical;
+  min-height: 60px;
+}
+
+/* Number input styles */
+input[type="number"].mat-input-element {
+  -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Map selector button styles */
+.map-selector-btn {
+  margin-left: 8px;
+  color: #1976d2;
+  background: rgba(25, 118, 210, 0.1);
+  border: 1px solid rgba(25, 118, 210, 0.3);
+  transition: all 0.3s ease;
+}
+
+.map-selector-btn:hover {
+  background: rgba(25, 118, 210, 0.2);
+  border-color: #1976d2;
+  transform: scale(1.05);
+}
+
+.map-selector-btn mat-icon {
+  font-size: 1.1rem;
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.subsection-title {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  margin: 16px 0 12px 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #388e3c;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .frente-form-container {
+    min-width: 100%;
+    max-width: 100%;
+  }
+  
+  .form-row.two-columns {
+    grid-template-columns: 1fr;
+  }
+  
+  mat-dialog-content {
+    padding: 16px;
+  }
+  
+  h2[mat-dialog-title] {
+    padding: 16px 16px 0 16px;
+    font-size: 1.3rem;
+  }
+  
+  mat-dialog-actions {
+    padding: 12px 16px 16px 16px;
+  }
+  
+  mat-dialog-actions button {
+    min-width: 100px;
+  }
+  
+  .map-selector-btn {
+    margin-left: 4px;
+  }
+}
+
+/* Focus and hover states */
+mat-form-field.mat-focused .mat-form-field-label {
+  color: #1976d2;
+}
+
+mat-form-field.mat-focused .mat-form-field-outline-thick {
+  color: #1976d2;
+}
+
+/* Success and error snackbar styles */
+::ng-deep .success-snackbar {
+  background-color: #4caf50;
+  color: white;
+}
+
+::ng-deep .error-snackbar {
+  background-color: #f44336;
+  color: white;
+}
+
+/* Disabled state */
+button[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Select dropdown styles */
+mat-select {
+  font-size: 1rem;
+}
+
+/* Date picker styles */
+mat-datepicker-toggle {
+  color: #666;
+}
+
+.mat-datepicker-toggle:hover {
+  color: #1976d2;
+}

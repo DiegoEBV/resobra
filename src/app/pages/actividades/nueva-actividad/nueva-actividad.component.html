@@ -1,0 +1,431 @@
+<div class="nueva-actividad-container">
+  <!-- Header -->
+  <div class="header-section">
+    <div class="title-section">
+      <h1>Nueva Actividad</h1>
+      <p class="subtitle">Crear una nueva actividad de construcción</p>
+    </div>
+    <div class="actions-section">
+      <button mat-stroked-button (click)="onCancel()" [disabled]="loading">
+        <mat-icon>arrow_back</mat-icon>
+        Volver
+      </button>
+    </div>
+  </div>
+
+  <!-- Formulario -->
+  <form [formGroup]="actividadForm" (ngSubmit)="onSubmit()">
+    <mat-card class="form-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>assignment</mat-icon>
+          Información Básica
+        </mat-card-title>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <div class="form-row">
+          <!-- Nombre de la Actividad -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Nombre de la Actividad</mat-label>
+            <input matInput 
+                   formControlName="nombre" 
+                   placeholder="Ej: Pavimentación Tramo A">
+            <mat-error *ngIf="nombre?.hasError('required')">
+              El nombre es requerido
+            </mat-error>
+            <mat-error *ngIf="nombre?.hasError('minlength')">
+              El nombre debe tener al menos 3 caracteres
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <!-- Descripción -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Descripción</mat-label>
+            <textarea matInput 
+                      formControlName="descripcion" 
+                      rows="3"
+                      placeholder="Describe los detalles de la actividad...">
+            </textarea>
+            <mat-error *ngIf="descripcion?.hasError('required')">
+              La descripción es requerida
+            </mat-error>
+            <mat-error *ngIf="descripcion?.hasError('minlength')">
+              La descripción debe tener al menos 10 caracteres
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <!-- Tipo de Actividad -->
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Tipo de Actividad</mat-label>
+            <mat-select formControlName="tipo">
+              <mat-option *ngFor="let tipo of tiposActividad" [value]="tipo.value">
+                {{ tipo.label }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="tipo?.hasError('required')">
+              Seleccione un tipo de actividad
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Prioridad -->
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Prioridad</mat-label>
+            <mat-select formControlName="prioridad">
+              <mat-option *ngFor="let prioridad of prioridades" [value]="prioridad.value">
+                {{ prioridad.label }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="prioridad?.hasError('required')">
+              Seleccione una prioridad
+            </mat-error>
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Mapa y Kilometraje -->
+    <mat-card class="form-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>map</mat-icon>
+          Ubicación y Kilometraje
+        </mat-card-title>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <!-- Campos de Responsable y Frente -->
+        <div class="form-row">
+          <!-- Frente de Trabajo -->
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Frente de Trabajo</mat-label>
+            <mat-select formControlName="frente_trabajo">
+              <mat-option *ngFor="let frente of frentes" [value]="frente.value">
+                {{ frente.label }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="frente_trabajo?.hasError('required')">
+              Seleccione un frente de trabajo
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Responsable -->
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Responsable</mat-label>
+            <mat-select formControlName="responsable">
+              <mat-option *ngFor="let responsable of responsables" [value]="responsable.value">
+                {{ responsable.label }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="responsable?.hasError('required')">
+              Seleccione un responsable
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="map-section">
+          <div class="map-container">
+            <div id="nueva-actividad-map" class="map"></div>
+          </div>
+          
+          <div class="map-controls">
+            <div class="map-instructions">
+              <mat-icon>info</mat-icon>
+              <span>Haga clic en el mapa para seleccionar el punto inicial y final de la actividad</span>
+            </div>
+            
+            <div class="location-actions">
+              <button mat-raised-button 
+                      color="primary" 
+                      type="button"
+                      (click)="clearMapPoints()">
+                <mat-icon>clear</mat-icon>
+                Limpiar Puntos
+              </button>
+              
+              <button mat-stroked-button 
+                      type="button"
+                      (click)="getCurrentLocation()">
+                <mat-icon>gps_fixed</mat-icon>
+                Usar GPS
+              </button>
+            </div>
+            
+            <!-- Campos de Kilometraje -->
+            <div class="kilometraje-section">
+              <div class="form-row">
+                <!-- Kilometraje Inicio -->
+                <mat-form-field appearance="outline" class="half-width">
+                  <mat-label>Kilometraje Inicio</mat-label>
+                  <input matInput 
+                         type="number" 
+                         formControlName="kilometraje_inicio" 
+                         placeholder="0.000"
+                         step="0.001"
+                         readonly>
+                  <mat-hint>Calculado automáticamente desde el mapa</mat-hint>
+                  <mat-error *ngIf="kilometraje_inicio?.hasError('required')">
+                    Seleccione el punto inicial en el mapa
+                  </mat-error>
+                </mat-form-field>
+
+                <!-- Kilometraje Fin -->
+                <mat-form-field appearance="outline" class="half-width">
+                  <mat-label>Kilometraje Fin</mat-label>
+                  <input matInput 
+                         type="number" 
+                         formControlName="kilometraje_fin" 
+                         placeholder="0.000"
+                         step="0.001"
+                         readonly>
+                  <mat-hint>Calculado automáticamente desde el mapa</mat-hint>
+                  <mat-error *ngIf="kilometraje_fin?.hasError('required')">
+                    Seleccione el punto final en el mapa
+                  </mat-error>
+                </mat-form-field>
+              </div>
+              
+              <!-- Distancia Total -->
+              <div class="distance-display" *ngIf="totalDistance > 0">
+                <mat-icon>straighten</mat-icon>
+                <span>Distancia total: {{ totalDistance.toFixed(3) }} km</span>
+              </div>
+            </div>
+            
+            <div class="progress-section">
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Progreso Inicial (%)</mat-label>
+                <input matInput 
+                       type="number" 
+                       formControlName="progreso_general" 
+                       min="0" 
+                       max="100"
+                       step="1">
+                <mat-hint>Progreso inicial de la actividad (0-100%)</mat-hint>
+              </mat-form-field>
+              
+              <div class="progress-display half-width">
+                <label>Vista previa del progreso:</label>
+                <mat-progress-bar 
+                  mode="determinate" 
+                  [value]="actividadForm.get('progreso_general')?.value || 0">
+                </mat-progress-bar>
+                <span class="progress-text">{{ actividadForm.get('progreso_general')?.value || 0 }}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+
+
+    <!-- Programación -->
+    <mat-card class="form-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>schedule</mat-icon>
+          Programación
+        </mat-card-title>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <div class="form-row">
+          <!-- Fecha de Inicio -->
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Fecha de Inicio</mat-label>
+            <input matInput 
+                   [matDatepicker]="fechaInicioPicker" 
+                   formControlName="fecha_inicio">
+            <mat-datepicker-toggle matIconSuffix [for]="fechaInicioPicker"></mat-datepicker-toggle>
+            <mat-datepicker #fechaInicioPicker></mat-datepicker>
+            <mat-error *ngIf="fecha_inicio?.hasError('required')">
+              La fecha de inicio es requerida
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Fecha Fin Estimada -->
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Fecha Fin Estimada</mat-label>
+            <input matInput 
+                   [matDatepicker]="fechaFinPicker" 
+                   formControlName="fecha_fin_estimada">
+            <mat-datepicker-toggle matIconSuffix [for]="fechaFinPicker"></mat-datepicker-toggle>
+            <mat-datepicker #fechaFinPicker></mat-datepicker>
+            <mat-error *ngIf="fecha_fin_estimada?.hasError('required')">
+              La fecha fin estimada es requerida
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Error de rango de fechas -->
+        <div *ngIf="actividadForm.hasError('dateRange')" class="form-error">
+          <mat-icon>error</mat-icon>
+          La fecha de inicio debe ser anterior a la fecha de fin
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Detalles Adicionales -->
+    <mat-card class="form-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>description</mat-icon>
+          Detalles Adicionales
+        </mat-card-title>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <div class="form-row">
+          <!-- Recursos Necesarios -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Recursos Necesarios</mat-label>
+            <textarea matInput 
+                      formControlName="recursos_necesarios" 
+                      rows="2"
+                      placeholder="Ej: 2 excavadoras, 3 camiones, 10 operarios...">
+            </textarea>
+            <mat-hint>Opcional: Especifique los recursos necesarios</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <!-- Observaciones -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Observaciones</mat-label>
+            <textarea matInput 
+                      formControlName="observaciones" 
+                      rows="2"
+                      placeholder="Observaciones adicionales...">
+            </textarea>
+            <mat-hint>Opcional: Información adicional relevante</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <!-- Configuraciones -->
+        <div class="form-row">
+          <div class="checkbox-group">
+            <mat-checkbox formControlName="requiere_evidencia">
+              Requiere evidencia fotográfica
+            </mat-checkbox>
+            
+            <mat-checkbox formControlName="notificar_inicio">
+              Notificar al iniciar la actividad
+            </mat-checkbox>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Tareas de la Actividad -->
+    <mat-card class="form-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>task_alt</mat-icon>
+          Tareas de la Actividad
+        </mat-card-title>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <div class="tareas-section">
+          <div class="tareas-header">
+            <p class="section-description">
+              Agregue las tareas específicas que componen esta actividad. El progreso se calculará automáticamente basado en las tareas completadas.
+            </p>
+            <button type="button" 
+                    mat-raised-button 
+                    color="accent" 
+                    (click)="agregarTarea()">
+              <mat-icon>add</mat-icon>
+              Agregar Tarea
+            </button>
+          </div>
+
+          <div class="tareas-list" *ngIf="tareasFormArray.length > 0" formArrayName="tareas">
+            <div class="tarea-item" 
+                 *ngFor="let tareaControl of tareasFormArray.controls; let i = index" 
+                 [attr.data-index]="i"
+                 [formGroupName]="i">
+              <div class="tarea-content">
+                <div class="tarea-order">
+                  <span class="order-number">{{ i + 1 }}</span>
+                </div>
+                
+                <div class="tarea-fields">
+                  <mat-form-field appearance="outline" class="tarea-nombre">
+                    <mat-label>Nombre de la tarea</mat-label>
+                    <input matInput 
+                           formControlName="nombre"
+                           placeholder="Ej: Excavación inicial">
+                    <mat-error *ngIf="tareaControl.get('nombre')?.hasError('required')">
+                      El nombre de la tarea es requerido
+                    </mat-error>
+                    <mat-error *ngIf="tareaControl.get('nombre')?.hasError('minlength')">
+                      El nombre debe tener al menos 3 caracteres
+                    </mat-error>
+                  </mat-form-field>
+                  
+                  <mat-form-field appearance="outline" class="tarea-descripcion">
+                    <mat-label>Descripción (opcional)</mat-label>
+                    <textarea matInput 
+                              formControlName="descripcion"
+                              rows="2"
+                              placeholder="Detalles de la tarea...">
+                    </textarea>
+                  </mat-form-field>
+                </div>
+                
+                <div class="tarea-actions">
+                  <button type="button" 
+                          mat-icon-button 
+                          color="warn"
+                          (click)="eliminarTarea(i)"
+                          matTooltip="Eliminar tarea">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="no-tareas" *ngIf="tareasFormArray.length === 0">
+            <mat-icon>assignment</mat-icon>
+            <p>No hay tareas agregadas</p>
+            <p class="hint">Las tareas ayudan a dividir la actividad en pasos específicos y permiten un mejor seguimiento del progreso.</p>
+          </div>
+
+          <div class="tareas-summary" *ngIf="tareasFormArray.length > 0">
+            <div class="summary-item">
+              <mat-icon>assignment</mat-icon>
+              <span>Total de tareas: {{ tareasFormArray.length }}</span>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Botones de Acción -->
+    <div class="actions-footer">
+      <button type="button" 
+              mat-stroked-button 
+              (click)="onCancel()" 
+              [disabled]="loading">
+        <mat-icon>cancel</mat-icon>
+        Cancelar
+      </button>
+      
+      <button type="submit" 
+              mat-raised-button 
+              color="primary" 
+              [disabled]="loading || actividadForm.invalid">
+        <mat-spinner *ngIf="loading" diameter="20" class="button-spinner"></mat-spinner>
+        <mat-icon *ngIf="!loading">save</mat-icon>
+        {{ loading ? 'Guardando...' : 'Crear Actividad' }}
+      </button>
+    </div>
+  </form>
+</div>

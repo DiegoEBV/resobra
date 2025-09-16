@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test de Login - Supabase</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test de Autenticación - Supabase</h1>
+    
+    <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" id="email" value="residente@cvh.com">
+    </div>
+    
+    <div class="form-group">
+        <label for="password">Contraseña:</label>
+        <input type="password" id="password" value="123456">
+    </div>
+    
+    <button onclick="testLogin()">Probar Login</button>
+    <button onclick="checkUsers()">Verificar Usuarios</button>
+    <button onclick="clearResult()">Limpiar</button>
+    
+    <div id="result"></div>
+
+    <script>
+        // Configuración de Supabase
+        const supabaseUrl = 'https://ugecshlhptnyeemmedoy.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnZWNzaGxocHRueWVlbW1lZG95Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU5MDA2NTAsImV4cCI6MjA3MTQ3NjY1MH0.qQU8nSWX-6r89n_-OWHfPcYOHS1oxDcPOXXGuS0LxbY';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        function showResult(message, type = 'info') {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `result ${type}`;
+            resultDiv.textContent = message;
+        }
+
+        function clearResult() {
+            document.getElementById('result').textContent = '';
+            document.getElementById('result').className = '';
+        }
+
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                showResult('Por favor ingrese email y contraseña', 'error');
+                return;
+            }
+
+            try {
+                showResult('Intentando iniciar sesión...', 'info');
+                
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (error) {
+                    showResult(`Error de autenticación:\n${error.message}\n\nDetalles técnicos:\n${JSON.stringify(error, null, 2)}`, 'error');
+                } else if (data.user) {
+                    showResult(`¡Login exitoso!\n\nUsuario ID: ${data.user.id}\nEmail: ${data.user.email}\nEmail confirmado: ${data.user.email_confirmed_at ? 'Sí' : 'No'}\nÚltimo login: ${data.user.last_sign_in_at}\n\nDetalles completos:\n${JSON.stringify(data.user, null, 2)}`, 'success');
+                } else {
+                    showResult('Login fallido: No se recibió información del usuario', 'error');
+                }
+            } catch (err) {
+                showResult(`Error inesperado:\n${err.message}\n\nStack trace:\n${err.stack}`, 'error');
+            }
+        }
+
+        async function checkUsers() {
+            try {
+                showResult('Verificando usuarios en la base de datos...', 'info');
+                
+                // Intentar obtener información de los usuarios desde la tabla users
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .in('email', ['residente@cvh.com', 'produccion@cvh.com']);
+
+                if (error) {
+                    showResult(`Error al consultar usuarios:\n${error.message}\n\nDetalles:\n${JSON.stringify(error, null, 2)}`, 'error');
+                } else {
+                    showResult(`Usuarios encontrados en la tabla 'users':\n\n${JSON.stringify(data, null, 2)}`, 'success');
+                }
+            } catch (err) {
+                showResult(`Error inesperado:\n${err.message}`, 'error');
+            }
+        }
+
+        // Cargar usuarios predefinidos al cargar la página
+        window.onload = function() {
+            showResult('Página cargada. Puede probar el login con:\n- residente@cvh.com / 123456\n- produccion@cvh.com / 123456', 'info');
+        };
+    </script>
+</body>
+</html>

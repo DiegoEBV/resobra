@@ -1,0 +1,246 @@
+<div class="editar-actividad-container">
+  <!-- Header -->
+  <div class="header-section">
+    <div class="title-section">
+      <h1>
+        <mat-icon>edit</mat-icon>
+        Editar Actividad
+      </h1>
+      <p class="subtitle" *ngIf="actividad">Modificando actividad</p>
+    </div>
+    <div class="actions-section">
+      <button mat-stroked-button (click)="onCancel()" [disabled]="loading">
+        <mat-icon>arrow_back</mat-icon>
+        Volver
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading indicator -->
+  <mat-progress-bar mode="indeterminate" *ngIf="loading" class="loading-bar"></mat-progress-bar>
+
+  <!-- Formulario -->
+  <form [formGroup]="actividadForm" (ngSubmit)="onSubmit()" *ngIf="!loading">
+    
+    <!-- Información Básica -->
+    <mat-card class="form-section">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>info</mat-icon>
+          Información Básica
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Tipo de Actividad</mat-label>
+            <mat-select formControlName="tipo_actividad">
+              <mat-option *ngFor="let tipo of tiposActividad" [value]="tipo">
+                {{ tipo | titlecase }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matSuffix>category</mat-icon>
+            <mat-error *ngIf="tipo_actividad?.hasError('required')">
+              Seleccione un tipo de actividad
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Estado</mat-label>
+            <mat-select formControlName="estado">
+              <mat-option *ngFor="let estado of estadosActividad" [value]="estado">
+                {{ estado | titlecase }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matSuffix>flag</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Fecha</mat-label>
+            <input matInput 
+                   [matDatepicker]="picker" 
+                   formControlName="fecha"
+                   readonly>
+            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+            <mat-error *ngIf="fecha?.hasError('required')">
+              La fecha es requerida
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Frente de Trabajo</mat-label>
+            <mat-select formControlName="frente_id">
+              <mat-option *ngFor="let frente of frentes$ | async" [value]="frente.id">
+                {{ frente.nombre }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matSuffix>construction</mat-icon>
+            <mat-error *ngIf="frente_id?.hasError('required')">
+              Seleccione un frente de trabajo
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Kilómetro</mat-label>
+            <input matInput type="number" formControlName="kilometro" placeholder="0.0">
+            <mat-icon matSuffix>straighten</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Progreso (%)</mat-label>
+            <input matInput type="number" formControlName="progreso_porcentaje" placeholder="0" min="0" max="100">
+            <mat-icon matSuffix>percent</mat-icon>
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Ubicación -->
+    <mat-card class="form-section">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>location_on</mat-icon>
+          Ubicación
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Dirección</mat-label>
+            <input matInput formControlName="ubicacion_direccion" placeholder="Descripción de la ubicación">
+            <mat-icon matSuffix>place</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Latitud</mat-label>
+            <input matInput 
+                   type="number" 
+                   formControlName="ubicacion_lat" 
+                   placeholder="-12.0464"
+                   step="any">
+            <mat-icon matSuffix>my_location</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Longitud</mat-label>
+            <input matInput 
+                   type="number" 
+                   formControlName="ubicacion_lng" 
+                   placeholder="-77.0428"
+                   step="any">
+            <mat-icon matSuffix>my_location</mat-icon>
+          </mat-form-field>
+
+          <button mat-raised-button 
+                  type="button" 
+                  color="primary" 
+                  (click)="openLocationSelector()"
+                  class="location-button">
+            <mat-icon>map</mat-icon>
+            Seleccionar en Mapa
+          </button>
+        </div>
+
+        <!-- Mapa -->
+        <div class="map-container" *ngIf="showMap">
+          <div id="map" class="map"></div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Observaciones -->
+    <mat-card class="form-section">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>note</mat-icon>
+          Observaciones
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Observaciones</mat-label>
+            <textarea matInput 
+                      formControlName="observaciones" 
+                      rows="4"
+                      placeholder="Observaciones adicionales sobre la actividad..."></textarea>
+            <mat-icon matSuffix>note</mat-icon>
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Observaciones y Configuración -->
+    <mat-card class="form-section">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>settings</mat-icon>
+          Observaciones y Configuración
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Observaciones</mat-label>
+            <textarea matInput 
+                      formControlName="observaciones" 
+                      rows="2"
+                      placeholder="Observaciones adicionales..."></textarea>
+            <mat-icon matSuffix>note</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row checkboxes-row">
+          <mat-checkbox formControlName="requiere_maquinaria">
+            <mat-icon>build</mat-icon>
+            Requiere Maquinaria
+          </mat-checkbox>
+          
+          <mat-checkbox formControlName="requiere_materiales">
+            <mat-icon>inventory</mat-icon>
+            Requiere Materiales
+          </mat-checkbox>
+          
+          <mat-checkbox formControlName="es_critica">
+            <mat-icon>warning</mat-icon>
+            Actividad Crítica
+          </mat-checkbox>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Botones de Acción -->
+    <div class="actions-container">
+      <button mat-stroked-button 
+              type="button" 
+              (click)="onCancel()" 
+              [disabled]="loading"
+              class="cancel-button">
+        <mat-icon>cancel</mat-icon>
+        Cancelar
+      </button>
+
+      <button mat-raised-button 
+              type="submit" 
+              color="primary" 
+              [disabled]="actividadForm.invalid || loading"
+              class="submit-button">
+        <mat-icon *ngIf="!loading">save</mat-icon>
+        <mat-progress-spinner 
+          *ngIf="loading" 
+          diameter="20" 
+          mode="indeterminate">
+        </mat-progress-spinner>
+        {{ loading ? 'Guardando...' : 'Guardar Cambios' }}
+      </button>
+    </div>
+  </form>
+</div>
