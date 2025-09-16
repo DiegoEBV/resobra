@@ -1,12 +1,20 @@
 <div class="app-container">
+  <!-- Loading State -->
+  <div *ngIf="!isInitialized" class="loading-layout">
+    <div class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>Verificando autenticación...</p>
+    </div>
+  </div>
+
   <!-- Authenticated Layout -->
-  <div *ngIf="isAuthenticated" class="authenticated-layout">
+  <div *ngIf="isInitialized && isAuthenticated" class="authenticated-layout">
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-header">
         <div class="logo">
           <mat-icon class="logo-icon">construction</mat-icon>
-          <span class="logo-text">SGR Carreteras</span>
+          <span class="logo-text">SGR Obras viales</span>
         </div>
       </div>
       
@@ -99,7 +107,7 @@
   </div>
 
   <!-- Unauthenticated Layout -->
-  <div *ngIf="!isAuthenticated" class="unauthenticated-layout">
+  <div *ngIf="isInitialized && !isAuthenticated" class="unauthenticated-layout">
     <router-outlet></router-outlet>
   </div>
 </div>

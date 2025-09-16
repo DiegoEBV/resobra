@@ -1,1 +1,0 @@
-SELECT id, nombre, km_inicial, km_final, coordenadas_inicio, coordenadas_fin, ubicacion_lat, ubicacion_lng FROM frentes LIMIT 5;

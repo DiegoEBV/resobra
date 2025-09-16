@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, NgZone, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -10,6 +10,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AuthService } from '../../services/auth.service';
+import { firstValueFrom, combineLatest } from 'rxjs';
+import { filter, take, timeout } from 'rxjs/operators';
 
 @Component({
   selector: 'app-login',
@@ -62,19 +64,6 @@ import { AuthService } from '../../services/auth.service';
               <mat-spinner *ngIf="isLoading" diameter="20"></mat-spinner>
               <span *ngIf="!isLoading">Iniciar Sesión</span>
             </button>
-            
-            <div class="credentials-info">
-              <h3>Credenciales de acceso:</h3>
-              <div class="credential-item">
-                <strong>RESIDENTE:</strong> RESIDENTE&#64;CVH.COM
-              </div>
-              <div class="credential-item">
-                <strong>PRODUCCIÓN:</strong> PRODUCCION&#64;CVH.COM
-              </div>
-              <div class="credential-item">
-                <strong>CONTRASEÑA:</strong> 123456
-              </div>
-            </div>
           </form>
         </mat-card-content>
       </mat-card>
@@ -86,7 +75,6 @@ import { AuthService } from '../../services/auth.service';
       justify-content: center;
       align-items: center;
       min-height: 100vh;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       padding: 20px;
     }
     
@@ -110,26 +98,6 @@ import { AuthService } from '../../services/auth.service';
       text-align: center;
       margin-bottom: 20px;
     }
-
-    .credentials-info {
-      margin-top: 24px;
-      padding: 16px;
-      background-color: rgba(0, 0, 0, 0.05);
-      border-radius: 4px;
-      border-left: 4px solid #3f51b5;
-    }
-
-    .credentials-info h3 {
-      margin-top: 0;
-      margin-bottom: 12px;
-      font-size: 16px;
-      color: #3f51b5;
-    }
-
-    .credential-item {
-      margin-bottom: 8px;
-      font-size: 14px;
-    }
   `]
 })
 export class LoginComponent {
@@ -141,7 +109,9 @@ export class LoginComponent {
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private ngZone: NgZone,
+    private cdr: ChangeDetectorRef
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -149,16 +119,54 @@ export class LoginComponent {
     });
   }
 
+  private async waitForCompleteAuth(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      console.log('⏳ Esperando carga completa de autenticación...');
+      
+      // Combinar observables de sesión y perfil
+      const authComplete$ = combineLatest([
+        this.authService.currentUser$,
+        this.authService.currentProfile$
+      ]).pipe(
+        filter(([user, profile]) => {
+          const hasUser = !!user;
+          const hasProfile = !!profile;
+          console.log('🔍 Estado de autenticación:', { hasUser, hasProfile });
+          return hasUser && hasProfile;
+        }),
+        take(1),
+        timeout(15000) // Aumentado a 15 segundos
+      );
+      
+      authComplete$.subscribe({
+        next: ([user, profile]) => {
+          console.log('✅ Autenticación completa:', { user: user?.email, profile: profile?.nombre });
+          resolve();
+        },
+        error: (error) => {
+          console.warn('⚠️ Timeout o error esperando autenticación completa:', error);
+          // Intentar forzar actualización del estado antes de fallar
+          this.authService.forceAuthStateUpdate().catch(e => 
+            console.error('Error forzando actualización de estado:', e)
+          );
+          reject(error);
+        }
+      });
+    });
+  }
+
   async onSubmit() {
     if (this.loginForm.valid) {
       this.isLoading = true;
       const { email, password } = this.loginForm.value;
+      console.log('🔑 Iniciando proceso de login para:', email);
       
+      console.log('📤 Llamando a authService.signIn...');
       this.authService.signIn(email, password).subscribe({
         next: ({ user, error }) => {
           this.isLoading = false;
           if (error) {
-            console.error('Error de autenticación:', error);
+            console.error('❌ Error de autenticación:', error);
             let errorMessage = 'Error al iniciar sesión';
             
             // Manejar errores específicos de Supabase
@@ -175,22 +183,69 @@ export class LoginComponent {
               panelClass: ['error-snackbar']
             });
           } else if (user) {
+            console.log('✅ Login exitoso, esperando carga completa de datos...');
             this.snackBar.open('Inicio de sesión exitoso', 'Cerrar', {
               duration: 3000,
               panelClass: ['success-snackbar']
             });
-            this.router.navigate(['/dashboard']);
+            
+            // Forzar actualización del estado de autenticación
+            this.authService.forceAuthStateUpdate().then(() => {
+              console.log('🔄 Estado de autenticación actualizado');
+              
+              // Esperar a que tanto la sesión como el perfil estén cargados
+              this.waitForCompleteAuth().then(() => {
+                console.log('🏠 Datos de autenticación completos, navegando al dashboard...');
+                // Usar NgZone para asegurar que la navegación ocurra correctamente
+                this.ngZone.run(() => {
+                  setTimeout(() => {
+                    this.router.navigate(['/dashboard']).then(() => {
+                      console.log('✅ Navegación al dashboard completada exitosamente');
+                      this.cdr.detectChanges();
+                    }).catch((navError) => {
+                      console.error('❌ Error en navegación:', navError);
+                      // Intentar navegación alternativa
+                      window.location.href = '/dashboard';
+                    });
+                  }, 100);
+                });
+              }).catch((error) => {
+                console.warn('⚠️ Timeout esperando datos completos, navegando de todas formas:', error);
+                this.ngZone.run(() => {
+                  setTimeout(() => {
+                    this.router.navigate(['/dashboard']).catch((navError) => {
+                      console.error('❌ Error en navegación de fallback:', navError);
+                      window.location.href = '/dashboard';
+                    });
+                  }, 100);
+                });
+              });
+            }).catch((forceError) => {
+              console.error('❌ Error forzando actualización de estado:', forceError);
+              // Continuar con el flujo normal aunque falle la actualización forzada
+              this.waitForCompleteAuth().then(() => {
+                this.ngZone.run(() => {
+                  this.router.navigate(['/dashboard']);
+                });
+              }).catch(() => {
+                this.ngZone.run(() => {
+                  this.router.navigate(['/dashboard']);
+                });
+              });
+            });
           }
         },
         error: (err) => {
           this.isLoading = false;
-          console.error('Error de conexión:', err);
+          console.error('❌ Error de conexión:', err);
           this.snackBar.open('Error de conexión. Intente nuevamente más tarde.', 'Cerrar', {
             duration: 5000,
             panelClass: ['error-snackbar']
           });
         }
       });
+    } else {
+      console.log('⚠️ Formulario de login inválido');
     }
   }
 }

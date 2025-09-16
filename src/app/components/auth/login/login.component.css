@@ -1,5 +1,11 @@
 /* Estilos personalizados para el componente de login */
 
+/* Fondo blanco para el contenedor principal */
+.login-container {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+}
+
 .mat-mdc-card {
   border-radius: 12px;
   padding: 2rem;

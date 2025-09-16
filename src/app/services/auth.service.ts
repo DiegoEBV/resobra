@@ -64,7 +64,7 @@ export class AuthService {
         
         const sessionPromise = this.supabase.auth.getSession();
         const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Session timeout')), 10000)
+          setTimeout(() => reject(new Error('Session timeout - No se pudo cargar la sesión')), 30000)
         );
         
         const { data: { session }, error } = await Promise.race([
@@ -100,11 +100,27 @@ export class AuthService {
 
         // Éxito - procesar la sesión
         console.log('✅ Sesión cargada exitosamente');
+        console.log('📋 Contenido de la sesión:', {
+          hasSession: !!session,
+          hasUser: !!session?.user,
+          userEmail: session?.user?.email,
+          sessionId: session?.access_token ? 'presente' : 'ausente'
+        });
+        
+        if (session?.user) {
+          console.log('👤 Usuario de sesión:', session.user.email);
+          console.log('🔑 Token de acceso:', session.access_token ? 'presente' : 'ausente');
+        }
+        
         this.sessionSubject.next(session);
         this.currentUserSubject.next(session?.user || null);
         
         if (session?.user) {
           await this.loadUserProfile(session.user.id);
+          console.log('🔐 Estado de autenticación actualizado a: true');
+        } else {
+          console.log('🔐 Estado de autenticación actualizado a: false');
+          console.log('❌ No hay usuario en la sesión - usuario debe hacer login');
         }
         return;
         
@@ -136,8 +152,44 @@ export class AuthService {
     console.error('❌ Se agotaron todos los intentos de carga de sesión');
   }
 
+  async loadSession(): Promise<void> {
+    try {
+      console.log('🔄 Cargando sesión...');
+      const { data: { session }, error } = await this.supabase.auth.getSession();
+      
+      if (error) {
+        console.error('❌ Error al cargar sesión:', error);
+        this.sessionSubject.next(null);
+        return;
+      }
+      
+      console.log('✅ Sesión cargada exitosamente');
+      console.log('📋 Contenido de la sesión:', {
+        hasSession: !!session,
+        hasUser: !!session?.user,
+        userEmail: session?.user?.email,
+        sessionId: session?.access_token ? 'presente' : 'ausente'
+      });
+      
+      this.sessionSubject.next(session);
+      this.currentUserSubject.next(session?.user || null);
+      
+      if (session?.user) {
+        await this.loadUserProfile(session.user.id);
+        console.log('🔐 Estado de autenticación actualizado a: true');
+      } else {
+        console.log('🔐 Estado de autenticación actualizado a: false');
+        console.log('❌ No hay usuario en la sesión - usuario debe hacer login');
+      }
+    } catch (error) {
+      console.error('❌ Error inesperado al cargar sesión:', error);
+      this.sessionSubject.next(null);
+    }
+  }
+
   private async loadUserProfile(userId: string) {
     try {
+      console.log('👤 Cargando perfil del usuario:', userId);
       const { data, error } = await this.supabase.db
         .from('users')
         .select('*')
@@ -154,7 +206,11 @@ export class AuthService {
         return;
       }
 
-      this.currentProfileSubject.next(data);
+      if (data) {
+        console.log('✅ Perfil cargado:', data.nombre, '-', data.rol);
+        this.currentProfileSubject.next(data);
+        console.log('📊 Perfil actualizado en BehaviorSubject');
+      }
     } catch (error) {
       console.warn('Error loading user profile:', error);
       // Continuar sin perfil en lugar de fallar completamente
@@ -229,10 +285,10 @@ export class AuthService {
       try {
         console.log(`🔄 Intento de login ${attempt + 1}/${maxRetries} para: ${email}`);
         
-        // Crear promesa con timeout personalizado
+        // Crear promesa con timeout personalizado (45 segundos)
         const signInPromise = this.supabase.auth.signInWithPassword({ email, password });
         const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Login timeout')), 15000)
+          setTimeout(() => reject(new Error('Login timeout - La conexión tardó demasiado')), 45000)
         );
         
         const result = await Promise.race([signInPromise, timeoutPromise]) as any;
@@ -288,8 +344,9 @@ export class AuthService {
     return { 
       data: null, 
       error: { 
-        message: 'Error temporal del sistema. Intente nuevamente en unos minutos.',
-        __isAuthError: true
+        message: 'No se pudo conectar con el servidor. Verifique su conexión a internet e intente nuevamente.',
+        __isAuthError: true,
+        code: 'MAX_RETRIES_EXCEEDED'
       }
     };
   }
@@ -377,9 +434,46 @@ export class AuthService {
     }
   }
 
-  // Cerrar sesión con limpieza de locks
+  // Forzar actualización del estado de autenticación
+  async forceAuthStateUpdate(): Promise<void> {
+    try {
+      console.log('🔄 Forzando actualización del estado de autenticación...');
+      
+      // Obtener la sesión actual
+      const { data: { session }, error } = await this.supabase.auth.getSession();
+      
+      if (error) {
+        console.error('❌ Error obteniendo sesión:', error);
+        return;
+      }
+      
+      if (session?.user) {
+        console.log('✅ Sesión válida encontrada, actualizando estado...');
+        
+        // Actualizar todos los subjects
+        this.currentUserSubject.next(session.user);
+        this.sessionSubject.next(session);
+        
+        // Cargar el perfil del usuario
+        await this.loadUserProfile(session.user.id);
+        
+        console.log('✅ Estado de autenticación actualizado correctamente');
+      } else {
+        console.log('⚠️ No hay sesión válida');
+        this.currentUserSubject.next(null);
+        this.currentProfileSubject.next(null);
+        this.sessionSubject.next(null);
+      }
+    } catch (error) {
+      console.error('❌ Error forzando actualización del estado:', error);
+    }
+  }
+
+  // Cerrar sesión
   signOut(): Observable<{ error: any }> {
-    return from(this.signOutWithCleanup()).pipe(
+    return from(
+      this.supabase.auth.signOut()
+    ).pipe(
       tap(() => {
         this.currentUserSubject.next(null);
         this.currentProfileSubject.next(null);
@@ -389,43 +483,7 @@ export class AuthService {
     );
   }
 
-  // Método auxiliar para signOut con limpieza
-  private async signOutWithCleanup(): Promise<{ error: any }> {
-    try {
-      console.log('🚪 Iniciando cierre de sesión...');
-      
-      // Limpiar locks antes del signOut
-      await this.clearAuthLocks();
-      
-      // Crear promesa con timeout
-      const signOutPromise = this.supabase.auth.signOut();
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('SignOut timeout')), 10000)
-      );
-      
-      const result = await Promise.race([signOutPromise, timeoutPromise]) as any;
-      
-      // Limpiar locks después del signOut también
-      await this.clearAuthLocks();
-      
-      console.log('✅ Cierre de sesión completado');
-      return result;
-      
-    } catch (error: any) {
-      console.warn('⚠️ Error durante cierre de sesión:', error);
-      
-      // Limpiar locks incluso si hay error
-      await this.clearAuthLocks();
-      
-      // Si es timeout, considerar como éxito parcial
-      if (error.message && error.message.includes('timeout')) {
-        console.log('⏰ Timeout en signOut, pero limpiando estado local...');
-        return { error: null };
-      }
-      
-      return { error };
-    }
-  }
+
 
   // Obtener usuario actual
   getCurrentUser(): User | null {

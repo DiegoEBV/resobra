@@ -18,6 +18,7 @@ import { Router, RouterModule } from '@angular/router';
 import { Subscription, forkJoin } from 'rxjs';
 import { ActividadesService } from '../../services/actividades.service';
 import { TareasService } from '../../services/tareas.service';
+import { AuthService } from '../../services/auth.service';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ConfirmDialogComponent } from '../../components/confirm-dialog/confirm-dialog.component';
@@ -48,7 +49,7 @@ import { ConfirmDialogComponent } from '../../components/confirm-dialog/confirm-
   styleUrls: ['./actividades.component.css']
 })
 export class ActividadesComponent implements OnInit, OnDestroy, AfterViewInit {
-
+  private subscriptions: Subscription[] = [];
   
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
@@ -68,6 +69,14 @@ export class ActividadesComponent implements OnInit, OnDestroy, AfterViewInit {
   // Filtros
   estadoFiltro: string = '';
   tipoFiltro: string = '';
+  filtroTexto: string = '';
+  filtroEstado: string = '';
+  filtroTipo: string = '';
+  
+  // Propiedades para datos del usuario
+  currentUser: any = null;
+  currentProfile: any = null;
+  frentes: any[] = [];
   
   // Estados y tipos disponibles
   estados = [
@@ -87,17 +96,62 @@ export class ActividadesComponent implements OnInit, OnDestroy, AfterViewInit {
   
   // Estado de carga
   isLoading = false;
-  private subscriptions: Subscription[] = [];
   
   constructor(
     private actividadesService: ActividadesService,
     private tareasService: TareasService,
+    private authService: AuthService,
     private router: Router,
     private snackBar: MatSnackBar,
     private dialog: MatDialog
   ) {}
   
   ngOnInit(): void {
+    // Suscribirse a las actividades del servicio
+    const actividadesSub = this.actividadesService.actividades$.subscribe({
+      next: (actividades) => {
+        this.processActividades(actividades);
+      },
+      error: (error) => {
+        console.error('Error en suscripción de actividades:', error);
+      }
+    });
+    this.subscriptions.push(actividadesSub);
+
+    // Suscribirse a los frentes del servicio
+    const frentesSub = this.actividadesService.frentes$.subscribe({
+      next: (frentes) => {
+        this.frentes = frentes;
+      },
+      error: (error) => {
+        console.error('Error en suscripción de frentes:', error);
+      }
+    });
+    this.subscriptions.push(frentesSub);
+
+    // Suscribirse al estado de autenticación
+    const userSub = this.authService.currentUser$.subscribe({
+      next: (user: any) => {
+        this.currentUser = user;
+      },
+      error: (error) => {
+        console.error('Error en suscripción de usuario:', error);
+      }
+    });
+    this.subscriptions.push(userSub);
+
+    // Suscribirse al perfil actual
+    const profileSub = this.authService.currentProfile$.subscribe({
+      next: (profile: any) => {
+        this.currentProfile = profile;
+      },
+      error: (error) => {
+        console.error('Error en suscripción de perfil:', error);
+      }
+    });
+    this.subscriptions.push(profileSub);
+    
+    // Forzar carga inicial de actividades
     this.loadActividades();
   }
   
@@ -131,16 +185,7 @@ export class ActividadesComponent implements OnInit, OnDestroy, AfterViewInit {
     return 'warn';
   }
 
-  // Método de debug para verificar el ID de cada actividad
-  logActividadId(actividad: any): string {
-    console.log('🔍 [ActividadesComponent] ===== DEBUG ACTIVIDAD =====');
-    console.log('🔍 [ActividadesComponent] Actividad completa:', JSON.stringify(actividad, null, 2));
-    console.log('🔍 [ActividadesComponent] ID de actividad:', actividad?.id);
-    console.log('🔍 [ActividadesComponent] Tipo de ID:', typeof actividad?.id);
-    console.log('🔍 [ActividadesComponent] Claves de actividad:', Object.keys(actividad || {}));
-    console.log('🔍 [ActividadesComponent] ================================');
-    return '';
-  }
+
 
   getEstadoLabel(estado: string): string {
     const estadoObj = this.estados.find(e => e.value === estado);
@@ -152,21 +197,34 @@ export class ActividadesComponent implements OnInit, OnDestroy, AfterViewInit {
     this.dataSource.sort = this.sort;
   }
   
+  // Suscribirse al observable de actividades para actualizaciones en tiempo real
+  private subscribeToActividades(): void {
+    const subscription = this.actividadesService.actividades$.subscribe({
+      next: (actividades) => {
+        this.processActividades(actividades);
+      },
+      error: (error) => {
+        console.error('Error en suscripción a actividades:', error);
+      },
+      complete: () => {
+        // Suscripción completada
+      }
+    });
+    this.subscriptions.push(subscription);
+  }
+
   // Cargar actividades
   async loadActividades(): Promise<void> {
     try {
-      this.isLoading = true;
-      console.log('🔄 Cargando actividades...');
-      
-      const actividades = await this.actividadesService.getActividades();
-      console.log('📋 Actividades cargadas:', actividades.length);
-      console.log('🔍 DEBUG: Primera actividad completa:', JSON.stringify(actividades[0], null, 2));
-      
-      // Verificar estructura de IDs
-      actividades.forEach((actividad, index) => {
-        console.log(`🔍 DEBUG: Actividad ${index} - ID:`, actividad.id, 'Tipo:', typeof actividad.id);
-      });
-      
+      const result = await (this.actividadesService as any).loadUserActividades();
+    } catch (error) {
+      console.error('Error al cargar actividades:', error);
+    }
+  }
+
+  // Procesar actividades con progreso de tareas
+  private async processActividades(actividades: any[]): Promise<void> {
+    try {
       // Cargar progreso de tareas para cada actividad
       const actividadesConProgreso = await Promise.all(
         actividades.map(async (actividad) => {
@@ -183,7 +241,6 @@ export class ActividadesComponent implements OnInit, OnDestroy, AfterViewInit {
               tareasCompletadas
             };
             
-            console.log(`🔍 DEBUG: Actividad procesada - ID: ${actividadConProgreso.id}, Tipo: ${typeof actividadConProgreso.id}`);
             return actividadConProgreso;
           } catch (error) {
             console.error(`Error cargando tareas para actividad ${actividad.id}:`, error);
@@ -197,16 +254,25 @@ export class ActividadesComponent implements OnInit, OnDestroy, AfterViewInit {
         })
       );
       
-      console.log('🔍 DEBUG: Actividades finales en dataSource:', actividadesConProgreso.map(a => ({ id: a.id, tipo: typeof a.id })));
-      this.dataSource.data = actividadesConProgreso;
+      // Aplicar filtros
+      let actividadesFiltradas = [...actividadesConProgreso];
+      
+      // Filtro por estado
+      if (this.estadoFiltro && this.estadoFiltro !== 'todos') {
+        actividadesFiltradas = actividadesFiltradas.filter(a => a.estado === this.estadoFiltro);
+      }
+      
+      // Filtro por tipo
+      if (this.tipoFiltro && this.tipoFiltro !== 'todos') {
+        actividadesFiltradas = actividadesFiltradas.filter(a => a.tipo_actividad === this.tipoFiltro);
+      }
+      
+      this.dataSource.data = actividadesFiltradas;
       this.applyFilters();
+      this.isLoading = false;
       
     } catch (error) {
-      console.error('Error cargando actividades:', error);
-      this.snackBar.open('Error al cargar las actividades', 'Cerrar', {
-        duration: 3000
-      });
-    } finally {
+      console.error('Error procesando actividades:', error);
       this.isLoading = false;
     }
   }
@@ -256,12 +322,7 @@ export class ActividadesComponent implements OnInit, OnDestroy, AfterViewInit {
 
   
   async deleteActividad(id: string): Promise<void> {
-    console.log('🔍 DEBUG: deleteActividad called with ID:', id);
-    console.log('🔍 DEBUG: ID type:', typeof id);
-    console.log('🔍 DEBUG: ID value:', JSON.stringify(id));
-    
     if (!id) {
-      console.error('❌ Error: ID is undefined or null');
       this.snackBar.open('Error: ID de actividad no válido', 'Cerrar', {
         duration: 3000,
         panelClass: ['error-snackbar']
@@ -280,16 +341,14 @@ export class ActividadesComponent implements OnInit, OnDestroy, AfterViewInit {
     const result = await dialogRef.afterClosed().toPromise();
     if (result) {
       try {
-        console.log('🔍 DEBUG: Calling service deleteActividad with ID:', id);
         await this.actividadesService.deleteActividad(id);
-        console.log('✅ Actividad eliminada exitosamente');
         this.snackBar.open('Actividad eliminada exitosamente', 'Cerrar', {
           duration: 3000,
           panelClass: ['success-snackbar']
         });
         this.loadActividades();
       } catch (error: any) {
-        console.error('❌ Error deleting actividad:', error);
+        console.error('Error deleting actividad:', error);
         this.snackBar.open('Error al eliminar la actividad', 'Cerrar', {
           duration: 3000,
           panelClass: ['error-snackbar']
@@ -300,6 +359,6 @@ export class ActividadesComponent implements OnInit, OnDestroy, AfterViewInit {
   
   // Refrescar datos
   refreshData(): void {
-    this.actividadesService.refresh();
+    this.loadActividades();
   }
 }

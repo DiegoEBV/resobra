@@ -263,9 +263,9 @@ export class ReportesComponent implements OnInit {
   }
 
   obtenerColorProgreso(valor: number): string {
-    if (valor < 30) return 'red';
-    if (valor < 70) return 'orange';
-    return 'green';
+    if (valor < 30) return '#DC2626';
+    if (valor < 70) return '#F59E0B';
+    return '#10B981';
   }
 
   obtenerIconoTendencia(tendencia: string): string {
@@ -278,9 +278,9 @@ export class ReportesComponent implements OnInit {
 
   obtenerColorTendencia(tendencia: string): string {
     switch (tendencia) {
-      case 'subiendo': return 'green';
-      case 'bajando': return 'red';
-      default: return 'gray';
+      case 'subiendo': return '#10B981';
+      case 'bajando': return '#DC2626';
+      default: return '#6B7280';
     }
   }
 }

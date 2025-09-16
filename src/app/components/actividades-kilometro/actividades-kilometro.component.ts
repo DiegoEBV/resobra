@@ -307,22 +307,22 @@ export class ActividadesKilometroComponent implements OnInit, OnDestroy {
 
   getEstadoColor(estado: string): string {
     const colors: { [key: string]: string } = {
-      'pendiente': '#ff9800',
-      'en_progreso': '#2196f3',
-      'completada': '#4caf50',
-      'pausada': '#f44336'
+      'pendiente': '#F59E0B',
+      'en_progreso': '#2D9596',
+      'completada': '#10B981',
+      'pausada': '#DC2626'
     };
-    return colors[estado] || '#666';
+    return colors[estado] || '#6B7280';
   }
 
   getPrioridadColor(prioridad: string): string {
     const colors: { [key: string]: string } = {
-      'baja': '#4caf50',
-      'media': '#ff9800',
-      'alta': '#f44336',
-      'critica': '#9c27b0'
+      'baja': '#10B981',
+      'media': '#F59E0B',
+      'alta': '#DC2626',
+      'critica': '#EA580C'
     };
-    return colors[prioridad] || '#666';
+    return colors[prioridad] || '#6B7280';
   }
 
   getProgressColor(progreso: number): string {

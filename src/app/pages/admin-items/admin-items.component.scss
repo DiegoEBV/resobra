@@ -1,15 +1,15 @@
 // BitePoint Design - Admin Items Component
 
 .min-h-screen {
-  background-color: var(--background-light);
+  background-color: #F8F9FA;
   font-family: 'Inter', sans-serif;
   min-height: 100vh;
 }
 
 // BitePoint Header Toolbar
 mat-toolbar {
-  background: linear-gradient(135deg, #1f7a7b 100%);
-  box-shadow: 0 4px 12px rgba(45, 149, 150, 0.15);
+  background: #1e3a8a;
+  box-shadow: 0 4px 12px rgba(30, 58, 138, 0.15);
   border-radius: 12px;
   border: none;
   padding: 1.5rem;
@@ -29,10 +29,10 @@ mat-toolbar {
   }
   
   button[mat-raised-button] {
-    background: linear-gradient(135deg, #e76f51 100%) !important;
+    background: #1e3a8a !important;
     color: white !important;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(244, 162, 97, 0.3);
+    box-shadow: 0 2px 8px rgba(30, 58, 138, 0.3);
     font-family: 'Inter', sans-serif;
     font-weight: 500;
     text-transform: none;
@@ -41,8 +41,8 @@ mat-toolbar {
     border: none;
     
     &:hover {
-      background: linear-gradient(135deg, #e76f51 0%) !important;
-      box-shadow: 0 4px 16px rgba(244, 162, 97, 0.4);
+      background: #0284c7 !important;
+      box-shadow: 0 4px 16px rgba(2, 132, 199, 0.4);
     }
     
     mat-icon {
@@ -55,13 +55,13 @@ mat-toolbar {
 // BitePoint Material Cards
 mat-card {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 1px solid var(--border-light);
+  border: 1px solid #E5E7EB;
   border-radius: 12px;
   background: white;
   transition: all 0.2s ease;
   
   &:hover {
-    box-shadow: 0 4px 16px rgba(45, 149, 150, 0.1);
+    box-shadow: 0 4px 16px rgba(30, 58, 138, 0.1);
   }
   
   mat-card-content {
@@ -78,27 +78,27 @@ mat-form-field {
       border-radius: 8px;
       
       .mat-mdc-form-field-outline {
-        color: var(--border-light);
+        color: #E5E7EB;
         
         .mat-mdc-form-field-outline-thick {
-          color: var(--primary-teal);
+          color: #1e3a8a;
         }
       }
     }
     
     .mat-mdc-form-field-label {
       font-family: 'Inter', sans-serif;
-      color: var(--text-secondary);
+      color: #6B7280;
       font-weight: 500;
     }
     
     input, textarea {
       font-family: 'Inter', sans-serif;
-      color: var(--text-dark);
+      color: #2C3E50;
     }
     
     mat-icon[matSuffix] {
-      color: var(--primary-teal);
+      color: #1e3a8a;
     }
   }
 }
@@ -106,17 +106,17 @@ mat-form-field {
 // BitePoint Select Dropdown
 mat-select {
   font-family: 'Inter', sans-serif;
-  color: var(--text-dark);
+  color: #2C3E50;
   
   .mat-mdc-select-value {
-    color: var(--text-dark);
+    color: #2C3E50;
   }
 }
 
 // BitePoint Loading Spinner
 mat-spinner {
   ::ng-deep circle {
-    stroke: var(--primary-teal);
+    stroke: #1e3a8a;
   }
 }
 
@@ -124,30 +124,30 @@ mat-spinner {
 mat-tab-group {
   &.mat-mdc-tab-group {
     .mat-mdc-tab-header {
-      border-bottom: 1px solid var(--border-light);
+      border-bottom: 1px solid #E5E7EB;
       
       .mat-mdc-tab-label-container {
         .mat-mdc-tab-label {
           font-family: 'Inter', sans-serif;
           font-weight: 500;
-          color: var(--text-secondary);
+          color: #6B7280;
           text-transform: none;
           min-width: 120px;
           transition: all 0.2s ease;
           
           &.mdc-tab--active {
-            color: var(--primary-teal);
+            color: #1e3a8a;
           }
         }
         
         .mat-mdc-tab-label:hover {
-          color: var(--primary-teal);
-          background-color: rgba(45, 149, 150, 0.05);
+          color: #1e3a8a;
+          background-color: rgba(30, 58, 138, 0.05);
         }
       }
       
       .mdc-tab-indicator__content--underline {
-        background-color: var(--primary-teal);
+        background-color: #1e3a8a;
         height: 3px;
         border-radius: 3px 3px 0 0;
       }
@@ -159,7 +159,7 @@ mat-tab-group {
 .overflow-x-auto {
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 1px solid var(--border-light);
+  border: 1px solid #E5E7EB;
   
   table.mat-mdc-table {
     width: 100%;
@@ -167,17 +167,17 @@ mat-tab-group {
     
     // BitePoint Header styling
     .mat-mdc-header-row {
-      background: linear-gradient(135deg, var(--primary-teal) 0%, #1f7a7b 100%);
-      border-bottom: 2px solid var(--border-light);
+      background: #1e3a8a;
+      border-bottom: 2px solid #E5E7EB;
       
       .mat-mdc-header-cell {
-        background: linear-gradient(135deg, var(--primary-teal) 0%, #1f7a7b 100%);
+        background: #1e3a8a;
         color: white;
         font-family: 'Inter', sans-serif;
         font-weight: 600;
         font-size: 0.875rem;
         padding: 1rem 1.5rem;
-        border-bottom: 2px solid var(--border-light);
+        border-bottom: 2px solid #E5E7EB;
         text-transform: none;
         letter-spacing: 0;
       }
@@ -188,21 +188,21 @@ mat-tab-group {
       transition: all 0.2s ease;
       
       &:hover {
-        background-color: rgba(45, 149, 150, 0.05);
+        background-color: rgba(30, 58, 138, 0.05);
       }
       
       .mat-mdc-cell {
         padding: 1rem 1.5rem;
-        border-bottom: 1px solid var(--border-light);
+        border-bottom: 1px solid #E5E7EB;
         font-family: 'Inter', sans-serif;
-        color: var(--text-dark);
+        color: #2C3E50;
         font-size: 0.875rem;
         
         // BitePoint Code column styling
         &:first-child {
           span {
             font-weight: 600;
-            color: var(--text-dark);
+            color: #2C3E50;
             font-family: 'Inter', sans-serif;
           }
         }
@@ -210,7 +210,7 @@ mat-tab-group {
         // BitePoint Description column styling
         &:nth-child(2) {
           span {
-            color: var(--text-secondary);
+            color: #6B7280;
             line-height: 1.4;
             font-family: 'Inter', sans-serif;
           }
@@ -218,9 +218,9 @@ mat-tab-group {
         
         // BitePoint Unit badge
         .inline-flex {
-          background-color: rgba(45, 149, 150, 0.1);
-          color: var(--primary-teal);
-          border: 1px solid var(--primary-teal-light);
+          background-color: rgba(30, 58, 138, 0.1);
+          color: #1e3a8a;
+          border: 1px solid #93c5fd;
           border-radius: 6px;
           padding: 0.25rem 0.75rem;
           font-size: 0.75rem;
@@ -233,9 +233,9 @@ mat-tab-group {
           gap: 0.25rem;
           
           span {
-            background-color: rgba(244, 162, 97, 0.1);
-            color: var(--accent-orange);
-            border: 1px solid rgba(244, 162, 97, 0.3);
+            background-color: rgba(2, 132, 199, 0.1);
+            color: #0284c7;
+            border: 1px solid rgba(2, 132, 199, 0.3);
             border-radius: 6px;
             padding: 0.25rem 0.5rem;
             font-size: 0.75rem;
@@ -248,50 +248,50 @@ mat-tab-group {
         &:last-child {
           .action-buttons {
             display: flex;
-            gap: var(--spacing-sm);
+            gap: 0.5rem;
             justify-content: flex-end;
             
             button {
               min-width: auto;
-              padding: var(--spacing-sm) var(--spacing-md);
-              border-radius: var(--radius-md);
+              padding: 0.5rem 1rem;
+              border-radius: 0.5rem;
               font-size: 0.75rem;
               font-weight: 500;
               text-transform: none;
-              transition: var(--transition-normal);
+              transition: all 0.2s ease;
               
               // BitePoint Edit button
               &.edit-btn {
-                background: linear-gradient(135deg, var(--primary-teal) 0%, #1f7a7b 100%);
+                background: #1e3a8a;
                 color: white;
                 border: none;
                 
                 &:hover {
-                  background: linear-gradient(135deg, #1f7a7b 0%, var(--primary-teal) 100%);
-                  box-shadow: 0 2px 8px rgba(45, 149, 150, 0.3);
+                  background: #0284c7;
+                  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3);
                 }
               }
               
               // BitePoint Delete button
               &.delete-btn {
-                background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+                background: #ef4444;
                 color: white;
                 border: none;
                 
                 &:hover {
-                  background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
-                  box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+                  background: #dc2626;
+                  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
                 }
               }
               
               // BitePoint Save button
               &.save-btn {
-                background: linear-gradient(135deg, var(--bitepoint-orange) 0%, var(--bitepoint-orange-dark) 100%);
+                background: linear-gradient(135deg, #F4A261 0%, #EA580C 100%);
                 color: white;
                 border: none;
                 
                 &:hover {
-                  background: linear-gradient(135deg, var(--bitepoint-orange-dark) 0%, var(--bitepoint-orange) 100%);
+                  background: linear-gradient(135deg, #EA580C 0%, #F4A261 100%);
                   box-shadow: 0 2px 8px rgba(244, 162, 97, 0.3);
                 }
               }
@@ -299,13 +299,13 @@ mat-tab-group {
               // BitePoint Cancel button
               &.cancel-btn {
                 background-color: white;
-                color: var(--text-secondary);
-                border: 1px solid var(--border-light);
+                color: #6B7280;
+                border: 1px solid #E5E7EB;
                 
                 &:hover {
-                  background-color: rgba(45, 149, 150, 0.05);
-                  border-color: var(--primary-teal-light);
-                  color: var(--primary-teal);
+                  background-color: rgba(30, 58, 138, 0.05);
+                  border-color: #93c5fd;
+                  color: #1e3a8a;
                 }
               }
             }
@@ -319,27 +319,27 @@ mat-tab-group {
 // Empty state estandarizado
 .empty-state {
   text-align: center;
-  padding: var(--spacing-xl) var(--spacing-md);
+  padding: 2rem 1rem;
   
   mat-icon {
     font-size: 4rem;
     width: 4rem;
     height: 4rem;
-    color: var(--text-disabled);
-    margin-bottom: var(--spacing-md);
+    color: #9CA3AF;
+    margin-bottom: 1rem;
   }
   
   h3 {
     font-family: 'Google Sans', sans-serif;
     font-size: 1.25rem;
     font-weight: 400;
-    color: var(--text-secondary);
-    margin-bottom: var(--spacing-sm);
+    color: #6B7280;
+    margin-bottom: 0.5rem;
   }
   
   p {
     font-family: 'Roboto', sans-serif;
-    color: var(--text-tertiary);
+    color: #9CA3AF;
     font-size: 0.875rem;
     line-height: 1.5;
   }
@@ -350,18 +350,18 @@ mat-tab-group {
   mat-form-field {
     &.mat-mdc-form-field {
       .mat-mdc-text-field-wrapper {
-        background-color: var(--surface-elevated);
+        background-color: #F9FAFB;
         
         &:hover {
           .mat-mdc-form-field-outline {
-            color: var(--bitepoint-teal);
+            color: #1e3a8a;
           }
         }
       }
       
       input, textarea {
         background-color: transparent;
-        color: var(--text-primary);
+        color: #2C3E50;
       }
     }
   }
@@ -394,11 +394,11 @@ mat-tab-group {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: var(--spacing-xl);
+  padding: 2rem;
   
   mat-spinner {
     ::ng-deep circle {
-      stroke: var(--bitepoint-teal);
+      stroke: #1e3a8a;
     }
   }
 }
@@ -540,7 +540,7 @@ mat-tab-group {
       flex-wrap: wrap;
       
       .mat-mdc-button {
-        min-height: var(--mobile-touch-target);
+        min-height: 44px;
         padding: 0 16px;
         font-size: 0.875rem;
       }
@@ -583,7 +583,7 @@ mat-tab-group {
       padding: 1rem !important;
       font-size: 1rem !important;
       justify-content: center !important;
-      min-height: var(--mobile-touch-target, 44px) !important;
+      min-height: 44px !important;
       display: flex !important;
       align-items: center !important;
       visibility: visible !important;
@@ -672,11 +672,11 @@ mat-tab-group {
     }
     
     &::-webkit-scrollbar-track {
-      background: var(--background-color);
+      background: #F8F9FA;
     }
     
     &::-webkit-scrollbar-thumb {
-      background: var(--border-color);
+      background: #E5E7EB;
       border-radius: 4px;
     }
   }
@@ -755,7 +755,7 @@ mat-tab-group {
             min-width: 120px;
             position: sticky;
             right: 0;
-            background: var(--surface-color);
+            background: #FFFFFF;
             z-index: 1;
           }
           

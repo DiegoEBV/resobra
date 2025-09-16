@@ -120,7 +120,7 @@
     }
     
     .mat-raised-button {
-      min-height: var(--mobile-touch-target, 44px);
+      min-height: 44px;
       padding: 1rem;
       width: 100%;
       justify-content: center;
@@ -143,11 +143,11 @@
     }
     
     &::-webkit-scrollbar-track {
-      background: var(--background-color);
+      background: #FFFFFF;
     }
     
     &::-webkit-scrollbar-thumb {
-      background: var(--border-color);
+      background: #E5E7EB;
       border-radius: 4px;
     }
   }
@@ -165,7 +165,7 @@
         padding-left: 1rem;
         position: sticky;
         left: 0;
-        background: var(--surface-color);
+        background: #FFFFFF;
         z-index: 1;
       }
       
@@ -173,7 +173,7 @@
         padding-right: 1rem;
         position: sticky;
         right: 0;
-        background: var(--surface-color);
+        background: #FFFFFF;
         z-index: 1;
       }
     }
@@ -202,7 +202,7 @@
     width: 100%;
     
     .mat-form-field-infix {
-      min-height: var(--mobile-touch-target);
+      min-height: 44px;
     }
   }
 }

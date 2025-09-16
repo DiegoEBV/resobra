@@ -9,6 +9,7 @@ import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/
 import { provideServiceWorker } from '@angular/service-worker';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { LockErrorInterceptor } from './interceptors/lock-error.interceptor';
+import { TimeoutInterceptor } from './interceptors/timeout.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -21,6 +22,12 @@ export const appConfig: ApplicationConfig = {
             enabled: !isDevMode(),
             registrationStrategy: 'registerWhenStable:30000'
           }),
+    // Interceptor global para manejar timeouts
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: TimeoutInterceptor,
+      multi: true
+    },
     // Interceptor global para manejar errores de locks
     {
       provide: HTTP_INTERCEPTORS,

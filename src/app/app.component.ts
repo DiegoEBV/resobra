@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -9,7 +9,7 @@ import { AuthService } from './services/auth.service';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css'],
+  styleUrls: ['./app.component.scss'],
   standalone: true,
   imports: [
     CommonModule,
@@ -24,24 +24,63 @@ import { AuthService } from './services/auth.service';
 export class AppComponent implements OnInit {
   title = 'Sistema de Gestión de Rendimiento en Construcción de Carreteras';
   isAuthenticated = false;
+  isInitialized = false; // Nueva propiedad para controlar la inicialización
   currentUser: any = null;
   currentProfile: any = null;
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(
+    private authService: AuthService, 
+    private router: Router,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
+  ) {}
 
   ngOnInit() {
-    // Verificar estado de autenticación al inicializar la app
-    this.authService.currentUser$.subscribe((user: any) => {
-      this.isAuthenticated = !!user;
-      this.currentUser = user;
+    console.log('🚀 AppComponent inicializando...');
+    
+    // Suscribirse al estado de autenticación con mejor manejo
+    this.authService.isAuthenticated$.subscribe(isAuth => {
+      this.ngZone.run(() => {
+        console.log('🔐 Estado de autenticación cambió:', isAuth);
+        this.isAuthenticated = isAuth;
+        
+        // Si el usuario se autentica, asegurar que la UI se actualice
+        if (isAuth) {
+          console.log('✅ Usuario autenticado, actualizando UI...');
+          setTimeout(() => {
+            this.cdr.detectChanges();
+          }, 100);
+        }
+        
+        this.cdr.detectChanges();
+      });
     });
 
-    // Suscribirse al perfil del usuario para obtener el rol
-    this.authService.currentProfile$.subscribe((profile: any) => {
-      this.currentProfile = profile;
+    // Suscribirse al usuario actual
+    this.authService.currentUser$.subscribe(user => {
+      this.ngZone.run(() => {
+        console.log('👤 Usuario actual:', user);
+        this.cdr.detectChanges();
+      });
     });
-    
-    console.log('Sistema de Gestión de Rendimiento inicializado');
+
+    // Suscribirse al perfil actual
+    this.authService.currentProfile$.subscribe(profile => {
+      this.ngZone.run(() => {
+        console.log('📋 Perfil actual:', profile);
+        this.currentProfile = profile;
+        this.cdr.detectChanges();
+      });
+    });
+
+    // Marcar como inicializado
+    setTimeout(() => {
+      this.ngZone.run(() => {
+        this.isInitialized = true;
+        console.log('✅ AppComponent inicializado');
+        this.cdr.detectChanges();
+      });
+    }, 300);
   }
 
   getCurrentDate(): string {
@@ -55,18 +94,21 @@ export class AppComponent implements OnInit {
     return today.toLocaleDateString('es-ES', options);
   }
 
+
+
   logout() {
+    console.log('🚪 Iniciando logout...');
     this.authService.signOut().subscribe({
-      next: ({ error }) => {
-        if (error) {
-          console.error('Error al cerrar sesión:', error);
-        } else {
-          console.log('Sesión cerrada exitosamente');
+      next: (result) => {
+        if (!result.error) {
+          console.log('✅ Logout completado');
           this.router.navigate(['/login']);
+        } else {
+          console.error('❌ Error durante logout:', result.error);
         }
       },
       error: (error) => {
-        console.error('Error al cerrar sesión:', error);
+        console.error('❌ Error durante logout:', error);
       }
     });
   }

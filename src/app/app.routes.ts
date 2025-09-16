@@ -159,12 +159,7 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
     title: 'Configuración'
   },
-  {
-    path: 'debug',
-    loadComponent: () => import('./components/debug/debug.component').then(m => m.DebugComponent),
-    canActivate: [AuthGuard],
-    title: 'Diagnóstico de Debug'
-  },
+
   {
     path: '**',
     redirectTo: '/dashboard',

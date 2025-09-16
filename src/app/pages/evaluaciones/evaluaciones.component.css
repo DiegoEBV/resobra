@@ -21,11 +21,25 @@
 
 .loading-container {
   display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
-  padding: 60px 20px;
-  text-align: center;
+  align-items: center;
+  height: 200px;
+}
+
+/* Estilos para mensajes de notificación */
+::ng-deep .success-snackbar {
+  background-color: #10B981 !important;
+  color: white !important;
+}
+
+::ng-deep .error-snackbar {
+  background-color: #DC2626 !important;
+  color: white !important;
+}
+
+::ng-deep .info-snackbar {
+  background-color: #3B82F6 !important;
+  color: white !important;
 }
 
 .loading-container p {

@@ -2,10 +2,10 @@
   min-width: 500px;
   max-width: 600px;
   padding: 1.5rem;
-  background: var(--background-light);
+  background: #FFFFFF;
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(45, 149, 150, 0.15);
-  border: 1px solid var(--border-light);
+  border: 1px solid #E5E7EB;
   font-family: 'Inter', sans-serif;
 }
 
@@ -32,9 +32,9 @@
 
 .accumulated-info {
   padding: 16px 20px;
-  background: linear-gradient(135deg, var(--primary-teal-light) 0%, #f0f9f9 100%);
+  background: linear-gradient(135deg, #A3D9D9 0%, #f0f9f9 100%);
   border-radius: 10px;
-  border-left: 4px solid var(--primary-teal);
+  border-left: 4px solid #2D9596;
   margin-top: 12px;
   box-shadow: 0 2px 8px rgba(45, 149, 150, 0.1);
   transition: all 0.2s ease;
@@ -45,7 +45,7 @@
 }
 
 .accumulated-value {
-  color: var(--primary-teal);
+  color: #2D9596;
   font-weight: 600;
   font-size: 1.15em;
   font-family: 'Inter', sans-serif;
@@ -57,13 +57,13 @@ h2[mat-dialog-title] {
   align-items: center;
   gap: 12px;
   margin-bottom: 8px;
-  color: var(--text-dark);
+  color: #2C3E50;
   font-weight: 600;
   font-size: 1.4em;
   font-family: 'Inter', sans-serif;
   padding: 16px 20px;
   margin: -1.5rem -1.5rem 1rem -1.5rem;
-  background: linear-gradient(135deg, var(--primary-teal) 0%, #1f7a7b 100%);
+  background: linear-gradient(135deg, #2D9596 0%, #1f7a7b 100%);
   color: white;
   border-radius: 12px 12px 0 0;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
@@ -78,7 +78,7 @@ h2[mat-dialog-title] {
 mat-dialog-actions {
   padding: 20px 0 0 0;
   margin: 0;
-  border-top: 1px solid var(--border-light);
+  border-top: 1px solid #E5E7EB;
   margin-top: 16px;
   display: flex;
   justify-content: flex-end;
@@ -114,12 +114,12 @@ mat-dialog-actions button {
   }
   
   &.mat-stroked-button {
-    border: 2px solid var(--text-secondary);
-    color: var(--text-secondary);
+    border: 2px solid #6B7280;
+    color: #6B7280;
     background: white;
     
     &:hover {
-      background: var(--text-secondary);
+      background: #6B7280;
       color: white;
       box-shadow: 0 4px 16px rgba(84, 110, 122, 0.3);
     }

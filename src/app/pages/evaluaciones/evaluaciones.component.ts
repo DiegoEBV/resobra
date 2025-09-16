@@ -160,6 +160,22 @@ export class EvaluacionesComponent implements OnInit {
 
   async onSubmitEvaluacion() {
     if (this.evaluacionForm.valid && this.selectedRubrica) {
+      // Validar que se hayan ingresado calificaciones
+      if (!this.calificaciones || Object.keys(this.calificaciones).length === 0) {
+        this.showMessage('Por favor, ingrese las calificaciones para todos los criterios', 'error');
+        return;
+      }
+
+      // Validar que todas las calificaciones estén completas
+      const criteriosSinCalificar = this.selectedRubrica.criterios.filter(
+        criterio => !this.calificaciones[criterio.id] || this.calificaciones[criterio.id] === 0
+      );
+      
+      if (criteriosSinCalificar.length > 0) {
+        this.showMessage(`Faltan calificaciones para: ${criteriosSinCalificar.map(c => c.nombre).join(', ')}`, 'error');
+        return;
+      }
+
       this.loading = true;
       
       try {
@@ -178,15 +194,29 @@ export class EvaluacionesComponent implements OnInit {
         
         await this.evaluacionesService.createEvaluacion(evaluacionData);
         
-        this.showMessage('Evaluación creada exitosamente');
+        this.showMessage('✅ Evaluación guardada exitosamente', 'success');
         this.resetForm();
         await this.loadData();
         
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error creating evaluacion:', error);
-        this.showMessage('Error al crear la evaluación');
+        
+        // Mostrar mensaje de error específico
+        const errorMessage = error.message || 'Error desconocido al crear la evaluación';
+        this.showMessage(`❌ ${errorMessage}`, 'error');
       } finally {
         this.loading = false;
+      }
+    } else {
+      // Validar campos del formulario
+      if (!this.evaluacionForm.valid) {
+        this.showMessage('Por favor, complete todos los campos requeridos', 'error');
+        return;
+      }
+      
+      if (!this.selectedRubrica) {
+        this.showMessage('Por favor, seleccione una rúbrica de evaluación', 'error');
+        return;
       }
     }
   }
@@ -214,11 +244,11 @@ export class EvaluacionesComponent implements OnInit {
   }
 
   getPuntuacionColor(puntuacion: number): string {
-    if (puntuacion >= 90) return '#4caf50';
-    if (puntuacion >= 80) return '#8bc34a';
-    if (puntuacion >= 70) return '#ffeb3b';
-    if (puntuacion >= 60) return '#ff9800';
-    return '#f44336';
+    if (puntuacion >= 90) return '#10B981';
+    if (puntuacion >= 80) return '#7DD3FC';
+    if (puntuacion >= 70) return '#FCD34D';
+    if (puntuacion >= 60) return '#F59E0B';
+    return '#DC2626';
   }
 
   getEstadoLabel(estado: string): string {
@@ -233,12 +263,12 @@ export class EvaluacionesComponent implements OnInit {
 
   getEstadoColor(estado: string): string {
     const colors: { [key: string]: string } = {
-      'borrador': '#9e9e9e',
-      'completada': '#2196f3',
-      'revisada': '#ff9800',
-      'aprobada': '#4caf50'
+      'borrador': '#6B7280',
+      'completada': '#2D9596',
+      'revisada': '#F59E0B',
+      'aprobada': '#10B981'
     };
-    return colors[estado] || '#9e9e9e';
+    return colors[estado] || '#6B7280';
   }
 
   getTendenciaIcon(tendencia: string): string {
@@ -252,11 +282,11 @@ export class EvaluacionesComponent implements OnInit {
 
   getTendenciaColor(tendencia: string): string {
     const colors: { [key: string]: string } = {
-      'mejorando': '#4caf50',
-      'estable': '#ff9800',
-      'declinando': '#f44336'
+      'mejorando': '#10B981',
+      'estable': '#F59E0B',
+      'declinando': '#DC2626'
     };
-    return colors[tendencia] || '#ff9800';
+    return colors[tendencia] || '#F59E0B';
   }
 
   applyFilter(event: Event) {
@@ -287,11 +317,17 @@ export class EvaluacionesComponent implements OnInit {
     }
   }
 
-  private showMessage(message: string) {
-    this.snackBar.open(message, 'Cerrar', {
-      duration: 3000,
-      horizontalPosition: 'end',
-      verticalPosition: 'top'
-    });
+  private showMessage(message: string, type: 'success' | 'error' | 'info' = 'info') {
+    const config = {
+      duration: type === 'error' ? 5000 : 3000,
+      horizontalPosition: 'end' as const,
+      verticalPosition: 'top' as const,
+      panelClass: [
+        type === 'success' ? 'success-snackbar' : 
+        type === 'error' ? 'error-snackbar' : 'info-snackbar'
+      ]
+    };
+
+    this.snackBar.open(message, 'Cerrar', config);
   }
 }

@@ -22,7 +22,7 @@
  *    - Los gastos ejecutados se registran en el módulo de control de costos
  */
 
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -34,16 +34,17 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatBadgeModule } from '@angular/material/badge';
 import { RouterModule } from '@angular/router';
-import { Subject, takeUntil, combineLatest, take } from 'rxjs';
+import { Subject, takeUntil, combineLatest, take, timer } from 'rxjs';
 import { Chart, ChartConfiguration, ChartType, registerables } from 'chart.js';
 
 import { AuthService } from '../../services/auth.service';
 import { KpisService, DashboardKPIs, AlertaKPI } from '../../services/kpis.service';
 import { ActividadesService } from '../../services/actividades.service';
+import { DashboardService, DashboardStats as ServiceDashboardStats, DashboardCharts } from '../../services/dashboard.service';
 
 Chart.register(...registerables);
 
-interface DashboardStats {
+interface ComponentDashboardStats {
   totalActividades: number;
   actividadesCompletadas: number;
   actividadesEnProgreso: number;
@@ -97,7 +98,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   userProfile: any = null;
   
   // Estadísticas del dashboard
-  stats: DashboardStats = {
+  stats: ComponentDashboardStats = {
     totalActividades: 0,
     actividadesCompletadas: 0,
     actividadesEnProgreso: 0,
@@ -121,19 +122,86 @@ export class DashboardComponent implements OnInit, OnDestroy {
   progressChartData: ChartData = { labels: [], datasets: [] };
   kpiChartData: ChartData = { labels: [], datasets: [] };
   activityChartData: ChartData = { labels: [], datasets: [] };
+  costChartData: ChartData = { labels: [], datasets: [] };
+  planificacionChartData: ChartData = { labels: [], datasets: [] };
 
   constructor(
     private authService: AuthService,
     private kpisService: KpisService,
-    private actividadesService: ActividadesService
+    private actividadesService: ActividadesService,
+    private dashboardService: DashboardService,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
   ) {}
 
-  ngOnInit(): void {
-    this.loadUserData();
-    this.loadDashboardData();
+  async ngOnInit(): Promise<void> {
+    console.log('🚀 [DashboardComponent] Inicializando dashboard...');
+    
+    try {
+      // Mostrar loading inmediatamente
+      this.isLoading = true;
+      this.cdr.detectChanges();
+      
+      // Cargar datos del usuario y dashboard con manejo de errores independiente
+      await this.loadDataWithErrorHandling();
+      
+      // Ejecutar diagnóstico de depuración (no crítico)
+      this.runDebugDiagnostic().catch(error => {
+        console.warn('⚠️ [DashboardComponent] Diagnóstico falló, continuando:', error);
+      });
+      
+      // Asegurar que los cambios se detecten
+      this.ngZone.run(() => {
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      });
+      
+      // Pequeña pausa para asegurar que el DOM esté listo antes de crear gráficos
+      timer(100).subscribe(() => {
+        this.ngZone.run(() => {
+          this.updateCharts();
+          this.cdr.detectChanges();
+        });
+      });
+      
+    } catch (error) {
+      console.error('❌ [DashboardComponent] Error crítico inicializando dashboard:', error);
+      this.ngZone.run(() => {
+        this.isLoading = false;
+        this.loadFallbackData(); // Cargar datos de respaldo
+        this.cdr.detectChanges();
+      });
+    }
+    
+    // Esperar a que el usuario esté autenticado antes de continuar
+    this.authService.currentUser$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(async (user) => {
+        if (user) {
+          console.log('✅ [Dashboard] Usuario autenticado, inicializando servicios...');
+          await this.initializeServices();
+        }
+      });
+  }
+
+  private async initializeServices(): Promise<void> {
+    try {
+      // Inicializar el servicio KpisService después de la autenticación
+      console.log('🔧 [Dashboard] Inicializando servicio KpisService...');
+      await this.kpisService.initialize();
+      console.log('✅ [Dashboard] Servicio KpisService inicializado correctamente');
+      
+      // Cargar datos del dashboard
+      this.loadDashboardDataSafely();
+    } catch (error) {
+      console.error('❌ [Dashboard] Error inicializando servicio KpisService:', error);
+      // Intentar cargar datos básicos aunque falle la inicialización
+      this.loadDashboardDataSafely();
+    }
+    
     // Forzar recarga de KPIs para asegurar datos actualizados
     this.refreshKPIsData();
-    // Ejecutar diagnóstico de debug
+    // Ejecutar diagnóstico de debug después de que el usuario esté autenticado
     this.runDebugDiagnostic();
   }
 
@@ -170,85 +238,194 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.destroyCharts();
   }
 
-  // Cargar datos del usuario
-  private loadUserData(): void {
+  // Cargar datos del usuario de forma segura
+  private async loadUserDataSafely(): Promise<void> {
     try {
+      console.log('👤 [DashboardComponent] Cargando datos del usuario...');
+      
       // Obtener usuario actual
       const user = this.authService.getCurrentUser();
       if (user) {
-        this.currentUser = user;
-        console.log('Usuario actual cargado:', user.email);
+        this.ngZone.run(() => {
+          this.currentUser = user;
+          this.cdr.detectChanges();
+        });
+        console.log('✅ [DashboardComponent] Usuario actual cargado:', user.email);
         
         // Obtener perfil del usuario
         const profile = this.authService.getCurrentProfile();
         if (profile) {
-          this.userProfile = profile;
-          console.log('Perfil del usuario cargado:', profile.rol);
+          this.ngZone.run(() => {
+            this.userProfile = profile;
+            this.cdr.detectChanges();
+          });
+          console.log('✅ [DashboardComponent] Perfil del usuario cargado:', profile.rol);
           
           // Cargar datos específicos según el rol después de obtener el perfil
           this.loadRoleSpecificData();
         } else {
-          console.warn('No se pudo cargar el perfil del usuario');
+          console.warn('⚠️ [DashboardComponent] No se pudo cargar el perfil del usuario');
           // Suscribirse a cambios en el perfil si no está disponible inmediatamente
           this.authService.currentProfile$
             .pipe(takeUntil(this.destroy$))
-            .subscribe(profile => {
-              if (profile) {
-                this.userProfile = profile;
-                console.log('Perfil del usuario cargado desde observable:', profile.rol);
-                this.loadRoleSpecificData();
+            .subscribe({
+              next: (profile) => {
+                if (profile) {
+                  this.ngZone.run(() => {
+                    this.userProfile = profile;
+                    this.cdr.detectChanges();
+                  });
+                  console.log('🔄 [DashboardComponent] Perfil del usuario cargado desde observable:', profile.rol);
+                  this.loadRoleSpecificData();
+                }
+              },
+              error: (error) => {
+                console.error('❌ [DashboardComponent] Error en currentProfile$:', error);
+                this.loadFallbackUserData();
               }
             });
         }
       } else {
-        console.warn('No hay usuario autenticado - usando datos por defecto');
-        // Sin usuario autenticado, usar valores por defecto
+        console.warn('⚠️ [DashboardComponent] No hay usuario autenticado - usando datos por defecto');
+        this.loadFallbackUserData();
       }
     } catch (error) {
-      console.error('Error cargando datos del usuario:', error);
-      // En caso de error, usar valores por defecto
+      console.error('❌ [DashboardComponent] Error cargando datos del usuario:', error);
+      this.loadFallbackUserData();
     }
   }
 
-  // Cargar datos del dashboard
-  private async loadDashboardData(): Promise<void> {
+  /**
+   * Cargar datos con manejo robusto de errores
+   */
+  private async loadDataWithErrorHandling(): Promise<void> {
+    const loadPromises = [
+      this.loadUserDataSafely(),
+      this.loadRealDashboardDataSafely()
+    ];
+    
+    // Ejecutar todas las cargas en paralelo, pero no fallar si alguna falla
+    const results = await Promise.allSettled(loadPromises);
+    
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        const taskName = index === 0 ? 'datos de usuario' : 'datos del dashboard';
+        console.warn(`⚠️ [DashboardComponent] Error cargando ${taskName}:`, result.reason);
+      }
+    });
+  }
+
+  /**
+   * Cargar datos reales del dashboard usando el nuevo servicio
+   */
+  private async loadRealDashboardDataSafely(): Promise<void> {
     try {
-      this.isLoading = true;
+      console.log('📊 [DashboardComponent] Cargando datos reales del dashboard...');
       
-      // Cargar KPIs del dashboard
+      // Cargar datos usando el nuevo servicio
+      await this.dashboardService.loadDashboardData();
+      
+      // Suscribirse a los datos del dashboard con manejo de errores
+      this.dashboardService.stats$.subscribe({
+        next: (stats) => {
+          this.ngZone.run(() => {
+            this.updateStatsFromService(stats);
+            this.cdr.detectChanges();
+          });
+        },
+        error: (error) => {
+          console.error('❌ [DashboardComponent] Error en stats$:', error);
+          this.loadFallbackStats();
+        }
+      });
+      
+      this.dashboardService.charts$.subscribe({
+        next: (charts) => {
+          this.ngZone.run(() => {
+            this.updateChartsFromService(charts);
+            this.cdr.detectChanges();
+          });
+        },
+        error: (error) => {
+          console.error('❌ [DashboardComponent] Error en charts$:', error);
+          this.loadFallbackCharts();
+        }
+      });
+      
+      console.log('✅ [DashboardComponent] Datos reales del dashboard cargados');
+    } catch (error) {
+      console.error('❌ [DashboardComponent] Error cargando datos reales del dashboard:', error);
+      // Fallback a datos de ejemplo si hay error
+      await this.loadDashboardDataSafely();
+    }
+  }
+
+  // Cargar datos del dashboard de forma segura (método original como fallback)
+  private async loadDashboardDataSafely(): Promise<void> {
+    try {
+      // Verificar si el servicio está inicializado
+      if (!this.kpisService.isServiceInitialized()) {
+        console.warn('⚠️ [Dashboard] Servicio KpisService no está inicializado, esperando...');
+        // Intentar inicializar nuevamente si no está listo
+        await this.kpisService.initialize().then(() => {
+          console.log('✅ [Dashboard] Servicio inicializado, cargando datos...');
+        }).catch(error => {
+          console.error('❌ [Dashboard] Error en inicialización tardía:', error);
+          throw error; // Re-lanzar para que sea manejado por el catch principal
+        });
+      } else {
+        console.log('✅ [Dashboard] Servicio ya inicializado, suscribiendo a datos...');
+      }
+      
+      // Cargar KPIs del dashboard con manejo de errores
       this.kpisService.dashboardKPIs$
         .pipe(takeUntil(this.destroy$))
-        .subscribe((kpis: any) => {
-          this.dashboardKPIs = kpis;
-          this.updateStats();
-          this.updateCharts();
+        .subscribe({
+          next: (kpis: any) => {
+            this.dashboardKPIs = kpis;
+            this.updateStats();
+            this.updateCharts();
+          },
+          error: (error) => {
+            console.error('❌ [Dashboard] Error en dashboardKPIs$:', error);
+            this.loadFallbackStats();
+          }
         });
       
-      // Cargar alertas
+      // Cargar alertas con manejo de errores
       this.kpisService.alertas$
         .pipe(takeUntil(this.destroy$))
-        .subscribe((alertas: any[]) => {
-          this.alertas = alertas;
-          this.stats.alertasActivas = alertas.length;
+        .subscribe({
+          next: (alertas: any[]) => {
+            this.alertas = alertas;
+            this.stats.alertasActivas = alertas.length;
+          },
+          error: (error) => {
+            console.error('❌ [Dashboard] Error en alertas$:', error);
+            this.alertas = [];
+            this.stats.alertasActivas = 0;
+          }
         });
       
       // Cargar estadísticas de actividades
-      await this.loadActivityStats();
+      await this.loadActivityStatsSafely();
+      
+      console.log('✅ [Dashboard] Datos del dashboard cargados exitosamente');
       
     } catch (error) {
-      console.error('Error loading dashboard data:', error);
-    } finally {
-      this.isLoading = false;
+      console.error('❌ [Dashboard] Error loading dashboard data:', error);
+      this.loadFallbackData();
+      throw error; // Re-lanzar el error para manejo en nivel superior
     }
   }
 
   private loadRoleSpecificData(): void {
     if (!this.userProfile?.rol) {
-      console.warn('No se puede cargar datos específicos del rol: perfil no disponible');
+      console.warn('⚠️ [DashboardComponent] No se puede cargar datos específicos del rol: perfil no disponible');
       return;
     }
 
-    console.log('Cargando datos específicos para el rol:', this.userProfile.rol);
+    console.log('📋 [DashboardComponent] Cargando datos específicos para el rol:', this.userProfile.rol);
     // Los datos ahora se cargan desde KpisService, no hay datos hardcodeados por rol
   }
 
@@ -258,25 +435,87 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
 
 
-  // Cargar estadísticas de actividades
-  private async loadActivityStats(): Promise<void> {
+  // Cargar estadísticas de actividades de forma segura
+  private async loadActivityStatsSafely(): Promise<void> {
     try {
+      console.log('🔍 [DASHBOARD] Iniciando carga de estadísticas de actividades...');
+      console.log('🔍 [DASHBOARD] Estado del observable actividades$:', this.actividadesService.actividades$);
+      
       const actividades = await this.actividadesService.actividades$.pipe(take(1)).toPromise();
+      
+      console.log('🔍 [DASHBOARD] Actividades recibidas del observable:', actividades);
+      console.log('🔍 [DASHBOARD] Tipo de datos:', typeof actividades);
+      console.log('🔍 [DASHBOARD] Es array:', Array.isArray(actividades));
+      console.log('🔍 [DASHBOARD] Longitud:', actividades ? actividades.length : 'null/undefined');
       
       if (actividades) {
         this.stats.totalActividades = actividades.length;
         this.stats.actividadesCompletadas = actividades.filter((a: any) => a.estado === 'finalizado').length;
         this.stats.actividadesEnProgreso = actividades.filter((a: any) => a.estado === 'ejecucion').length;
         
+        console.log('🔍 [DASHBOARD] Estadísticas calculadas:', {
+          total: this.stats.totalActividades,
+          completadas: this.stats.actividadesCompletadas,
+          enProgreso: this.stats.actividadesEnProgreso
+        });
+        
         if (actividades.length > 0) {
           this.stats.progresoPromedio = Math.round(
             (this.stats.actividadesCompletadas / actividades.length) * 100
           );
+          console.log('🔍 [DASHBOARD] Progreso promedio calculado:', this.stats.progresoPromedio + '%');
         }
+      } else {
+        console.warn('⚠️ [DASHBOARD] No se recibieron actividades del observable');
+        this.loadFallbackActivityStats();
       }
     } catch (error) {
-      console.error('Error loading activity stats:', error);
+      console.error('❌ [DASHBOARD] Error loading activity stats:', error);
+      this.loadFallbackActivityStats();
     }
+  }
+
+  // Métodos de fallback para manejo de errores
+  private loadFallbackData(): void {
+    console.log('🔄 [Dashboard] Cargando datos de respaldo...');
+    this.loadFallbackUserData();
+    this.loadFallbackStats();
+    this.loadFallbackCharts();
+  }
+
+  private loadFallbackUserData(): void {
+    this.currentUser = { email: 'usuario@ejemplo.com' };
+    this.userProfile = { rol: 'residente', nombre: 'Usuario' };
+  }
+
+  private loadFallbackStats(): void {
+    this.stats = {
+      totalActividades: 0,
+      actividadesCompletadas: 0,
+      actividadesEnProgreso: 0,
+      progresoPromedio: 0,
+      alertasActivas: 0,
+      kpisCriticos: 0,
+      actividadesCampo: 0,
+      evaluacionesPersonal: 0,
+      progresoObra: 0,
+      incidentesSeguridad: 0
+    };
+  }
+
+  private loadFallbackActivityStats(): void {
+    this.stats.totalActividades = 0;
+    this.stats.actividadesCompletadas = 0;
+    this.stats.actividadesEnProgreso = 0;
+    this.stats.progresoPromedio = 0;
+  }
+
+  private loadFallbackCharts(): void {
+    this.progressChartData = { labels: ['Sin datos'], datasets: [] };
+    this.kpiChartData = { labels: ['Sin datos'], datasets: [] };
+    this.activityChartData = { labels: ['Sin datos'], datasets: [] };
+    this.costChartData = { labels: ['Sin datos'], datasets: [] };
+    this.planificacionChartData = { labels: ['Sin datos'], datasets: [] };
   }
 
   // Actualizar estadísticas del dashboard
@@ -312,13 +551,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // Actualizar gráficos
   private updateCharts(): void {
-    setTimeout(() => {
-      this.createProgressChart();
-      this.createKPIChart();
-      this.createActivityChart();
-      this.createCostChart();
-      this.createPlanificacionChart();
-    }, 100);
+    // Usar NgZone y setTimeout para asegurar que el DOM esté listo
+    this.ngZone.runOutsideAngular(() => {
+      setTimeout(() => {
+        this.ngZone.run(() => {
+          this.createProgressChart();
+          this.createKPIChart();
+          this.createActivityChart();
+          this.createCostChart();
+          this.createPlanificacionChart();
+          this.cdr.detectChanges();
+        });
+      }, 200); // Aumentar el delay para asegurar que el DOM esté completamente listo
+    });
   }
 
   // Crear gráfico de progreso
@@ -694,8 +939,25 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   // Refrescar datos
-  refreshData(): void {
-    this.loadDashboardData();
+  async refreshData(): Promise<void> {
+    try {
+      console.log('🔄 [DashboardComponent] Refrescando datos...');
+      this.isLoading = true;
+      
+      // Refrescar usando el nuevo servicio
+      await this.dashboardService.refreshDashboard();
+      
+      // Refrescar KPIs como fallback
+      await this.refreshKPIsData();
+      
+      console.log('✅ [DashboardComponent] Datos refrescados exitosamente');
+    } catch (error) {
+      console.error('❌ [DashboardComponent] Error refrescando datos:', error);
+      // Fallback al método original
+      await this.loadDashboardDataSafely();
+    } finally {
+      this.isLoading = false;
+    }
   }
 
   // Navegar a sección específica
@@ -723,6 +985,51 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (progress >= 60) return 'accent';
     return 'warn';
   }
+
+  /**
+   * Actualizar estadísticas desde el servicio
+   */
+  private updateStatsFromService(stats: ServiceDashboardStats): void {
+    // Mapear estadísticas del servicio a las del componente
+    this.stats = {
+      totalActividades: stats.actividadesTotales || 0,
+      actividadesCompletadas: stats.actividadesCompletadas || 0,
+      actividadesEnProgreso: stats.actividadesEnProgreso || 0,
+      progresoPromedio: stats.progresoPromedio || 0,
+      alertasActivas: 0, // Se calculará desde KPIs
+      kpisCriticos: stats.kpisCriticos || 0
+    };
+    console.log('📊 Estadísticas actualizadas desde servicio:', this.stats);
+  }
+
+  /**
+    * Actualizar gráficos desde el servicio
+    */
+   private updateChartsFromService(charts: DashboardCharts): void {
+     // Actualizar datos de gráficos con datos reales
+     this.activityChartData = charts.evaluacionesPorMes;
+     this.costChartData = charts.evidenciasPorObra;
+     this.kpiChartData = charts.kpisPorCategoria;
+     this.progressChartData = charts.progresoActividades;
+     this.planificacionChartData = charts.tendenciaCalidad;
+     
+     // Recrear gráficos con nuevos datos usando NgZone
+     this.ngZone.runOutsideAngular(() => {
+       setTimeout(() => {
+         this.ngZone.run(() => {
+           this.destroyCharts();
+           this.createActivityChart();
+           this.createCostChart();
+           this.createKPIChart();
+           this.createProgressChart();
+           this.createPlanificacionChart();
+           this.cdr.detectChanges();
+         });
+       }, 200);
+     });
+     
+     console.log('📈 Gráficos actualizados desde servicio');
+   }
 
   // Obtener icono de tendencia
   getTrendIcon(tendencia: string): string {

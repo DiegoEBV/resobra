@@ -91,157 +91,269 @@ export class KpisService {
   private alertasSubject = new BehaviorSubject<AlertaKPI[]>([]);
   public alertas$ = this.alertasSubject.asObservable();
 
+  private isInitialized = false;
+
   constructor(
     private supabase: SupabaseService,
     private authService: AuthService
   ) {
-    this.loadUserKPIs();
-    this.loadDashboardKPIs();
-    this.loadAlertas();
+    // No cargar datos en el constructor - esperar a que se inicialice explícitamente
+    console.log('🔧 [KpisService] Servicio inicializado - esperando autenticación');
+  }
+
+  // Método de inicialización explícita que debe llamarse después de la autenticación
+  async initialize(): Promise<void> {
+    try {
+      console.log('🚀 [KpisService] Iniciando carga de datos...');
+      
+      const user = await this.authService.getCurrentUser();
+      if (!user) {
+        console.warn('⚠️ [KpisService] No hay usuario autenticado - no se pueden cargar KPIs');
+        return;
+      }
+
+      console.log('✅ [KpisService] Usuario autenticado:', user.email);
+      
+      // Cargar datos en paralelo
+      await Promise.all([
+        this.loadUserKPIs(),
+        this.loadDashboardKPIs(),
+        this.loadAlertas()
+      ]);
+      
+      this.isInitialized = true;
+      console.log('✅ [KpisService] Inicialización completada');
+    } catch (error) {
+      console.error('❌ [KpisService] Error en inicialización:', error);
+      throw error;
+    }
+  }
+
+  // Verificar si el servicio está inicializado
+  isServiceInitialized(): boolean {
+    return this.isInitialized;
   }
 
   // Cargar KPIs del usuario
-  private async loadUserKPIs(): Promise<void> {
+  async loadUserKPIs(): Promise<void> {
     try {
+      console.log('📊 [KpisService] Iniciando carga de KPIs de usuario...');
+      
       const user = await this.authService.getCurrentUser();
-      if (!user) return;
+      if (!user) {
+        console.warn('⚠️ [KpisService] No hay usuario autenticado para cargar KPIs');
+        return;
+      }
+
+      console.log('👤 [KpisService] Cargando KPIs para usuario:', user.id);
 
       // Obtener obras asignadas al usuario
+      console.log('🏗️ [KpisService] Obteniendo obras del usuario...');
       const { data: userObras, error: userObrasError } = await this.supabase.client
         .from('user_obras')
         .select('obra_id')
         .eq('user_id', user.id);
 
-      if (userObrasError) throw userObrasError;
+      if (userObrasError) {
+        console.error('❌ [KpisService] Error obteniendo obras del usuario:', userObrasError);
+        throw new Error(`Error obteniendo obras: ${userObrasError.message}`);
+      }
 
-      if (userObras && userObras.length > 0) {
-        const obraIds = userObras.map(uo => uo.obra_id);
+      if (!userObras || userObras.length === 0) {
+        console.warn('⚠️ [KpisService] Usuario no tiene obras asignadas');
+        this.kpisSubject.next([]);
+        return;
+      }
+
+      const obraIds = userObras.map(uo => uo.obra_id);
+      console.log('✅ [KpisService] Obras encontradas:', obraIds.length);
+
+      // Cargar KPIs por obra
+      console.log('🏗️ [KpisService] Cargando KPIs por obra...');
+      const { data: kpisObra, error: errorObra } = await this.supabase.client
+        .from('kpis')
+        .select(`
+          *,
+          obra:obras(nombre)
+        `)
+        .in('obra_id', obraIds)
+        .is('actividad_id', null);
+
+      if (errorObra) {
+        console.error('❌ [KpisService] Error cargando KPIs de obra:', errorObra);
+        throw new Error(`Error cargando KPIs de obra: ${errorObra.message}`);
+      }
+
+      console.log('✅ [KpisService] KPIs de obra cargados:', kpisObra?.length || 0);
+
+      // Cargar KPIs por actividad
+      console.log('⚡ [KpisService] Cargando actividades de las obras...');
+      const { data: actividades, error: actError } = await this.supabase.client
+        .from('actividades')
+        .select('id')
+        .in('obra_id', obraIds);
+
+      let kpisActividad: any[] = [];
+      if (!actError && actividades && actividades.length > 0) {
+        const actividadIds = actividades.map(a => a.id);
+        console.log('✅ [KpisService] Actividades encontradas:', actividadIds.length);
         
-        // Consulta simplificada para KPIs por obra
-        const { data: kpisObra, error: errorObra } = await this.supabase.client
+        console.log('📊 [KpisService] Cargando KPIs de actividades...');
+        const { data: kpisAct, error: errorAct } = await this.supabase.client
           .from('kpis')
           .select(`
             *,
-            obra:obras(id, nombre)
+            actividad:actividades(tipo_actividad, ubicacion)
           `)
-          .in('obra_id', obraIds)
-          .order('fecha', { ascending: false });
+          .in('actividad_id', actividadIds);
 
-        if (errorObra) throw errorObra;
-
-        // Consulta separada para KPIs por actividad
-        const { data: actividades, error: actError } = await this.supabase.client
-          .from('actividades')
-          .select('id')
-          .in('obra_id', obraIds);
-
-        let kpisActividad: any[] = [];
-        if (!actError && actividades && actividades.length > 0) {
-          const actividadIds = actividades.map(a => a.id);
-          
-          const { data: kpisAct, error: errorAct } = await this.supabase.client
-            .from('kpis')
-            .select(`
-              *,
-              actividad:actividades(id, tipo_actividad, ubicacion, responsable)
-            `)
-            .in('actividad_id', actividadIds)
-            .order('fecha', { ascending: false });
-
-          if (!errorAct) {
-            kpisActividad = kpisAct || [];
-          }
+        if (errorAct) {
+          console.error('❌ [KpisService] Error cargando KPIs de actividad:', errorAct);
+          throw new Error(`Error cargando KPIs de actividad: ${errorAct.message}`);
         }
 
-        // Combinar resultados evitando duplicados
-        const kpisObraArray = kpisObra || [];
-        const kpisActividadArray = kpisActividad || [];
-        
-        // Crear un Map para evitar duplicados por ID
-        const kpisMap = new Map();
-        
-        // Agregar KPIs de obra
-        kpisObraArray.forEach(kpi => {
-          kpisMap.set(kpi.id, kpi);
-        });
-        
-        // Agregar KPIs de actividad (solo si no existen ya)
-        kpisActividadArray.forEach(kpi => {
-          if (!kpisMap.has(kpi.id)) {
-            kpisMap.set(kpi.id, kpi);
-          }
-        });
-        
-        // Convertir Map a array y ordenar por fecha
-        const allKpis = Array.from(kpisMap.values())
-          .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
-        
-        this.kpisSubject.next(allKpis);
+        kpisActividad = kpisAct || [];
+        console.log('✅ [KpisService] KPIs de actividad cargados:', kpisActividad.length);
+      } else {
+        console.log('ℹ️ [KpisService] No se encontraron actividades');
       }
+
+      // Combinar y procesar KPIs
+      const allKPIs = [...(kpisObra || []), ...kpisActividad];
+      console.log('🔄 [KpisService] Total KPIs antes de filtrar duplicados:', allKPIs.length);
+      
+      // Eliminar duplicados por ID
+      const uniqueKPIs = allKPIs.filter((kpi, index, self) => 
+        index === self.findIndex(k => k.id === kpi.id)
+      );
+
+      console.log('✅ [KpisService] KPIs únicos procesados:', uniqueKPIs.length);
+      this.kpisSubject.next(uniqueKPIs);
+      
     } catch (error) {
-      console.error('Error loading KPIs:', error);
+      console.error('❌ [KpisService] Error crítico en loadUserKPIs:', error);
+      // Emitir array vacío en caso de error para evitar que el observable se quede colgado
+      this.kpisSubject.next([]);
+      throw error;
     }
   }
 
   // Cargar KPIs para dashboard
   private async loadDashboardKPIs(): Promise<void> {
     try {
+      console.log('📈 [KpisService] Iniciando carga de KPIs para dashboard...');
+      
       const user = await this.authService.getCurrentUser();
-      if (!user) return;
+      if (!user) {
+        console.warn('⚠️ [KpisService] No hay usuario autenticado para cargar dashboard KPIs');
+        return;
+      }
+
+      console.log('👤 [KpisService] Cargando dashboard KPIs para usuario:', user.id);
 
       // Obtener obras asignadas al usuario
+      console.log('🏗️ [KpisService] Obteniendo obras del usuario...');
       const { data: userObras, error: userObrasError } = await this.supabase.client
         .from('user_obras')
         .select('obra_id')
         .eq('user_id', user.id);
 
-      if (userObrasError) throw userObrasError;
+      if (userObrasError) {
+        console.error('❌ [KpisService] Error obteniendo obras del usuario:', userObrasError);
+        throw new Error(`Error obteniendo obras: ${userObrasError.message}`);
+      }
 
-      if (userObras && userObras.length > 0) {
-        const obraIds = userObras.map(uo => uo.obra_id);
-        const fechaLimite = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      if (!userObras || userObras.length === 0) {
+        console.warn('⚠️ [KpisService] Usuario no tiene obras asignadas');
+        this.dashboardKPIsSubject.next({
+          rendimiento: { promedio: 0, tendencia: 'estable', criticos: 0 },
+          calidad: { promedio: 0, tendencia: 'estable', criticos: 0 },
+          seguridad: { promedio: 0, tendencia: 'estable', criticos: 0 },
+          costo: { promedio: 0, tendencia: 'estable', criticos: 0 },
+          tiempo: { promedio: 0, tendencia: 'estable', criticos: 0 }
+        });
+        return;
+      }
+
+      const obraIds = userObras.map(uo => uo.obra_id);
+      console.log('✅ [KpisService] Obras encontradas:', obraIds.length);
+      
+      const fechaLimite = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      
+      // Consulta simplificada para dashboard
+      console.log('📊 [KpisService] Cargando KPIs de obras...');
+      const { data: kpisObra, error: errorObra } = await this.supabase.client
+        .from('kpis')
+        .select('avance_fisico, productividad, calidad, desviacion_cronograma')
+        .in('obra_id', obraIds)
+        .gte('fecha', fechaLimite);
+
+      if (errorObra) {
+        console.error('❌ [KpisService] Error cargando KPIs de obras:', errorObra);
+        throw new Error(`Error cargando KPIs de obras: ${errorObra.message}`);
+      }
+
+      console.log('✅ [KpisService] KPIs de obras cargados:', kpisObra?.length || 0);
+
+      // Consulta para KPIs de actividades
+      console.log('⚡ [KpisService] Cargando actividades de las obras...');
+      const { data: actividades, error: actError } = await this.supabase.client
+        .from('actividades')
+        .select('id')
+        .in('obra_id', obraIds);
+
+      if (actError) {
+        console.error('❌ [KpisService] Error cargando actividades:', actError);
+        throw new Error(`Error cargando actividades: ${actError.message}`);
+      }
+
+      let kpisActividad: any[] = [];
+      if (actividades && actividades.length > 0) {
+        const actividadIds = actividades.map(a => a.id);
+        console.log('✅ [KpisService] Actividades encontradas:', actividadIds.length);
         
-        // Consulta simplificada para dashboard
-        const { data: kpisObra, error: errorObra } = await this.supabase.client
+        console.log('📊 [KpisService] Cargando KPIs de actividades...');
+        const { data: kpisAct, error: errorAct } = await this.supabase.client
           .from('kpis')
-          .select('avance_fisico, productividad, calidad')
-          .in('obra_id', obraIds)
+          .select('avance_fisico, productividad, calidad, desviacion_cronograma')
+          .in('actividad_id', actividadIds)
           .gte('fecha', fechaLimite);
 
-        if (errorObra) throw errorObra;
-
-        // Consulta para KPIs de actividades
-        const { data: actividades, error: actError } = await this.supabase.client
-          .from('actividades')
-          .select('id')
-          .in('obra_id', obraIds);
-
-        let kpisActividad: any[] = [];
-        if (!actError && actividades && actividades.length > 0) {
-          const actividadIds = actividades.map(a => a.id);
-          
-          const { data: kpisAct, error: errorAct } = await this.supabase.client
-            .from('kpis')
-            .select('avance_fisico, productividad, calidad')
-            .in('actividad_id', actividadIds)
-            .gte('fecha', fechaLimite);
-
-          if (!errorAct) {
-            kpisActividad = kpisAct || [];
-          }
+        if (errorAct) {
+          console.error('❌ [KpisService] Error cargando KPIs de actividades:', errorAct);
+          throw new Error(`Error cargando KPIs de actividades: ${errorAct.message}`);
         }
 
-        // Combinar y procesar datos
-        const kpisObraArray = kpisObra || [];
-        const kpisActividadArray = kpisActividad || [];
-        
-        // Combinar todos los KPIs
-        const allKpis = [...kpisObraArray, ...kpisActividadArray];
-        const dashboardData = this.processDashboardKPIs(allKpis);
-        this.dashboardKPIsSubject.next(dashboardData);
+        kpisActividad = kpisAct || [];
+        console.log('✅ [KpisService] KPIs de actividades cargados:', kpisActividad.length);
+      } else {
+        console.log('ℹ️ [KpisService] No se encontraron actividades');
       }
+
+      // Combinar y procesar datos
+      const kpisObraArray = kpisObra || [];
+      const kpisActividadArray = kpisActividad || [];
+      
+      // Combinar todos los KPIs
+      const allKpis = [...kpisObraArray, ...kpisActividadArray];
+      console.log('🔄 [KpisService] Total KPIs para procesar:', allKpis.length);
+      
+      const dashboardData = this.processDashboardKPIs(allKpis);
+      console.log('✅ [KpisService] Datos procesados para dashboard:', dashboardData);
+      
+      this.dashboardKPIsSubject.next(dashboardData);
+      
     } catch (error) {
-      console.error('Error loading dashboard KPIs:', error);
+      console.error('❌ [KpisService] Error crítico en loadDashboardKPIs:', error);
+      // Emitir datos por defecto en caso de error
+      this.dashboardKPIsSubject.next({
+        rendimiento: { promedio: 0, tendencia: 'estable', criticos: 0 },
+        calidad: { promedio: 0, tendencia: 'estable', criticos: 0 },
+        seguridad: { promedio: 0, tendencia: 'estable', criticos: 0 },
+        costo: { promedio: 0, tendencia: 'estable', criticos: 0 },
+        tiempo: { promedio: 0, tendencia: 'estable', criticos: 0 }
+      });
+      throw error;
     }
   }
 
@@ -302,22 +414,74 @@ export class KpisService {
   // Cargar alertas
   private async loadAlertas(): Promise<void> {
     try {
+      console.log('🚨 [KpisService] Iniciando carga de alertas...');
+      
       const user = await this.authService.getCurrentUser();
-      if (!user) return;
+      if (!user) {
+        console.warn('⚠️ [KpisService] No hay usuario autenticado para cargar alertas');
+        return;
+      }
+
+      console.log('👤 [KpisService] Cargando alertas para usuario:', user.id);
 
       // Obtener obras asignadas al usuario
+      console.log('🏗️ [KpisService] Obteniendo obras del usuario para alertas...');
       const { data: userObras, error: userObrasError } = await this.supabase.client
         .from('user_obras')
         .select('obra_id')
         .eq('user_id', user.id);
 
-      if (userObrasError) throw userObrasError;
+      if (userObrasError) {
+        console.error('❌ [KpisService] Error obteniendo obras para alertas:', userObrasError);
+        throw new Error(`Error obteniendo obras para alertas: ${userObrasError.message}`);
+      }
 
-      if (userObras && userObras.length > 0) {
-        const obraIds = userObras.map(uo => uo.obra_id);
+      if (!userObras || userObras.length === 0) {
+        console.warn('⚠️ [KpisService] Usuario no tiene obras asignadas - no hay alertas');
+        this.alertasSubject.next([]);
+        return;
+      }
+
+      const obraIds = userObras.map(uo => uo.obra_id);
+      console.log('✅ [KpisService] Obras para alertas encontradas:', obraIds.length);
+      
+      // Consulta simplificada para alertas
+      console.log('📊 [KpisService] Cargando KPIs para alertas...');
+      const { data: kpisObra, error: errorObra } = await this.supabase.client
+        .from('kpis')
+        .select(`
+          id,
+          avance_fisico,
+          productividad,
+          calidad,
+          fecha,
+          obra:obras(nombre)
+        `)
+        .in('obra_id', obraIds)
+        .order('fecha', { ascending: false })
+        .limit(5);
+
+      if (errorObra) {
+        console.error('❌ [KpisService] Error cargando KPIs de obras para alertas:', errorObra);
+        throw new Error(`Error cargando KPIs de obras para alertas: ${errorObra.message}`);
+      }
+
+      console.log('✅ [KpisService] KPIs de obras para alertas cargados:', kpisObra?.length || 0);
+
+      // Consulta para KPIs de actividades
+      console.log('⚡ [KpisService] Cargando actividades para alertas...');
+      const { data: actividades, error: actError } = await this.supabase.client
+        .from('actividades')
+        .select('id')
+        .in('obra_id', obraIds);
+
+      let kpisActividad: any[] = [];
+      if (!actError && actividades && actividades.length > 0) {
+        const actividadIds = actividades.map(a => a.id);
+        console.log('✅ [KpisService] Actividades para alertas encontradas:', actividadIds.length);
         
-        // Consulta simplificada para alertas
-        const { data: kpisObra, error: errorObra } = await this.supabase.client
+        console.log('📊 [KpisService] Cargando KPIs de actividades para alertas...');
+        const { data: kpisAct, error: errorAct } = await this.supabase.client
           .from('kpis')
           .select(`
             id,
@@ -325,60 +489,45 @@ export class KpisService {
             productividad,
             calidad,
             fecha,
-            obra:obras(nombre)
+            actividad:actividades(tipo_actividad, ubicacion)
           `)
-          .in('obra_id', obraIds)
+          .in('actividad_id', actividadIds)
           .order('fecha', { ascending: false })
           .limit(5);
 
-        if (errorObra) throw errorObra;
-
-        // Consulta para KPIs de actividades
-        const { data: actividades, error: actError } = await this.supabase.client
-          .from('actividades')
-          .select('id')
-          .in('obra_id', obraIds);
-
-        let kpisActividad: any[] = [];
-        if (!actError && actividades && actividades.length > 0) {
-          const actividadIds = actividades.map(a => a.id);
-          
-          const { data: kpisAct, error: errorAct } = await this.supabase.client
-            .from('kpis')
-            .select(`
-              id,
-              avance_fisico,
-              productividad,
-              calidad,
-              fecha,
-              actividad:actividades(tipo_actividad, ubicacion)
-            `)
-            .in('actividad_id', actividadIds)
-            .order('fecha', { ascending: false })
-            .limit(5);
-
-          if (!errorAct) {
-            kpisActividad = kpisAct || [];
-          }
+        if (!errorAct) {
+          kpisActividad = kpisAct || [];
+          console.log('✅ [KpisService] KPIs de actividades para alertas cargados:', kpisActividad.length);
+        } else {
+          console.error('❌ [KpisService] Error cargando KPIs de actividades para alertas:', errorAct);
         }
-
-        // Combinar y procesar alertas
-        const allKpis = [...(kpisObra || []), ...kpisActividad];
-        const alertas = allKpis.map((kpi: any) => ({
-          id: kpi.id,
-          avance_fisico: kpi.avance_fisico,
-          productividad: kpi.productividad,
-          calidad: kpi.calidad,
-          fecha: kpi.fecha,
-          obra_nombre: kpi.obra?.nombre || 'Sin asignar',
-          actividad_tipo: kpi.actividad?.tipo_actividad || null,
-          actividad_ubicacion: kpi.actividad?.ubicacion || null
-        }));
-
-        this.alertasSubject.next(alertas.slice(0, 10));
+      } else {
+        console.log('ℹ️ [KpisService] No se encontraron actividades para alertas');
       }
+
+      // Combinar y procesar alertas
+      const allKpis = [...(kpisObra || []), ...kpisActividad];
+      console.log('🔄 [KpisService] Total KPIs para alertas:', allKpis.length);
+      
+      const alertas = allKpis.map((kpi: any) => ({
+        id: kpi.id,
+        avance_fisico: kpi.avance_fisico,
+        productividad: kpi.productividad,
+        calidad: kpi.calidad,
+        fecha: kpi.fecha,
+        obra_nombre: kpi.obra?.nombre || 'Sin asignar',
+        actividad_tipo: kpi.actividad?.tipo_actividad || null,
+        actividad_ubicacion: kpi.actividad?.ubicacion || null
+      }));
+
+      console.log('✅ [KpisService] Alertas procesadas:', alertas.length);
+      this.alertasSubject.next(alertas.slice(0, 10));
+      
     } catch (error) {
-      console.error('Error loading alertas:', error);
+      console.error('❌ [KpisService] Error crítico en loadAlertas:', error);
+      // Emitir array vacío en caso de error
+      this.alertasSubject.next([]);
+      throw error;
     }
   }
 

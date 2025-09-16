@@ -150,24 +150,57 @@ export class EvaluacionesService {
   async createEvaluacion(evaluacionData: Partial<Evaluacion>): Promise<Evaluacion> {
     try {
       const evaluadorId = await this.supabase.getCurrentUserId();
+      
+      // Validar datos requeridos
+      if (!evaluacionData.evaluado_id) {
+        throw new Error('El ID del empleado a evaluar es requerido');
+      }
+      if (!evaluacionData.rubrica_id) {
+        throw new Error('La rúbrica de evaluación es requerida');
+      }
+      if (!evaluacionData.calificaciones || Object.keys(evaluacionData.calificaciones).length === 0) {
+        throw new Error('Las calificaciones son requeridas');
+      }
+
       const { data, error } = await this.supabase.client
         .from('evaluaciones')
         .insert({
           ...evaluacionData,
           evaluador_id: evaluadorId,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          created_at: new Date().toISOString()
         })
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error de Supabase al crear evaluación:', error);
+        
+        // Manejo específico de errores comunes
+        if (error.code === 'PGRST204') {
+          throw new Error('Error de estructura de base de datos. Contacte al administrador.');
+        }
+        if (error.code === '23505') {
+          throw new Error('Ya existe una evaluación para este empleado en este período.');
+        }
+        if (error.code === '23503') {
+          throw new Error('Datos de referencia inválidos. Verifique el empleado y la rúbrica seleccionados.');
+        }
+        
+        throw new Error(`Error al guardar la evaluación: ${error.message}`);
+      }
 
       await this.loadEvaluaciones();
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating evaluacion:', error);
-      throw error;
+      
+      // Re-lanzar errores personalizados
+      if (error.message && error.message.includes('requerido')) {
+        throw error;
+      }
+      
+      // Error genérico para otros casos
+      throw new Error('Error inesperado al crear la evaluación. Intente nuevamente.');
     }
   }
 

@@ -161,13 +161,19 @@ export interface Evaluacion {
   id: string;
   evaluado_id: string;
   evaluador_id: string;
-  periodo: string;
+  obra_id: string;
+  tipo_evaluacion: string;
+  criterios: any; // JSONB field
   puntuacion_total: number;
   comentarios?: string;
-  estado: 'borrador' | 'completada' | 'aprobada';
   fecha_evaluacion: string;
   created_at: string;
-  criterios?: CriterioEvaluacion[];
+  rubrica_id?: string;
+  calificaciones?: { [criterio_id: string]: number }; // Nueva columna JSONB
+  // Campos adicionales para las consultas con JOIN
+  evaluado_nombre?: string;
+  evaluador_nombre?: string;
+  rubrica_nombre?: string;
 }
 
 export interface CriterioEvaluacion {

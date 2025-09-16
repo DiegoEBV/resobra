@@ -1,7 +1,7 @@
 // BitePoint Estilos para el componente de generación
 
 .min-h-screen {
-  background-color: var(--background-light);
+  background-color: #F8F9FA;
   font-family: 'Inter', sans-serif;
   min-height: 100vh;
   padding: 1.5rem;
@@ -9,10 +9,10 @@
 
 // BitePoint Header section
 .text-center.mb-12 {
-  background: linear-gradient(135deg, var(--bitepoint-teal) 0%, var(--bitepoint-teal-light) 100%);
+  background: linear-gradient(135deg, #2D9596 0%, #A3D9D9 100%);
   box-shadow: 0 4px 16px rgba(45, 149, 150, 0.15);
   border-radius: 12px;
-  border: 1px solid var(--bitepoint-teal-light);
+  border: 1px solid #A3D9D9;
   padding: 2rem;
   margin-bottom: 2rem;
   
@@ -29,7 +29,7 @@
       width: 2.5rem;
       height: 2.5rem;
       margin-right: 0.75rem;
-      color: var(--accent-orange);
+      color: #F4A261;
     }
   }
   
@@ -44,7 +44,7 @@
 // BitePoint Material Cards
 mat-card {
   box-shadow: 0 2px 8px rgba(45, 149, 150, 0.08);
-  border: 1px solid var(--border-light);
+  border: 1px solid #E5E7EB;
   border-radius: 12px;
   background: white;
   margin-bottom: 2rem;
@@ -58,10 +58,10 @@ mat-card {
     border-radius: 12px 12px 0 0;
     padding: 1.5rem;
     
-    &.from-bitepoint-teal { background: linear-gradient(135deg, var(--bitepoint-teal) 0%, var(--bitepoint-teal-light) 100%); }
-    &.from-orange-400 { background: linear-gradient(135deg, var(--bitepoint-orange) 0%, var(--bitepoint-orange-dark) 100%); }
-  &.from-teal-500 { background: linear-gradient(135deg, var(--bitepoint-teal) 0%, var(--bitepoint-teal-dark) 100%); }
-    &.from-bitepoint-teal-dark { background: linear-gradient(135deg, var(--bitepoint-teal) 0%, var(--bitepoint-teal-dark) 100%); }
+    &.from-bitepoint-teal { background: linear-gradient(135deg, #2D9596 0%, #A3D9D9 100%); }
+    &.from-orange-400 { background: linear-gradient(135deg, #F4A261 0%, #EA580C 100%); }
+  &.from-teal-500 { background: linear-gradient(135deg, #2D9596 0%, #1F6B6C 100%); }
+    &.from-bitepoint-teal-dark { background: linear-gradient(135deg, #2D9596 0%, #1F6B6C 100%); }
     
     mat-card-title {
       font-family: 'Inter', sans-serif;
@@ -75,38 +75,38 @@ mat-card {
         width: 1.5rem;
         height: 1.5rem;
         margin-right: 0.75rem;
-        color: var(--accent-orange);
+        color: #F4A261;
       }
     }
   }
   
   mat-card-content {
-    padding: var(--spacing-lg);
+    padding: 1.5rem;
     
     .grid {
-      gap: var(--spacing-lg);
+      gap: 1.5rem;
       
       .bg-gradient-to-br {
-        border-radius: var(--radius-lg);
-        box-shadow: var(--elevation-2);
-        padding: var(--spacing-md);
-        border: 1px solid var(--divider-color);
-        transition: var(--transition-normal);
+        border-radius: 0.75rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        padding: 1rem;
+        border: 1px solid #E5E7EB;
+        transition: all 0.2s ease;
         
         &:hover {
-          box-shadow: var(--elevation-4);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
         }
         
-        &.from-gray-50 { background: linear-gradient(135deg, var(--surface-elevated) 0%, var(--surface-hover) 100%); }
-        &.from-orange-50 { background: linear-gradient(135deg, var(--bitepoint-orange-50) 0%, var(--bitepoint-orange-100) 100%); }
-        &.from-green-50 { background: linear-gradient(135deg, var(--success-50) 0%, var(--success-100) 100%); }
-        &.from-blue-50 { background: linear-gradient(135deg, var(--bitepoint-teal-50) 0%, var(--bitepoint-teal-100) 100%); }
+        &.from-gray-50 { background: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%); }
+        &.from-orange-50 { background: linear-gradient(135deg, #FEF3E2 0%, #FED7AA 100%); }
+        &.from-green-50 { background: linear-gradient(135deg, #ECFDF5 0%, #BBF7D0 100%); }
+        &.from-blue-50 { background: linear-gradient(135deg, #E6F7F7 0%, #B3E5E6 100%); }
         
         span {
           font-family: 'Google Sans', sans-serif;
           font-weight: 500;
           font-size: 0.875rem;
-          color: var(--text-secondary);
+          color: #6B7280;
           text-transform: uppercase;
           letter-spacing: 0.05em;
         }
@@ -114,8 +114,8 @@ mat-card {
         p {
           font-family: 'Roboto', sans-serif;
           font-weight: 500;
-          color: var(--text-primary);
-          margin-top: var(--spacing-sm);
+          color: #2C3E50;
+          margin-top: 0.5rem;
           
           &.text-2xl { font-size: 1.875rem; font-weight: 600; }
           &.text-3xl { font-size: 2.25rem; font-weight: 700; }
@@ -128,14 +128,14 @@ mat-card {
 
 // Material Table estandarizada
 mat-table, .mat-mdc-table {
-  background: var(--surface-color) !important;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--elevation-2);
+  background: #FFFFFF !important;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   width: 100%;
   
   .mat-mdc-header-row, .mat-header-row {
-    background: linear-gradient(to right, var(--bitepoint-teal), var(--bitepoint-teal-light)) !important;
+    background: linear-gradient(to right, #2D9596, #A3D9D9) !important;
     
     .mat-mdc-header-cell, .mat-header-cell {
       color: white !important;
@@ -144,23 +144,23 @@ mat-table, .mat-mdc-table {
       font-size: 0.875rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      padding: var(--spacing-md) !important;
+      padding: 1rem !important;
       border-bottom: none !important;
     }
   }
   
   .mat-mdc-row, .mat-row {
-    border-bottom: 1px solid var(--divider-color) !important;
-    transition: var(--transition-fast);
+    border-bottom: 1px solid #E5E7EB !important;
+    transition: all 0.15s ease;
     
     &:hover {
-      background-color: var(--surface-elevated) !important;
-    }
+        background-color: #F9FAFB !important;
+      }
     
     .mat-mdc-cell, .mat-cell {
-      padding: var(--spacing-md) !important;
-      font-family: 'Roboto', sans-serif !important;
-      color: var(--text-primary) !important;
+        padding: 1rem !important;
+        font-family: 'Roboto', sans-serif !important;
+        color: #2C3E50 !important;
       border-bottom: none !important;
       font-size: 0.875rem !important;
       font-weight: 500 !important;
@@ -172,30 +172,30 @@ mat-table, .mat-mdc-table {
       
       // Embedded spans and badges
       span {
-        color: var(--text-primary) !important;
+          color: #2C3E50 !important;
         
         &.badge {
-          display: inline-block;
-          padding: var(--spacing-xs) var(--spacing-sm);
-          border-radius: var(--radius-full);
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
           font-size: 0.75rem;
           font-weight: 500;
           text-transform: uppercase;
           letter-spacing: 0.05em;
           
           &.bg-blue-100 {
-            background-color: var(--bitepoint-teal-100) !important;
-            color: var(--bitepoint-teal-dark) !important;
+            background-color: #B3E5E6 !important;
+            color: #1F6B6C !important;
           }
           
           &.bg-green-100 {
-            background-color: var(--success-100) !important;
-            color: var(--success-dark) !important;
+            background-color: #BBF7D0 !important;
+            color: #065F46 !important;
           }
           
           &.bg-orange-100 {
-            background-color: var(--bitepoint-orange-100) !important;
-    color: var(--bitepoint-orange-dark) !important;
+            background-color: #FED7AA !important;
+    color: #EA580C !important;
           }
         }
       }
@@ -206,16 +206,16 @@ mat-table, .mat-mdc-table {
 // Estilos específicos para las clases de Tailwind en la tabla
 .mat-mdc-table, mat-table {
   .text-sm {
-    color: var(--text-primary) !important;
+    color: #2C3E50 !important;
     font-size: 0.875rem !important;
   }
   
   .text-gray-900 {
-    color: var(--text-primary) !important;
+    color: #2C3E50 !important;
   }
   
   .text-gray-700 {
-    color: var(--text-secondary) !important;
+    color: #6B7280 !important;
   }
   
   .font-medium {
@@ -232,34 +232,34 @@ mat-table, .mat-mdc-table {
   
   // Asegurar visibilidad de todos los elementos de texto
   span, div, p {
-    color: var(--text-primary) !important;
+    color: #2C3E50 !important;
   }
   
   // Estilos específicos para el resumen de partidas
   .text-xs {
-    color: var(--text-secondary) !important;
+    color: #6B7280 !important;
     font-size: 0.75rem !important;
   }
   
   .text-base {
-    color: var(--text-primary) !important;
+    color: #2C3E50 !important;
     font-size: 1rem !important;
   }
   
   .text-lg {
-    color: var(--text-primary) !important;
+    color: #2C3E50 !important;
     font-size: 1.125rem !important;
   }
   
   // Mejorar contraste en celdas con fondo
   .bg-gray-50 {
     background-color: #f9fafb !important;
-    color: var(--text-primary) !important;
+    color: #2C3E50 !important;
   }
   
   .bg-white {
     background-color: white !important;
-    color: var(--text-primary) !important;
+    color: #2C3E50 !important;
   }
 }
 
@@ -270,7 +270,7 @@ mat-table, .mat-mdc-table {
   box-shadow: 0 2px 8px rgba(45, 149, 150, 0.08);
   padding: 2rem;
   margin-bottom: 2rem;
-  border: 1px solid var(--border-light);
+  border: 1px solid #E5E7EB;
   
   button[mat-raised-button] {
     border-radius: 8px;
@@ -299,15 +299,15 @@ mat-table, .mat-mdc-table {
     }
     
     &.from-blue-500 {
-      background: linear-gradient(135deg, var(--bitepoint-teal) 0%, var(--bitepoint-teal-dark) 100%) !important;
+      background: linear-gradient(135deg, #2D9596 0%, #1F6B6C 100%) !important;
       color: white !important;
-      &:hover { background: linear-gradient(135deg, var(--bitepoint-teal-dark) 0%, var(--bitepoint-teal) 100%) !important; }
+      &:hover { background: linear-gradient(135deg, #1F6B6C 0%, #2D9596 100%) !important; }
     }
     
     &.from-teal-500 {
-      background: linear-gradient(135deg, var(--accent-orange) 0%, #e76f51 100%) !important;
+      background: linear-gradient(135deg, #F4A261 0%, #e76f51 100%) !important;
       color: white !important;
-      &:hover { background: linear-gradient(135deg, #e76f51 0%, var(--accent-orange) 100%) !important; }
+      &:hover { background: linear-gradient(135deg, #e76f51 0%, #F4A261 100%) !important; }
     }
     
     &[disabled] {
@@ -341,11 +341,11 @@ mat-table, .mat-mdc-table {
     border: 1px solid transparent;
     
     &.mat-primary {
-      background: linear-gradient(135deg, var(--bitepoint-teal) 0%, var(--bitepoint-teal-light) 100%);
+      background: linear-gradient(135deg, #2D9596 0%, #A3D9D9 100%);
       color: white;
       
       &:hover {
-        background: linear-gradient(135deg, #1f7a7b 0%, var(--bitepoint-teal) 100%);
+        background: linear-gradient(135deg, #1f7a7b 0%, #2D9596 100%);
         box-shadow: 0 2px 8px rgba(45, 149, 150, 0.3);
       }
       
@@ -357,11 +357,11 @@ mat-table, .mat-mdc-table {
     }
     
     &.mat-accent {
-      background: linear-gradient(135deg, var(--accent-orange) 0%, #e76f51 100%);
+      background: linear-gradient(135deg, #F4A261 0%, #e76f51 100%);
       color: white;
       
       &:hover {
-        background: linear-gradient(135deg, #e76f51 0%, var(--accent-orange) 100%);
+        background: linear-gradient(135deg, #e76f51 0%, #F4A261 100%);
         box-shadow: 0 2px 8px rgba(244, 162, 97, 0.3);
       }
     }
@@ -378,12 +378,12 @@ mat-table, .mat-mdc-table {
     
     &.mat-stroked-button {
       background: white;
-      border: 1px solid var(--border-light);
-      color: var(--bitepoint-teal);
+      border: 1px solid #E5E7EB;
+      color: #2D9596;
       
       &:hover {
         background: rgba(45, 149, 150, 0.05);
-        border-color: var(--bitepoint-teal);
+        border-color: #2D9596;
       }
     }
   }
@@ -403,18 +403,18 @@ mat-table, .mat-mdc-table {
       padding: 2rem;
       border-radius: 12px;
       box-shadow: 0 4px 20px rgba(45, 149, 150, 0.1);
-      border: 1px solid var(--border-light);
+      border: 1px solid #E5E7EB;
       
       mat-spinner {
         margin-bottom: 1rem;
         
         ::ng-deep circle {
-          stroke: var(--bitepoint-teal);
+          stroke: #2D9596;
         }
       }
       
       p {
-        color: var(--text-secondary);
+        color: #6B7280;
         font-family: 'Inter', sans-serif;
         font-size: 1rem;
         margin: 0;
