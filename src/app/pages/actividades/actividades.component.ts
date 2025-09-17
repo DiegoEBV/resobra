@@ -218,7 +218,7 @@ export class ActividadesComponent implements OnInit, OnDestroy, AfterViewInit {
     try {
       const result = await (this.actividadesService as any).loadUserActividades();
     } catch (error) {
-      console.error('Error al cargar actividades:', error);
+      // Error loading activities
     }
   }
 
@@ -348,7 +348,7 @@ export class ActividadesComponent implements OnInit, OnDestroy, AfterViewInit {
         });
         this.loadActividades();
       } catch (error: any) {
-        console.error('Error deleting actividad:', error);
+        // Error deleting activity
         this.snackBar.open('Error al eliminar la actividad', 'Cerrar', {
           duration: 3000,
           panelClass: ['error-snackbar']

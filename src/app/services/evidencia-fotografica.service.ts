@@ -63,20 +63,16 @@ export class EvidenciaFotograficaService {
     }
 
     try {
-      console.log('🔄 Inicializando bucket de evidencia fotográfica...');
-      
       // Verificar si el bucket existe
       const { data: buckets, error: listError } = await this.supabaseService.storage.listBuckets();
       
       if (listError) {
-        console.error('❌ Error listando buckets:', listError);
         throw listError;
       }
       
       const bucketExists = buckets?.some(bucket => bucket.name === this.STORAGE_BUCKET);
       
       if (!bucketExists) {
-        console.log('📁 Creando bucket de evidencia fotográfica...');
         const { error: createError } = await this.supabaseService.storage.createBucket(this.STORAGE_BUCKET, {
           public: false,
           allowedMimeTypes: this.ALLOWED_TYPES,
@@ -84,19 +80,13 @@ export class EvidenciaFotograficaService {
         });
         
         if (createError) {
-          console.error('❌ Error creando bucket:', createError);
           // No lanzar error aquí, el bucket puede existir pero no ser visible
           // debido a permisos. Intentaremos usarlo de todas formas.
-        } else {
-          console.log('✅ Bucket de evidencia fotográfica creado exitosamente');
         }
-      } else {
-        console.log('✅ Bucket de evidencia fotográfica ya existe');
       }
       
       this.bucketInitialized = true;
     } catch (error) {
-      console.error('❌ Error inicializando bucket de storage:', error);
       // Marcar como inicializado para evitar intentos repetidos
       this.bucketInitialized = true;
     }
@@ -502,10 +492,7 @@ export class EvidenciaFotograficaService {
    * Obtiene todas las evidencias fotográficas de una actividad
    */
   obtenerEvidenciasPorActividad(actividadId: string): Observable<EvidenciaFotografica[]> {
-    console.log('🔍 INICIANDO CONSULTA DE EVIDENCIAS', {
-      actividadId,
-      timestamp: new Date().toISOString()
-    });
+
     
     return from(this.supabaseService.db
       .from('evidencia_fotografica')
@@ -515,63 +502,15 @@ export class EvidenciaFotograficaService {
     ).pipe(
       map(({ data, error }) => {
         if (error) {
-          console.error('❌ ERROR EN CONSULTA SUPABASE', {
-            actividadId,
-            errorName: error.name,
-            errorMessage: error.message,
-            errorDetails: error.details,
-            errorHint: error.hint,
-            errorCode: error.code,
-            timestamp: new Date().toISOString()
-          });
           throw error;
         }
         
         const evidencias = data as EvidenciaFotografica[];
         
-        console.log('✅ CONSULTA SUPABASE EXITOSA', {
-          actividadId,
-          cantidadEvidencias: evidencias?.length || 0,
-          evidenciasRaw: evidencias,
-          timestamp: new Date().toISOString()
-        });
-        
-        // Log detallado de cada evidencia encontrada
-        if (evidencias && evidencias.length > 0) {
-          evidencias.forEach((evidencia, index) => {
-            console.log(`📸 Evidencia encontrada ${index + 1}:`, {
-              id: evidencia.id,
-              actividad_id: evidencia.actividad_id,
-              nombre_archivo: evidencia.nombre_archivo,
-              url_imagen: evidencia.url_imagen,
-              descripcion: evidencia.descripcion,
-              fecha_subida: evidencia.fecha_subida,
-              subido_por: evidencia.subido_por,
-              tamaño_archivo: evidencia.tamaño_archivo,
-              tipo_archivo: evidencia.tipo_archivo,
-              created_at: evidencia.created_at,
-              updated_at: evidencia.updated_at
-            });
-          });
-        } else {
-          console.log('ℹ️ NO SE ENCONTRARON EVIDENCIAS EN LA CONSULTA', {
-            actividadId,
-            dataResponse: data,
-            timestamp: new Date().toISOString()
-          });
-        }
-        
         this.evidenciasSubject.next(evidencias);
         return evidencias;
       }),
       catchError(error => {
-        console.error('❌ ERROR PROCESANDO EVIDENCIAS', {
-          actividadId,
-          errorName: error?.name,
-          errorMessage: error?.message,
-          errorStack: error?.stack,
-          timestamp: new Date().toISOString()
-        });
         return throwError(() => error);
       })
     );
@@ -595,7 +534,6 @@ export class EvidenciaFotograficaService {
         return data as EvidenciaFotografica;
       }),
       catchError(error => {
-        console.error('Error actualizando descripción:', error);
         return throwError(() => error);
       })
     );
@@ -717,7 +655,6 @@ export class EvidenciaFotograficaService {
         return data as EvidenciaFotografica;
       }),
       catchError(error => {
-        console.error('Error al actualizar evidencia:', error);
         return throwError(() => error);
       })
     );
@@ -757,49 +694,21 @@ export class EvidenciaFotograficaService {
    * Log de debug con contexto estructurado
    */
   private logDebug(method: string, message: string, context?: any): void {
-    const timestamp = new Date().toISOString();
-    const logData = {
-      timestamp,
-      service: 'EvidenciaFotograficaService',
-      method,
-      level: 'DEBUG',
-      message,
-      context: context || {}
-    };
-    console.debug('🔍 [EvidenciaFotografica]', logData);
+    // Debug logging disabled
   }
 
   /**
    * Log de errores con contexto estructurado
    */
   private logError(method: string, message: string, context?: any): void {
-    const timestamp = new Date().toISOString();
-    const logData = {
-      timestamp,
-      service: 'EvidenciaFotograficaService',
-      method,
-      level: 'ERROR',
-      message,
-      context: context || {},
-      stack: context?.error?.stack || new Error().stack
-    };
-    console.error('❌ [EvidenciaFotografica]', logData);
+    // Error logging disabled
   }
 
   /**
    * Log de información con contexto estructurado
    */
   private logInfo(method: string, message: string, context?: any): void {
-    const timestamp = new Date().toISOString();
-    const logData = {
-      timestamp,
-      service: 'EvidenciaFotograficaService',
-      method,
-      level: 'INFO',
-      message,
-      context: context || {}
-    };
-    console.info('ℹ️ [EvidenciaFotografica]', logData);
+    // Info logging disabled
   }
 
   /**

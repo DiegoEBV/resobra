@@ -67,10 +67,10 @@ export class ExportService {
 
   // Exportar a PDF
   async exportToPDF(report: Report, reportItems: any[]): Promise<void> {
-    console.log('🔍 Export Service - exportToPDF iniciado');
-    console.log('📋 Report recibido:', report);
-    console.log('📊 ReportItems recibidos:', reportItems);
-    console.log('📈 Cantidad de items:', reportItems?.length || 0);
+    // Export Service - exportToPDF iniciado
+    // Report recibido: report
+    // ReportItems recibidos: reportItems
+    // Cantidad de items: reportItems?.length || 0
     
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -165,13 +165,8 @@ export class ExportService {
 
     // Tabla de partidas con formato detallado (múltiples partidas por página)
     reportItems.forEach((item, index) => {
-      console.log(`🔍 Procesando item ${index + 1}:`, item);
-      console.log('📝 Estructura del item:', {
-        hasItem: !!item.item,
-        itemName: item.item?.name,
-        directName: item.name,
-        fullItem: item
-      });
+      // Procesando item ${index + 1}: item
+      // Estructura del item: hasItem, itemName, directName, fullItem
       
       // Verificar si necesitamos una nueva página (altura estimada de una partida ~120px)
       if (yPosition + 120 > pageHeight - 40) {
@@ -183,7 +178,7 @@ export class ExportService {
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
       const itemName = item.item?.name || item.name || 'Sin nombre';
-      console.log('📋 Nombre usado para el item:', itemName);
+      // Nombre usado para el item: itemName
       doc.text(`${itemName}`, 20, yPosition);
       yPosition += 15;
 
@@ -299,10 +294,10 @@ export class ExportService {
 
   // Exportar a Word
   async exportToWord(report: Report, reportItems: any[]): Promise<void> {
-    console.log('🔍 Export Service - exportToWord iniciado');
-    console.log('📋 Report recibido:', report);
-    console.log('📊 ReportItems recibidos:', reportItems);
-    console.log('📈 Cantidad de items:', reportItems?.length || 0);
+    // Export Service - exportToWord iniciado
+    // Report recibido: report
+    // ReportItems recibidos: reportItems
+    // Cantidad de items: reportItems?.length || 0
     
     const doc = new Document({
       sections: [
@@ -430,7 +425,7 @@ export class ExportService {
 
             // Partidas detalladas
             ...reportItems.map((item, index) => {
-              console.log(`🔍 Word - Procesando item ${index + 1}:`, item);
+              // Word - Procesando item ${index + 1}: item
               const itemName = item.item?.name || item.name || 'Sin nombre';
               const description = item.item?.description || item.description || 'Sin descripción';
               const unit = item.item?.unit || item.unit || 'Sin unidad';

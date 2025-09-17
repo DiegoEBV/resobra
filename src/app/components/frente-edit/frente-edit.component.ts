@@ -390,7 +390,7 @@ export class FrenteEditComponent implements OnInit, AfterViewInit {
         this.router.navigate(['/mapa']);
       }
     } catch (error) {
-      console.error('Error loading frente:', error);
+      // Error loading frente
       this.snackBar.open('Error al cargar el frente', 'Cerrar', {
         duration: 3000,
         panelClass: ['error-snackbar']
@@ -428,7 +428,7 @@ export class FrenteEditComponent implements OnInit, AfterViewInit {
     try {
       this.obras = await this.actividadesService.getUserObras();
     } catch (error) {
-      console.error('Error loading obras:', error);
+      // Error loading obras
       this.snackBar.open('Error al cargar las obras', 'Cerrar', {
         duration: 3000,
         panelClass: ['error-snackbar']
@@ -459,7 +459,7 @@ export class FrenteEditComponent implements OnInit, AfterViewInit {
         
         this.router.navigate(['/frentes']);
       } catch (error) {
-        console.error('Error updating frente:', error);
+        // Error updating frente
         this.snackBar.open('Error al actualizar el frente', 'Cerrar', {
           duration: 5000,
           panelClass: ['error-snackbar']

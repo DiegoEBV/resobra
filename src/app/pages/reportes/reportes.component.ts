@@ -138,7 +138,7 @@ export class ReportesComponent implements OnInit {
         }
       });
     } catch (error) {
-      console.error('Error al cargar reporte de rendimiento:', error);
+      // Error loading reporte de rendimiento
       throw error;
     }
   }
@@ -156,7 +156,7 @@ export class ReportesComponent implements OnInit {
         }
       });
     } catch (error) {
-      console.error('Error al cargar reporte de personal:', error);
+      // Error loading reporte de personal
       throw error;
     }
   }
@@ -174,7 +174,7 @@ export class ReportesComponent implements OnInit {
         }
       });
     } catch (error) {
-      console.error('Error al cargar reporte de actividades:', error);
+      // Error loading reporte de actividades
       throw error;
     }
   }
@@ -183,7 +183,7 @@ export class ReportesComponent implements OnInit {
     try {
       this.reporteKPIs = await this.reportesService.getReporteKPIs(this.periodoSeleccionado);
     } catch (error) {
-      console.error('Error al cargar reporte de KPIs:', error);
+      // Error loading reporte de KPIs
       throw error;
     }
   }
@@ -194,7 +194,7 @@ export class ReportesComponent implements OnInit {
       this.frentes = await this.reportesService.getFrente();
       this.empleados = await this.reportesService.getEmpleados();
     } catch (error) {
-      console.error('Error al cargar listas para filtros:', error);
+      // Error al cargar listas para filtros
       this.snackBar.open('Error al cargar datos para filtros', 'Cerrar', { duration: 3000 });
     }
   }
@@ -243,7 +243,7 @@ export class ReportesComponent implements OnInit {
         this.snackBar.open('Reporte exportado correctamente', 'Cerrar', { duration: 3000 });
       })
       .catch(error => {
-        console.error('Error al exportar PDF:', error);
+        // Error al exportar PDF
         this.snackBar.open('Error al exportar reporte', 'Cerrar', { duration: 3000 });
       });
   }

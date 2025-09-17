@@ -9,9 +9,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { AuthService } from '../../services/auth.service';
-import { firstValueFrom, combineLatest } from 'rxjs';
-import { filter, take, timeout } from 'rxjs/operators';
+import { DirectAuthService } from '../../services/direct-auth.service';
+// Importaciones de RxJS ya no necesarias con DirectAuthService
 
 @Component({
   selector: 'app-login',
@@ -107,7 +106,7 @@ export class LoginComponent {
 
   constructor(
     private fb: FormBuilder,
-    private authService: AuthService,
+    private directAuthService: DirectAuthService,
     private router: Router,
     private snackBar: MatSnackBar,
     private ngZone: NgZone,
@@ -119,54 +118,57 @@ export class LoginComponent {
     });
   }
 
-  private async waitForCompleteAuth(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      console.log('⏳ Esperando carga completa de autenticación...');
-      
-      // Combinar observables de sesión y perfil
-      const authComplete$ = combineLatest([
-        this.authService.currentUser$,
-        this.authService.currentProfile$
-      ]).pipe(
-        filter(([user, profile]) => {
-          const hasUser = !!user;
-          const hasProfile = !!profile;
-          console.log('🔍 Estado de autenticación:', { hasUser, hasProfile });
-          return hasUser && hasProfile;
-        }),
-        take(1),
-        timeout(15000) // Aumentado a 15 segundos
-      );
-      
-      authComplete$.subscribe({
-        next: ([user, profile]) => {
-          console.log('✅ Autenticación completa:', { user: user?.email, profile: profile?.nombre });
-          resolve();
-        },
-        error: (error) => {
-          console.warn('⚠️ Timeout o error esperando autenticación completa:', error);
-          // Intentar forzar actualización del estado antes de fallar
-          this.authService.forceAuthStateUpdate().catch(e => 
-            console.error('Error forzando actualización de estado:', e)
-          );
-          reject(error);
-        }
-      });
-    });
-  }
+  // Método waitForCompleteAuth ya no es necesario con DirectAuthService
+  // DirectAuthService maneja la autenticación de forma síncrona
 
   async onSubmit() {
     if (this.loginForm.valid) {
       this.isLoading = true;
       const { email, password } = this.loginForm.value;
-      console.log('🔑 Iniciando proceso de login para:', email);
       
-      console.log('📤 Llamando a authService.signIn...');
+      console.log('📤 Usando DirectAuthService para login...');
+      
+      try {
+        const result = await this.directAuthService.login(email, password);
+        
+        this.isLoading = false;
+        
+        if (result.user && !result.error) {
+          this.snackBar.open('Inicio de sesión exitoso', 'Cerrar', {
+            duration: 3000,
+            panelClass: ['success-snackbar']
+          });
+          
+          console.log('✅ Login exitoso, navegando al dashboard...');
+          this.router.navigate(['/dashboard']);
+        } else {
+          let errorMessage = result.error?.message || 'Error al iniciar sesión';
+          
+          if (errorMessage.includes('Invalid login credentials')) {
+            errorMessage = 'Credenciales inválidas. Por favor verifique su email y contraseña.';
+          }
+          
+          this.snackBar.open(errorMessage, 'Cerrar', {
+            duration: 5000,
+            panelClass: ['error-snackbar']
+          });
+        }
+      } catch (error: any) {
+        this.isLoading = false;
+        console.error('❌ Error de conexión:', error);
+        this.snackBar.open('Error de conexión. Intente nuevamente más tarde.', 'Cerrar', {
+          duration: 5000,
+          panelClass: ['error-snackbar']
+        });
+      }
+      
+      /*
+      // Código anterior con AuthService
       this.authService.signIn(email, password).subscribe({
         next: ({ user, error }) => {
           this.isLoading = false;
           if (error) {
-            console.error('❌ Error de autenticación:', error);
+            // Login error
             let errorMessage = 'Error al iniciar sesión';
             
             // Manejar errores específicos de Supabase
@@ -183,7 +185,7 @@ export class LoginComponent {
               panelClass: ['error-snackbar']
             });
           } else if (user) {
-            console.log('✅ Login exitoso, esperando carga completa de datos...');
+            // Login successful
             this.snackBar.open('Inicio de sesión exitoso', 'Cerrar', {
               duration: 3000,
               panelClass: ['success-snackbar']
@@ -244,6 +246,7 @@ export class LoginComponent {
           });
         }
       });
+      */
     } else {
       console.log('⚠️ Formulario de login inválido');
     }

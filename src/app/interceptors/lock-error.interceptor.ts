@@ -9,6 +9,10 @@ export class LockErrorInterceptor implements HttpInterceptor {
   private readonly retryDelay = 1000; // 1 segundo base
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    // Temporalmente deshabilitado para evitar interferencias
+    return next.handle(req);
+    
+    /*
     return next.handle(req).pipe(
       retryWhen(errors => 
         errors.pipe(
@@ -16,7 +20,7 @@ export class LockErrorInterceptor implements HttpInterceptor {
             // Solo reintentar para errores relacionados con locks
             if (this.isLockError(error) && attempt < this.maxRetries) {
               const delay = this.retryDelay * Math.pow(2, attempt); // Exponential backoff
-              console.log(`🔄 Reintentando request después de error de lock (intento ${attempt + 1}/${this.maxRetries}) en ${delay}ms`);
+              // Reintentando request después de error de lock
               
               // Limpiar locks antes de reintentar
               this.clearLocks();
@@ -52,6 +56,7 @@ export class LockErrorInterceptor implements HttpInterceptor {
         return throwError(() => error);
       })
     );
+    */
   }
 
   private isLockError(error: any): boolean {

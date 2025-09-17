@@ -75,7 +75,7 @@ export class EvaluacionesService {
         this.loadCriterios()
       ]);
     } catch (error) {
-      console.error('Error loading initial evaluation data:', error);
+      // Error loading initial evaluation data
     }
   }
 
@@ -103,7 +103,7 @@ export class EvaluacionesService {
 
       this.evaluacionesSubject.next(evaluaciones);
     } catch (error) {
-      console.error('Error loading evaluaciones:', error);
+      // Error loading evaluaciones
       throw error;
     }
   }
@@ -124,7 +124,7 @@ export class EvaluacionesService {
 
       this.rubricasSubject.next(data || []);
     } catch (error) {
-      console.error('Error loading rubricas:', error);
+      // Error loading rubricas
       throw error;
     }
   }
@@ -141,7 +141,7 @@ export class EvaluacionesService {
 
       this.criteriosSubject.next(data || []);
     } catch (error) {
-      console.error('Error loading criterios:', error);
+      // Error loading criterios
       throw error;
     }
   }
@@ -173,7 +173,7 @@ export class EvaluacionesService {
         .single();
 
       if (error) {
-        console.error('Error de Supabase al crear evaluación:', error);
+        // Error de Supabase al crear evaluación
         
         // Manejo específico de errores comunes
         if (error.code === 'PGRST204') {
@@ -192,7 +192,7 @@ export class EvaluacionesService {
       await this.loadEvaluaciones();
       return data;
     } catch (error: any) {
-      console.error('Error creating evaluacion:', error);
+      // Error creating evaluacion
       
       // Re-lanzar errores personalizados
       if (error.message && error.message.includes('requerido')) {
@@ -222,7 +222,7 @@ export class EvaluacionesService {
       await this.loadEvaluaciones();
       return data;
     } catch (error) {
-      console.error('Error updating evaluacion:', error);
+      // Error updating evaluacion
       throw error;
     }
   }
@@ -258,7 +258,7 @@ export class EvaluacionesService {
 
       return data || [];
     } catch (error) {
-      console.error('Error getting empleados:', error);
+      // Error getting empleados
       return [];
     }
   }
@@ -305,7 +305,7 @@ export class EvaluacionesService {
 
       return resumen;
     } catch (error) {
-      console.error('Error getting resumen evaluaciones:', error);
+      // Error getting resumen evaluaciones
       return [];
     }
   }
@@ -327,7 +327,7 @@ export class EvaluacionesService {
       await this.loadRubricas();
       return data;
     } catch (error) {
-      console.error('Error creating rubrica:', error);
+      // Error creating rubrica
       throw error;
     }
   }
@@ -349,7 +349,7 @@ export class EvaluacionesService {
       await this.loadCriterios();
       return data;
     } catch (error) {
-      console.error('Error creating criterio:', error);
+      // Error creating criterio
       throw error;
     }
   }
@@ -382,7 +382,7 @@ export class EvaluacionesService {
         rubrica_nombre: data.rubrica?.nombre
       };
     } catch (error) {
-      console.error('Error getting evaluacion by id:', error);
+      // Error getting evaluacion by id
       return null;
     }
   }
@@ -412,7 +412,7 @@ export class EvaluacionesService {
 
       return stats;
     } catch (error) {
-      console.error('Error getting estadisticas:', error);
+      // Error getting estadisticas
       return null;
     }
   }

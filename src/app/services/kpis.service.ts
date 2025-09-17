@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { SupabaseService } from './supabase.service';
-import { AuthService } from './auth.service';
+import { DirectAuthService } from './direct-auth.service';
 
 export interface KPI {
   id?: string;
@@ -95,24 +95,24 @@ export class KpisService {
 
   constructor(
     private supabase: SupabaseService,
-    private authService: AuthService
+    private directAuthService: DirectAuthService
   ) {
     // No cargar datos en el constructor - esperar a que se inicialice explícitamente
-    console.log('🔧 [KpisService] Servicio inicializado - esperando autenticación');
+    // Servicio inicializado - esperando autenticación
   }
 
   // Método de inicialización explícita que debe llamarse después de la autenticación
   async initialize(): Promise<void> {
     try {
-      console.log('🚀 [KpisService] Iniciando carga de datos...');
+      // Iniciando carga de datos
       
-      const user = await this.authService.getCurrentUser();
+      const user = this.directAuthService.getCurrentUser();
       if (!user) {
-        console.warn('⚠️ [KpisService] No hay usuario autenticado - no se pueden cargar KPIs');
+        // No hay usuario autenticado - no se pueden cargar KPIs
         return;
       }
 
-      console.log('✅ [KpisService] Usuario autenticado:', user.email);
+      // Usuario autenticado
       
       // Cargar datos en paralelo
       await Promise.all([
@@ -122,9 +122,9 @@ export class KpisService {
       ]);
       
       this.isInitialized = true;
-      console.log('✅ [KpisService] Inicialización completada');
+      // Inicialización completada
     } catch (error) {
-      console.error('❌ [KpisService] Error en inicialización:', error);
+      // Error en inicialización
       throw error;
     }
   }
@@ -137,39 +137,43 @@ export class KpisService {
   // Cargar KPIs del usuario
   async loadUserKPIs(): Promise<void> {
     try {
-      console.log('📊 [KpisService] Iniciando carga de KPIs de usuario...');
+      // Iniciando carga de KPIs de usuario
       
-      const user = await this.authService.getCurrentUser();
+      const user = this.directAuthService.getCurrentUser();
       if (!user) {
-        console.warn('⚠️ [KpisService] No hay usuario autenticado para cargar KPIs');
+        // No hay usuario autenticado para cargar KPIs
         return;
       }
 
-      console.log('👤 [KpisService] Cargando KPIs para usuario:', user.id);
+      // Cargando KPIs para usuario
+
+      // Obtener token de autenticación
+      const token = this.directAuthService.getAccessToken();
+      if (!token) throw new Error('Token de autenticación no disponible');
 
       // Obtener obras asignadas al usuario
-      console.log('🏗️ [KpisService] Obteniendo obras del usuario...');
+      // Obteniendo obras del usuario
       const { data: userObras, error: userObrasError } = await this.supabase.client
         .from('user_obras')
         .select('obra_id')
         .eq('user_id', user.id);
 
       if (userObrasError) {
-        console.error('❌ [KpisService] Error obteniendo obras del usuario:', userObrasError);
+        // Error obteniendo obras del usuario
         throw new Error(`Error obteniendo obras: ${userObrasError.message}`);
       }
 
       if (!userObras || userObras.length === 0) {
-        console.warn('⚠️ [KpisService] Usuario no tiene obras asignadas');
+        // Usuario no tiene obras asignadas
         this.kpisSubject.next([]);
         return;
       }
 
       const obraIds = userObras.map(uo => uo.obra_id);
-      console.log('✅ [KpisService] Obras encontradas:', obraIds.length);
+      // Obras encontradas
 
       // Cargar KPIs por obra
-      console.log('🏗️ [KpisService] Cargando KPIs por obra...');
+      // Cargando KPIs por obra
       const { data: kpisObra, error: errorObra } = await this.supabase.client
         .from('kpis')
         .select(`
@@ -180,14 +184,14 @@ export class KpisService {
         .is('actividad_id', null);
 
       if (errorObra) {
-        console.error('❌ [KpisService] Error cargando KPIs de obra:', errorObra);
+        // Error cargando KPIs de obra
         throw new Error(`Error cargando KPIs de obra: ${errorObra.message}`);
       }
 
-      console.log('✅ [KpisService] KPIs de obra cargados:', kpisObra?.length || 0);
+      // KPIs de obra cargados
 
       // Cargar KPIs por actividad
-      console.log('⚡ [KpisService] Cargando actividades de las obras...');
+      // Cargando actividades de las obras
       const { data: actividades, error: actError } = await this.supabase.client
         .from('actividades')
         .select('id')
@@ -196,9 +200,9 @@ export class KpisService {
       let kpisActividad: any[] = [];
       if (!actError && actividades && actividades.length > 0) {
         const actividadIds = actividades.map(a => a.id);
-        console.log('✅ [KpisService] Actividades encontradas:', actividadIds.length);
+        // Actividades encontradas
         
-        console.log('📊 [KpisService] Cargando KPIs de actividades...');
+        // Cargando KPIs de actividades
         const { data: kpisAct, error: errorAct } = await this.supabase.client
           .from('kpis')
           .select(`
@@ -208,30 +212,30 @@ export class KpisService {
           .in('actividad_id', actividadIds);
 
         if (errorAct) {
-          console.error('❌ [KpisService] Error cargando KPIs de actividad:', errorAct);
+          // Error cargando KPIs de actividad
           throw new Error(`Error cargando KPIs de actividad: ${errorAct.message}`);
         }
 
         kpisActividad = kpisAct || [];
-        console.log('✅ [KpisService] KPIs de actividad cargados:', kpisActividad.length);
+        // KPIs de actividad cargados
       } else {
-        console.log('ℹ️ [KpisService] No se encontraron actividades');
+        // No se encontraron actividades
       }
 
       // Combinar y procesar KPIs
       const allKPIs = [...(kpisObra || []), ...kpisActividad];
-      console.log('🔄 [KpisService] Total KPIs antes de filtrar duplicados:', allKPIs.length);
+      // Total KPIs antes de filtrar duplicados
       
       // Eliminar duplicados por ID
       const uniqueKPIs = allKPIs.filter((kpi, index, self) => 
         index === self.findIndex(k => k.id === kpi.id)
       );
 
-      console.log('✅ [KpisService] KPIs únicos procesados:', uniqueKPIs.length);
+      // KPIs únicos procesados
       this.kpisSubject.next(uniqueKPIs);
       
     } catch (error) {
-      console.error('❌ [KpisService] Error crítico en loadUserKPIs:', error);
+      // Error crítico en loadUserKPIs
       // Emitir array vacío en caso de error para evitar que el observable se quede colgado
       this.kpisSubject.next([]);
       throw error;
@@ -241,30 +245,34 @@ export class KpisService {
   // Cargar KPIs para dashboard
   private async loadDashboardKPIs(): Promise<void> {
     try {
-      console.log('📈 [KpisService] Iniciando carga de KPIs para dashboard...');
+      // Iniciando carga de KPIs para dashboard
       
-      const user = await this.authService.getCurrentUser();
+      const user = await this.directAuthService.getCurrentUser();
       if (!user) {
-        console.warn('⚠️ [KpisService] No hay usuario autenticado para cargar dashboard KPIs');
+        // No hay usuario autenticado para cargar dashboard KPIs
         return;
       }
 
-      console.log('👤 [KpisService] Cargando dashboard KPIs para usuario:', user.id);
+      // Cargando dashboard KPIs para usuario
+
+      // Obtener token de autenticación
+      const token = this.directAuthService.getAccessToken();
+      if (!token) throw new Error('Token de autenticación no disponible');
 
       // Obtener obras asignadas al usuario
-      console.log('🏗️ [KpisService] Obteniendo obras del usuario...');
+      // Obteniendo obras del usuario
       const { data: userObras, error: userObrasError } = await this.supabase.client
         .from('user_obras')
         .select('obra_id')
         .eq('user_id', user.id);
 
       if (userObrasError) {
-        console.error('❌ [KpisService] Error obteniendo obras del usuario:', userObrasError);
+        // Error obteniendo obras del usuario
         throw new Error(`Error obteniendo obras: ${userObrasError.message}`);
       }
 
       if (!userObras || userObras.length === 0) {
-        console.warn('⚠️ [KpisService] Usuario no tiene obras asignadas');
+        // Usuario no tiene obras asignadas
         this.dashboardKPIsSubject.next({
           rendimiento: { promedio: 0, tendencia: 'estable', criticos: 0 },
           calidad: { promedio: 0, tendencia: 'estable', criticos: 0 },
@@ -276,12 +284,12 @@ export class KpisService {
       }
 
       const obraIds = userObras.map(uo => uo.obra_id);
-      console.log('✅ [KpisService] Obras encontradas:', obraIds.length);
+      // Obras encontradas
       
       const fechaLimite = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
       
       // Consulta simplificada para dashboard
-      console.log('📊 [KpisService] Cargando KPIs de obras...');
+      // Cargando KPIs de obras
       const { data: kpisObra, error: errorObra } = await this.supabase.client
         .from('kpis')
         .select('avance_fisico, productividad, calidad, desviacion_cronograma')
@@ -289,30 +297,30 @@ export class KpisService {
         .gte('fecha', fechaLimite);
 
       if (errorObra) {
-        console.error('❌ [KpisService] Error cargando KPIs de obras:', errorObra);
+        // Error cargando KPIs de obras
         throw new Error(`Error cargando KPIs de obras: ${errorObra.message}`);
       }
 
-      console.log('✅ [KpisService] KPIs de obras cargados:', kpisObra?.length || 0);
+      // KPIs de obras cargados
 
       // Consulta para KPIs de actividades
-      console.log('⚡ [KpisService] Cargando actividades de las obras...');
+      // Cargando actividades de las obras
       const { data: actividades, error: actError } = await this.supabase.client
         .from('actividades')
         .select('id')
         .in('obra_id', obraIds);
 
       if (actError) {
-        console.error('❌ [KpisService] Error cargando actividades:', actError);
+        // Error cargando actividades
         throw new Error(`Error cargando actividades: ${actError.message}`);
       }
 
       let kpisActividad: any[] = [];
       if (actividades && actividades.length > 0) {
         const actividadIds = actividades.map(a => a.id);
-        console.log('✅ [KpisService] Actividades encontradas:', actividadIds.length);
+        // Actividades encontradas
         
-        console.log('📊 [KpisService] Cargando KPIs de actividades...');
+        // Cargando KPIs de actividades
         const { data: kpisAct, error: errorAct } = await this.supabase.client
           .from('kpis')
           .select('avance_fisico, productividad, calidad, desviacion_cronograma')
@@ -320,14 +328,14 @@ export class KpisService {
           .gte('fecha', fechaLimite);
 
         if (errorAct) {
-          console.error('❌ [KpisService] Error cargando KPIs de actividades:', errorAct);
+          // Error cargando KPIs de actividades
           throw new Error(`Error cargando KPIs de actividades: ${errorAct.message}`);
         }
 
         kpisActividad = kpisAct || [];
-        console.log('✅ [KpisService] KPIs de actividades cargados:', kpisActividad.length);
+        // KPIs de actividades cargados
       } else {
-        console.log('ℹ️ [KpisService] No se encontraron actividades');
+        // No se encontraron actividades
       }
 
       // Combinar y procesar datos
@@ -336,15 +344,15 @@ export class KpisService {
       
       // Combinar todos los KPIs
       const allKpis = [...kpisObraArray, ...kpisActividadArray];
-      console.log('🔄 [KpisService] Total KPIs para procesar:', allKpis.length);
+      // Total KPIs para procesar
       
       const dashboardData = this.processDashboardKPIs(allKpis);
-      console.log('✅ [KpisService] Datos procesados para dashboard:', dashboardData);
+      // Datos procesados para dashboard
       
       this.dashboardKPIsSubject.next(dashboardData);
       
     } catch (error) {
-      console.error('❌ [KpisService] Error crítico en loadDashboardKPIs:', error);
+      // Error crítico en loadDashboardKPIs
       // Emitir datos por defecto en caso de error
       this.dashboardKPIsSubject.next({
         rendimiento: { promedio: 0, tendencia: 'estable', criticos: 0 },
@@ -414,39 +422,43 @@ export class KpisService {
   // Cargar alertas
   private async loadAlertas(): Promise<void> {
     try {
-      console.log('🚨 [KpisService] Iniciando carga de alertas...');
+      // Iniciando carga de alertas
       
-      const user = await this.authService.getCurrentUser();
+      const user = await this.directAuthService.getCurrentUser();
       if (!user) {
-        console.warn('⚠️ [KpisService] No hay usuario autenticado para cargar alertas');
+        // No hay usuario autenticado para cargar alertas
         return;
       }
 
-      console.log('👤 [KpisService] Cargando alertas para usuario:', user.id);
+      // Cargando alertas para usuario
+
+      // Obtener token de autenticación
+      const token = this.directAuthService.getAccessToken();
+      if (!token) throw new Error('Token de autenticación no disponible');
 
       // Obtener obras asignadas al usuario
-      console.log('🏗️ [KpisService] Obteniendo obras del usuario para alertas...');
+      // Obteniendo obras del usuario para alertas
       const { data: userObras, error: userObrasError } = await this.supabase.client
         .from('user_obras')
         .select('obra_id')
         .eq('user_id', user.id);
 
       if (userObrasError) {
-        console.error('❌ [KpisService] Error obteniendo obras para alertas:', userObrasError);
+        // Error obteniendo obras para alertas
         throw new Error(`Error obteniendo obras para alertas: ${userObrasError.message}`);
       }
 
       if (!userObras || userObras.length === 0) {
-        console.warn('⚠️ [KpisService] Usuario no tiene obras asignadas - no hay alertas');
+        // Usuario no tiene obras asignadas - no hay alertas
         this.alertasSubject.next([]);
         return;
       }
 
       const obraIds = userObras.map(uo => uo.obra_id);
-      console.log('✅ [KpisService] Obras para alertas encontradas:', obraIds.length);
+      // Obras para alertas encontradas
       
       // Consulta simplificada para alertas
-      console.log('📊 [KpisService] Cargando KPIs para alertas...');
+      // Cargando KPIs para alertas
       const { data: kpisObra, error: errorObra } = await this.supabase.client
         .from('kpis')
         .select(`
@@ -462,14 +474,14 @@ export class KpisService {
         .limit(5);
 
       if (errorObra) {
-        console.error('❌ [KpisService] Error cargando KPIs de obras para alertas:', errorObra);
+        // Error cargando KPIs de obras para alertas
         throw new Error(`Error cargando KPIs de obras para alertas: ${errorObra.message}`);
       }
 
-      console.log('✅ [KpisService] KPIs de obras para alertas cargados:', kpisObra?.length || 0);
+      // KPIs de obras para alertas cargados
 
       // Consulta para KPIs de actividades
-      console.log('⚡ [KpisService] Cargando actividades para alertas...');
+      // Cargando actividades para alertas
       const { data: actividades, error: actError } = await this.supabase.client
         .from('actividades')
         .select('id')
@@ -478,9 +490,9 @@ export class KpisService {
       let kpisActividad: any[] = [];
       if (!actError && actividades && actividades.length > 0) {
         const actividadIds = actividades.map(a => a.id);
-        console.log('✅ [KpisService] Actividades para alertas encontradas:', actividadIds.length);
+        // Actividades para alertas encontradas
         
-        console.log('📊 [KpisService] Cargando KPIs de actividades para alertas...');
+        // Cargando KPIs de actividades para alertas
         const { data: kpisAct, error: errorAct } = await this.supabase.client
           .from('kpis')
           .select(`
@@ -497,17 +509,17 @@ export class KpisService {
 
         if (!errorAct) {
           kpisActividad = kpisAct || [];
-          console.log('✅ [KpisService] KPIs de actividades para alertas cargados:', kpisActividad.length);
+          // KPIs de actividades para alertas cargados
         } else {
-          console.error('❌ [KpisService] Error cargando KPIs de actividades para alertas:', errorAct);
+          // Error cargando KPIs de actividades para alertas
         }
       } else {
-        console.log('ℹ️ [KpisService] No se encontraron actividades para alertas');
+        // No se encontraron actividades para alertas
       }
 
       // Combinar y procesar alertas
       const allKpis = [...(kpisObra || []), ...kpisActividad];
-      console.log('🔄 [KpisService] Total KPIs para alertas:', allKpis.length);
+      // Total KPIs para alertas
       
       const alertas = allKpis.map((kpi: any) => ({
         id: kpi.id,
@@ -520,11 +532,11 @@ export class KpisService {
         actividad_ubicacion: kpi.actividad?.ubicacion || null
       }));
 
-      console.log('✅ [KpisService] Alertas procesadas:', alertas.length);
+      // Alertas procesadas
       this.alertasSubject.next(alertas.slice(0, 10));
       
     } catch (error) {
-      console.error('❌ [KpisService] Error crítico en loadAlertas:', error);
+      // Error crítico en loadAlertas
       // Emitir array vacío en caso de error
       this.alertasSubject.next([]);
       throw error;
@@ -534,8 +546,11 @@ export class KpisService {
   // Crear nuevo KPI
   async createKPI(kpi: Omit<KPI, 'id' | 'calculated_at'>): Promise<KPI> {
     try {
-      const user = await this.authService.getCurrentUser();
+      const user = await this.directAuthService.getCurrentUser();
       if (!user) throw new Error('Usuario no autenticado');
+
+      const token = this.directAuthService.getAccessToken();
+      if (!token) throw new Error('Token de autenticación no disponible');
 
       const kpiData = {
         ...kpi,
@@ -559,7 +574,7 @@ export class KpisService {
       
       return data;
     } catch (error) {
-      console.error('Error creating KPI:', error);
+      // Error creating KPI
       throw error;
     }
   }
@@ -567,6 +582,9 @@ export class KpisService {
   // Actualizar KPI
   async updateKPI(id: string, updates: Partial<KPI>): Promise<KPI> {
     try {
+      const token = this.directAuthService.getAccessToken();
+      if (!token) throw new Error('Token de autenticación no disponible');
+
       const updateData = {
         ...updates,
         updated_at: new Date().toISOString()
@@ -595,7 +613,7 @@ export class KpisService {
       
       return data;
     } catch (error) {
-      console.error('Error updating KPI:', error);
+      // Error updating KPI
       throw error;
     }
   }
@@ -608,9 +626,12 @@ export class KpisService {
         throw new Error('ID de KPI inválido o vacío');
       }
 
-      console.log('🗑️ Eliminando KPI con ID:', id);
+      // Eliminando KPI con ID
       
       // Verificar que el KPI existe antes de intentar eliminarlo
+      const token = this.directAuthService.getAccessToken();
+      if (!token) throw new Error('Token de autenticación no disponible');
+
       const { data: existingKPI, error: checkError } = await this.supabase.client
         .from('kpis')
         .select('id, obra_id, actividad_id, created_by')
@@ -618,7 +639,7 @@ export class KpisService {
         .single();
 
       if (checkError) {
-        console.error('Error verificando KPI:', checkError);
+        // Error verificando KPI
         if (checkError.code === 'PGRST116') {
           throw new Error('KPI no encontrado - puede haber sido eliminado previamente');
         }
@@ -629,10 +650,10 @@ export class KpisService {
         throw new Error('El KPI no existe o ya fue eliminado');
       }
 
-      console.log('KPI encontrado:', existingKPI);
+      // KPI encontrado
 
       // Verificar permisos del usuario
-      const user = await this.authService.getCurrentUser();
+      const user = await this.directAuthService.getCurrentUser();
       if (!user) {
         throw new Error('Usuario no autenticado');
       }
@@ -644,19 +665,19 @@ export class KpisService {
         .eq('id', id.trim());
 
       if (error) {
-        console.error('Error en eliminación:', error);
+        // Error en eliminación
         if (error.code === '42501') {
           throw new Error('No tiene permisos para eliminar este KPI');
         }
         throw new Error(`Error al eliminar KPI: ${error.message}`);
       }
 
-      console.log('✅ KPI eliminado exitosamente');
+      // KPI eliminado exitosamente
 
       // Actualizar listas locales
       await this.refresh();
     } catch (error: any) {
-      console.error('Error deleting KPI:', error);
+      // Error deleting KPI
       throw error;
     }
   }
@@ -664,6 +685,9 @@ export class KpisService {
   // Agregar registro al historial de KPI
   private async addKPIHistorial(kpiId: string, valor: number, observaciones?: string): Promise<void> {
     try {
+      const token = this.directAuthService.getAccessToken();
+      if (!token) throw new Error('Token de autenticación no disponible');
+
       const historialData = {
         kpi_id: kpiId,
         valor,
@@ -677,13 +701,16 @@ export class KpisService {
 
       if (error) throw error;
     } catch (error) {
-      console.error('Error adding KPI historial:', error);
+      // Error adding KPI historial
     }
   }
 
   // Obtener historial de KPI
   async getKPIHistorial(kpiId: string, limite: number = 30): Promise<KPIHistorial[]> {
     try {
+      const token = this.directAuthService.getAccessToken();
+      if (!token) throw new Error('Token de autenticación no disponible');
+
       const { data, error } = await this.supabase.client
         .from('kpi_historial')
         .select('*')
@@ -694,7 +721,7 @@ export class KpisService {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error getting KPI historial:', error);
+      // Error getting KPI historial
       return [];
     }
   }
@@ -702,8 +729,11 @@ export class KpisService {
   // Obtener KPIs por tipo
   async getKPIsByTipo(tipo: string): Promise<KPI[]> {
     try {
-      const user = await this.authService.getCurrentUser();
+      const user = await this.directAuthService.getCurrentUser();
       if (!user) return [];
+
+      const token = this.directAuthService.getAccessToken();
+      if (!token) throw new Error('Token de autenticación no disponible');
 
       // Obtener obras asignadas al usuario
       const { data: userObras, error: userObrasError } = await this.supabase.client
@@ -732,7 +762,7 @@ export class KpisService {
       }
       return [];
     } catch (error) {
-      console.error('Error getting KPIs by tipo:', error);
+      // Error getting KPIs by tipo
       return [];
     }
   }
@@ -740,8 +770,11 @@ export class KpisService {
   // Obtener estadísticas generales
   async getEstadisticasGenerales(): Promise<any> {
     try {
-      const user = await this.authService.getCurrentUser();
+      const user = await this.directAuthService.getCurrentUser();
       if (!user) return null;
+
+      const token = this.directAuthService.getAccessToken();
+      if (!token) throw new Error('Token de autenticación no disponible');
 
       // Obtener obras asignadas al usuario
       const { data: userObras, error: userObrasError } = await this.supabase.client
@@ -777,7 +810,7 @@ export class KpisService {
       }
       return null;
     } catch (error) {
-      console.error('Error getting estadísticas generales:', error);
+      // Error getting estadísticas generales
       return null;
     }
   }
@@ -785,7 +818,10 @@ export class KpisService {
   // Calcular KPIs automáticamente basándose en datos de obras
   async calculateAutomaticKPIs(obraId: string): Promise<void> {
     try {
-      console.log('Calculando KPIs automáticos para obra:', obraId);
+      // Calculando KPIs automáticos para obra
+      
+      const token = this.directAuthService.getAccessToken();
+      if (!token) throw new Error('Token de autenticación no disponible');
       
       // Obtener actividades de la obra
       const { data: actividades, error: actError } = await this.supabase.client
@@ -831,25 +867,28 @@ export class KpisService {
         if (existingKPI) {
           // Actualizar KPI existente
           await this.updateKPI(existingKPI.id, kpiData);
-          console.log('KPI automático actualizado para obra:', obraId);
+          // KPI automático actualizado para obra
         } else {
           // Crear nuevo KPI
           await this.createKPI(kpiData);
-          console.log('KPI automático creado para obra:', obraId);
+          // KPI automático creado para obra
         }
       } else {
-        console.log('No hay actividades para calcular KPIs en obra:', obraId);
+        // No hay actividades para calcular KPIs en obra
       }
     } catch (error) {
-      console.error('Error calculando KPIs automáticos:', error);
+      // Error calculando KPIs automáticos
     }
   }
 
   // Calcular KPIs para todas las obras del usuario
   async calculateAllAutomaticKPIs(): Promise<void> {
     try {
-      const user = await this.authService.getCurrentUser();
+      const user = await this.directAuthService.getCurrentUser();
       if (!user) return;
+
+      const token = this.directAuthService.getAccessToken();
+      if (!token) throw new Error('Token de autenticación no disponible');
 
       // Obtener obras asignadas al usuario
       const { data: userObras, error: userObrasError } = await this.supabase.client
@@ -860,7 +899,7 @@ export class KpisService {
       if (userObrasError) throw userObrasError;
 
       if (userObras && userObras.length > 0) {
-        console.log('Calculando KPIs automáticos para', userObras.length, 'obras');
+        // Calculando KPIs automáticos
         
         // Calcular KPIs para cada obra
         for (const userObra of userObras) {
@@ -869,16 +908,19 @@ export class KpisService {
         
         // Refrescar datos después del cálculo
         await this.refresh();
-        console.log('KPIs automáticos calculados para todas las obras');
+        // KPIs automáticos calculados para todas las obras
       }
     } catch (error) {
-      console.error('Error calculando KPIs automáticos para todas las obras:', error);
+      // Error calculando KPIs automáticos para todas las obras
     }
   }
 
   // Obtener actividades de una obra para selección en formulario
   async getActividadesByObra(obraId: string): Promise<any[]> {
     try {
+      const token = this.directAuthService.getAccessToken();
+      if (!token) throw new Error('Token de autenticación no disponible');
+
       const { data, error } = await this.supabase.client
         .from('actividades')
         .select('id, tipo_actividad, ubicacion, responsable, estado')
@@ -888,7 +930,7 @@ export class KpisService {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error getting actividades by obra:', error);
+      // Error getting actividades by obra
       return [];
     }
   }
@@ -896,6 +938,9 @@ export class KpisService {
   // Obtener KPIs específicos de una actividad
   async getKPIsByActividad(actividadId: string): Promise<KPI[]> {
     try {
+      const token = this.directAuthService.getAccessToken();
+      if (!token) throw new Error('Token de autenticación no disponible');
+
       const { data, error } = await this.supabase.client
         .from('kpis')
         .select(`
@@ -909,7 +954,7 @@ export class KpisService {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error getting KPIs by actividad:', error);
+      // Error getting KPIs by actividad
       return [];
     }
   }
@@ -917,7 +962,10 @@ export class KpisService {
   // Calcular KPIs automáticamente para una actividad específica
   async calculateAutomaticKPIsForActividad(actividadId: string): Promise<void> {
     try {
-      console.log('Calculando KPIs automáticos para actividad:', actividadId);
+      // Calculando KPIs automáticos para actividad
+      
+      const token = this.directAuthService.getAccessToken();
+      if (!token) throw new Error('Token de autenticación no disponible');
       
       // Obtener datos de la actividad
       const { data: actividad, error: actError } = await this.supabase.client
@@ -957,15 +1005,15 @@ export class KpisService {
         if (existingKPI) {
           // Actualizar KPI existente
           await this.updateKPI(existingKPI.id, kpiData);
-          console.log('KPI automático actualizado para actividad:', actividadId);
+          // KPI automático actualizado para actividad
         } else {
           // Crear nuevo KPI
           await this.createKPI(kpiData);
-          console.log('KPI automático creado para actividad:', actividadId);
+          // KPI automático creado para actividad
         }
       }
     } catch (error) {
-      console.error('Error calculando KPIs automáticos para actividad:', error);
+      // Error calculando KPIs automáticos para actividad
     }
   }
 

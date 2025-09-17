@@ -27,7 +27,7 @@ export class ReportsService {
         .order('created_at', { ascending: false })
         .then(({ data, error }) => {
           if (error) {
-            console.error('Error fetching reports:', error);
+            // Error fetching reports
             throw error;
           }
           return data || [];
@@ -48,7 +48,7 @@ export class ReportsService {
         .order('created_at', { ascending: false })
         .then(({ data, error }) => {
           if (error) {
-            console.error('Error fetching reports by project:', error);
+            // Error fetching reports by project
             throw error;
           }
           return data || [];
@@ -73,7 +73,7 @@ export class ReportsService {
         .single()
         .then(({ data, error }) => {
           if (error) {
-            console.error('Error fetching report:', error);
+            // Error fetching report
             throw error;
           }
           return data;
@@ -92,7 +92,7 @@ export class ReportsService {
         .limit(1)
         .then(({ data, error }) => {
           if (error) {
-            console.error('Error generating report number:', error);
+            // Error generating report number
             throw error;
           }
           
@@ -124,7 +124,7 @@ export class ReportsService {
         .single()
         .then(({ data, error }) => {
           if (error) {
-            console.error('Error creating report:', error);
+            // Error creating report
             throw error;
           }
           return data;
@@ -132,7 +132,7 @@ export class ReportsService {
     ).pipe(
       catchError((error) => {
         // Si hay error de conexión, encolar para sincronización offline
-        console.log('Connection error, queuing report for offline sync');
+        // Connection error, queuing report for offline sync
         this.offlineSync.createReportOffline(report);
         // Retornar un reporte temporal con ID generado
         const tempReport: Report = {
@@ -158,7 +158,7 @@ export class ReportsService {
         `)
         .then(({ data, error }) => {
           if (error) {
-            console.error('Error creating report items:', error);
+            // Error creating report items
             throw error;
           }
           return data || [];
@@ -166,7 +166,7 @@ export class ReportsService {
     ).pipe(
       catchError((error) => {
         // Si hay error de conexión, encolar cada item para sincronización offline
-        console.log('Connection error, queuing report items for offline sync');
+        // Connection error, queuing report items for offline sync
         reportItems.forEach(item => {
           this.offlineSync.createReportItemOffline(item);
         });
@@ -196,7 +196,7 @@ export class ReportsService {
         .single()
         .then(({ data, error }) => {
           if (error) {
-            console.error('Error updating report:', error);
+            // Error updating report
             throw error;
           }
           return data;
@@ -204,7 +204,7 @@ export class ReportsService {
     ).pipe(
       catchError((error) => {
         // Si hay error de conexión, encolar para sincronización offline
-        console.log('Connection error, queuing report update for offline sync');
+        // Connection error, queuing report update for offline sync
         this.offlineSync.updateReportOffline(id, updates);
         // Retornar el reporte con las actualizaciones aplicadas localmente
         const updatedReport = { ...updates, id, updated_at: new Date().toISOString() } as Report;
@@ -222,7 +222,7 @@ export class ReportsService {
         .eq('id', id)
         .then(({ error }) => {
           if (error) {
-            console.error('Error deleting report:', error);
+            // Error deleting report
             throw error;
           }
         })

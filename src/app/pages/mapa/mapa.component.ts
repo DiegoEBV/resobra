@@ -146,21 +146,18 @@ export class MapaComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private async loadData(): Promise<void> {
     try {
-      console.log('🚀 [LoadData] Iniciando carga de datos del mapa');
+      // [LoadData] Iniciando carga de datos del mapa
       this.loading = true;
       
       // Cargar frentes
       this.actividadesService.frentes$
         .pipe(takeUntil(this.destroy$))
         .subscribe(frentes => {
-          console.log('🏗️ [LoadData] Frentes recibidos:', frentes.length);
+          // [LoadData] Frentes recibidos
           frentes.forEach(frente => {
-            console.log(`📍 [LoadData] Frente: ${frente.nombre}`);
-            console.log(`   - ID: ${frente.id}`);
-            console.log(`   - Ubicación: ${frente.ubicacion_lat}, ${frente.ubicacion_lng}`);
-            console.log(`   - Coordenadas inicio: ${frente.coordenadas_inicio}`);
-            console.log(`   - Coordenadas fin: ${frente.coordenadas_fin}`);
-            console.log(`   - KM inicial: ${frente.km_inicial}, KM final: ${frente.km_final}`);
+            // [LoadData] Frente details
+        // - ID, Ubicación, Coordenadas inicio/fin
+        // - KM inicial/final
           });
           this.frentes = frentes;
           this.applyFilters();
@@ -171,30 +168,30 @@ export class MapaComponent implements OnInit, AfterViewInit, OnDestroy {
       this.actividadesService.actividades$
         .pipe(takeUntil(this.destroy$))
         .subscribe(actividades => {
-          console.log('📋 [LoadData] Actividades recibidas:', actividades.length);
+          // [LoadData] Actividades recibidas
           this.actividades = actividades;
           this.updateMapMarkers();
         });
       
       // Refrescar datos
-      console.log('🔄 [LoadData] Refrescando datos del servicio...');
+      // [LoadData] Refrescando datos del servicio
       await this.actividadesService.refresh();
-      console.log('✅ [LoadData] Datos del servicio refrescados');
+      // [LoadData] Datos del servicio refrescados
       
       // Cargar datos kilométricos
-      console.log('📏 [LoadData] Iniciando carga de datos kilométricos...');
+      // [LoadData] Iniciando carga de datos kilométricos
       await this.loadKilometricData();
-      console.log('✅ [LoadData] Datos kilométricos cargados');
+      // [LoadData] Datos kilométricos cargados
       
     } catch (error) {
-      console.error('❌ [LoadData] Error loading map data:', error);
+      // [LoadData] Error loading map data
       this.snackBar.open('Error al cargar los datos del mapa', 'Cerrar', {
         duration: 5000,
         panelClass: ['error-snackbar']
       });
     } finally {
       this.loading = false;
-      console.log('🏁 [LoadData] Carga de datos completada');
+      // [LoadData] Carga de datos completada
     }
   }
 
@@ -445,52 +442,54 @@ export class MapaComponent implements OnInit, AfterViewInit, OnDestroy {
   // Métodos kilométricos
   private async loadKilometricData(): Promise<void> {
     try {
-      console.log('🔍 [LoadKilometricData] Iniciando carga de datos kilométricos');
+      // [LoadKilometricData] Iniciando carga de datos kilométricos
       
       // Cargar configuración de estados
       this.estadosConfig = await this.kilometrosService.getEstadosConfig().toPromise() || [];
-      console.log('📊 [LoadKilometricData] Estados config cargados:', this.estadosConfig.length);
+      // [LoadKilometricData] Estados config cargados
       
       // Cargar kilómetros para todos los frentes
       this.kilometros = [];
-      console.log('🏗️ [LoadKilometricData] Frentes disponibles:', this.frentes.length);
+      // [LoadKilometricData] Frentes disponibles
       
       for (const frente of this.frentes) {
-        console.log(`🔍 [LoadKilometricData] Cargando kilómetros para frente: ${frente.nombre} (${frente.id})`);
-        console.log(`📍 [LoadKilometricData] Coordenadas inicio:`, frente.coordenadas_inicio);
-        console.log(`📍 [LoadKilometricData] Coordenadas fin:`, frente.coordenadas_fin);
-        console.log(`📏 [LoadKilometricData] KM inicial: ${frente.km_inicial}, KM final: ${frente.km_final}`);
+        // [LoadKilometricData] Cargando kilómetros para frente
+        // [LoadKilometricData] Coordenadas inicio/fin
+        // [LoadKilometricData] KM inicial/final
         
         const kilometrosFrente = await this.kilometrosService.getKilometrosByFrente(frente.id).toPromise() || [];
-        console.log(`📊 [LoadKilometricData] Kilómetros encontrados para ${frente.nombre}:`, kilometrosFrente.length);
+        // [LoadKilometricData] Kilómetros encontrados
         this.kilometros.push(...kilometrosFrente);
       }
       
-      console.log('📊 [LoadKilometricData] Total kilómetros cargados:', this.kilometros.length);
+      // [LoadKilometricData] Total kilómetros cargados
       
       // Actualizar visualización si está en modo kilométrico
       if (this.showKilometricView) {
-        console.log('🗺️ [LoadKilometricData] Actualizando visualización kilométrica');
+        // [LoadKilometricData] Actualizando visualización kilométrica
         this.updateKilometricVisualization();
       }
     } catch (error) {
-      console.error('❌ [LoadKilometricData] Error loading kilometric data:', error);
+      // [LoadKilometricData] Error loading kilometric data
     }
   }
 
-  toggleKilometricView(): void {
+  async toggleKilometricView(): Promise<void> {
     this.showKilometricView = !this.showKilometricView;
-    console.log('🔄 [ToggleKilometricView] Vista kilométrica:', this.showKilometricView ? 'ACTIVADA' : 'DESACTIVADA');
+    // [ToggleKilometricView] Vista kilométrica
     
     if (this.showKilometricView) {
-      console.log('🗺️ [ToggleKilometricView] Iniciando visualización kilométrica');
-      console.log('📊 [ToggleKilometricView] Frentes disponibles:', this.frentes.length);
-      console.log('📊 [ToggleKilometricView] Kilómetros disponibles:', this.kilometros.length);
+      // [ToggleKilometricView] Iniciando visualización kilométrica
+      
+      // Recargar datos kilométricos para obtener los colores actualizados
+      await this.loadKilometricData();
+      
+      // [ToggleKilometricView] Frentes y kilómetros disponibles
       
       this.updateKilometricVisualization();
-      this.snackBar.open('Vista kilométrica activada', 'Cerrar', {
+      this.snackBar.open('Vista kilométrica activada - Datos actualizados', 'Cerrar', {
         duration: 3000,
-        panelClass: ['info-snackbar']
+        panelClass: ['success-snackbar']
       });
     } else {
       this.kilometroLayers.clearLayers();
@@ -502,40 +501,38 @@ export class MapaComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private updateKilometricVisualization(): void {
-    console.log('🗺️ [UpdateKilometricVisualization] Iniciando actualización de visualización');
-    console.log('🗺️ [UpdateKilometricVisualization] Map exists:', !!this.map);
-    console.log('🗺️ [UpdateKilometricVisualization] Show kilometric view:', this.showKilometricView);
+    // [UpdateKilometricVisualization] Iniciando actualización de visualización
+    // [UpdateKilometricVisualization] Map exists and show kilometric view
     
     if (!this.map || !this.showKilometricView) {
-      console.log('⚠️ [UpdateKilometricVisualization] Saliendo: mapa no existe o vista kilométrica desactivada');
+      // [UpdateKilometricVisualization] Saliendo: mapa no existe o vista kilométrica desactivada
       return;
     }
 
     // Limpiar capas kilométricas existentes
     this.kilometroLayers.clearLayers();
-    console.log('🧹 [UpdateKilometricVisualization] Capas kilométricas limpiadas');
+    // [UpdateKilometricVisualization] Capas kilométricas limpiadas
 
     // Agrupar kilómetros por frente
     const kilometrosByFrente = this.groupKilometrosByFrente();
-    console.log('📊 [UpdateKilometricVisualization] Kilómetros agrupados por frente:', Object.keys(kilometrosByFrente).length);
+    // [UpdateKilometricVisualization] Kilómetros agrupados por frente
 
     // Crear visualización para cada frente
     Object.entries(kilometrosByFrente).forEach(([frenteId, kilometros]) => {
       const frente = this.frentes.find(f => f.id === frenteId);
-      console.log(`🏗️ [UpdateKilometricVisualization] Procesando frente: ${frente?.nombre || frenteId}`);
-      console.log(`📍 [UpdateKilometricVisualization] Coordenadas inicio:`, frente?.coordenadas_inicio);
-      console.log(`📍 [UpdateKilometricVisualization] Coordenadas fin:`, frente?.coordenadas_fin);
-      console.log(`📊 [UpdateKilometricVisualization] Kilómetros en frente:`, kilometros.length);
+      // [UpdateKilometricVisualization] Procesando frente
+        // [UpdateKilometricVisualization] Coordenadas inicio/fin
+        // [UpdateKilometricVisualization] Kilómetros en frente
       
       if (frente && frente.coordenadas_inicio && frente.coordenadas_fin) {
-        console.log(`✅ [UpdateKilometricVisualization] Creando ruta kilométrica para ${frente.nombre}`);
+        // [UpdateKilometricVisualization] Creando ruta kilométrica
         this.createKilometricRoute(frente, kilometros);
       } else {
-        console.log(`⚠️ [UpdateKilometricVisualization] Frente ${frente?.nombre || frenteId} no tiene coordenadas completas`);
+        // [UpdateKilometricVisualization] Frente no tiene coordenadas completas
       }
     });
     
-    console.log('🗺️ [UpdateKilometricVisualization] Visualización kilométrica completada');
+    // [UpdateKilometricVisualization] Visualización kilométrica completada
   }
 
   private groupKilometrosByFrente(): { [frenteId: string]: Kilometro[] } {
@@ -840,7 +837,7 @@ export class MapaComponent implements OnInit, AfterViewInit, OnDestroy {
       // Recargar datos kilométricos
       await this.loadKilometricData();
     } catch (error) {
-      console.error('Error generating kilometros:', error);
+      // Error generating kilometros
       this.snackBar.open('Error al generar kilómetros', 'Cerrar', {
         duration: 5000,
         panelClass: ['error-snackbar']
@@ -938,7 +935,7 @@ export class MapaComponent implements OnInit, AfterViewInit, OnDestroy {
           this.selectedFrente = null;
         }
       } catch (error) {
-        console.error('Error deleting frente:', error);
+        // Error deleting frente
         this.snackBar.open('Error al eliminar el frente', 'Cerrar', {
           duration: 5000,
           panelClass: ['error-snackbar']
@@ -980,7 +977,7 @@ export class MapaComponent implements OnInit, AfterViewInit, OnDestroy {
           this.applyFilters();
         }
       } catch (error) {
-        console.error('Error updating frente location:', error);
+        // Error updating frente location
         this.snackBar.open('Error al actualizar la ubicación', 'Cerrar', {
           duration: 5000,
           panelClass: ['error-snackbar']

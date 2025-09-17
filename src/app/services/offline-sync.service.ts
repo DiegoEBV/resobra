@@ -100,8 +100,7 @@ export class OfflineSyncService {
   
   private startPeriodicSync(): void {
     // DESHABILITADO: Timer de sincronización automática para resolver NavigatorLockAcquireTimeoutError
-    console.log('Sincronización automática deshabilitada para resolver problemas de concurrencia con NavigatorLockManager');
-    console.log('Use syncPendingOperations() manualmente cuando sea necesario');
+    // Sincronización automática deshabilitada
     
     // DESHABILITADO: Sincronizar cada 5 minutos si hay conexión
     // setInterval(() => {
@@ -182,7 +181,7 @@ export class OfflineSyncService {
           await this.executeOperation(operation);
           await this.removeOperation(operation.id);
         } catch (error) {
-          console.error(`Error executing operation ${operation.id}:`, error);
+  
           errors.push(`Error en operación ${operation.type}: ${error}`);
           
           // Incrementar contador de reintentos
@@ -207,7 +206,7 @@ export class OfflineSyncService {
       await this.loadPendingOperationsCount();
       
     } catch (error) {
-      console.error('Error during sync:', error);
+
       this.updateSyncStatus({
         isSyncing: false,
         syncErrors: [`Error general de sincronización: ${error}`]

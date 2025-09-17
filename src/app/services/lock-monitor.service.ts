@@ -10,10 +10,14 @@ export class LockMonitorService {
   public lockStatus$ = this.lockStatusSubject.asObservable();
 
   constructor() {
-    this.startMonitoring();
+    // Temporalmente deshabilitado para evitar errores de NavigatorLockManager
+    // this.startMonitoring();
   }
 
   private startMonitoring(): void {
+    // Temporalmente deshabilitado para evitar errores de NavigatorLockManager
+    return;
+    
     // Monitorear locks cada 30 segundos
     this.monitoringSubscription = interval(30000).subscribe(() => {
       this.checkAndCleanLocks();
@@ -32,7 +36,7 @@ export class LockMonitorService {
         const hasStuckLocks = lockInfo.pending && lockInfo.pending.length > 0;
         
         if (hasStuckLocks && lockInfo.pending) {
-          console.log('🔍 LockMonitor: Detectados locks pendientes:', lockInfo.pending);
+          // Detectados locks pendientes
           
           // Si hay locks pendientes por más de 1 minuto, limpiar
           const oldLocks = lockInfo.pending.filter(lock => {
@@ -44,7 +48,7 @@ export class LockMonitorService {
           });
           
           if (oldLocks.length > 0) {
-            console.log('🧹 LockMonitor: Limpiando locks atascados...');
+            // Limpiando locks atascados
             await this.forceCleanLocks();
             this.lockStatusSubject.next(true); // Indicar que se limpiaron locks
           }
@@ -53,13 +57,13 @@ export class LockMonitorService {
         }
       }
     } catch (error) {
-      console.warn('⚠️ LockMonitor: Error verificando locks:', error);
+      // Error verificando locks
     }
   }
 
   public async forceCleanLocks(): Promise<void> {
     try {
-      console.log('🔓 LockMonitor: Iniciando limpieza forzada de locks...');
+      // Iniciando limpieza forzada de locks
       
       // Limpiar storage
       const lockKeys = [
@@ -79,16 +83,16 @@ export class LockMonitorService {
           localStorage.removeItem(key);
           sessionStorage.removeItem(key);
         } catch (e) {
-          console.warn(`⚠️ Error removing ${key}:`, e);
+          // Error removing key
         }
       });
       
       // También limpiar cualquier clave que contenga 'lock' o 'sb-'
       this.cleanStorageByPattern(['lock', 'sb-']);
       
-      console.log('✅ LockMonitor: Limpieza forzada completada');
+      // Limpieza forzada completada
     } catch (error) {
-      console.error('❌ LockMonitor: Error en limpieza forzada:', error);
+      // Error en limpieza forzada
     }
   }
 
@@ -98,7 +102,7 @@ export class LockMonitorService {
       for (let i = localStorage.length - 1; i >= 0; i--) {
         const key = localStorage.key(i);
         if (key && patterns.some(pattern => key.includes(pattern))) {
-          console.log(`🗑️ Removing localStorage key: ${key}`);
+          // Removing localStorage key
           localStorage.removeItem(key);
         }
       }
@@ -107,12 +111,12 @@ export class LockMonitorService {
       for (let i = sessionStorage.length - 1; i >= 0; i--) {
         const key = sessionStorage.key(i);
         if (key && patterns.some(pattern => key.includes(pattern))) {
-          console.log(`🗑️ Removing sessionStorage key: ${key}`);
+          // Removing sessionStorage key
           sessionStorage.removeItem(key);
         }
       }
     } catch (error) {
-      console.warn('⚠️ Error cleaning storage by pattern:', error);
+      // Error cleaning storage by pattern
     }
   }
 
@@ -123,7 +127,7 @@ export class LockMonitorService {
       }
       return null;
     } catch (error) {
-      console.warn('⚠️ Error getting lock info:', error);
+      // Error getting lock info
       return null;
     }
   }

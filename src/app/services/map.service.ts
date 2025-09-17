@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import * as L from 'leaflet';
 import { SupabaseService } from './supabase.service';
-import { AuthService } from './auth.service';
+import { DirectAuthService } from './direct-auth.service';
 
 export interface MapMarker {
   id: string;
@@ -101,7 +101,7 @@ export class MapService {
 
   constructor(
     private supabase: SupabaseService,
-    private authService: AuthService
+    private directAuthService: DirectAuthService
   ) {
     this.loadMapData();
   }
@@ -141,7 +141,7 @@ export class MapService {
       const markers = await this.loadAllMarkers();
       this.markersSubject.next(markers);
     } catch (error) {
-      console.error('Error loading map data:', error);
+      // Error loading map data
     } finally {
       this.isLoadingSubject.next(false);
     }
@@ -150,7 +150,7 @@ export class MapService {
   // Cargar todos los marcadores
   private async loadAllMarkers(): Promise<MapMarker[]> {
     try {
-      const user = await this.authService.getCurrentUser();
+      const user = this.directAuthService.getCurrentUser();
       if (!user) return [];
 
       // Obtener obras asignadas al usuario
@@ -176,7 +176,7 @@ export class MapService {
 
       return markers;
     } catch (error) {
-      console.error('Error loading markers:', error);
+      // Error loading markers
       return [];
     }
   }
@@ -218,7 +218,7 @@ export class MapService {
         }
       }));
     } catch (error) {
-      console.error('Error loading frentes markers:', error);
+      // Error loading frentes markers
       return [];
     }
   }
@@ -258,7 +258,7 @@ export class MapService {
         }
       }));
     } catch (error) {
-      console.error('Error loading actividades markers:', error);
+      // Error loading actividades markers
       return [];
     }
   }
@@ -397,7 +397,7 @@ export class MapService {
   async getCurrentPosition(): Promise<GeolocationPosition | null> {
     return new Promise((resolve) => {
       if (!navigator.geolocation) {
-        console.error('Geolocation is not supported by this browser.');
+        // Geolocation is not supported by this browser
         resolve(null);
         return;
       }
@@ -415,7 +415,7 @@ export class MapService {
           resolve(geoPosition);
         },
         (error) => {
-          console.error('Error getting current position:', error);
+          // Error getting current position
           resolve(null);
         },
         {

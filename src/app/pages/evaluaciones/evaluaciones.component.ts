@@ -137,7 +137,7 @@ export class EvaluacionesComponent implements OnInit {
       });
       
     } catch (error) {
-      console.error('Error initializing evaluaciones:', error);
+      // Error initializing evaluaciones
       this.showMessage('Error al cargar las evaluaciones');
     } finally {
       this.loading = false;
@@ -154,7 +154,7 @@ export class EvaluacionesComponent implements OnInit {
       this.empleados = empleados;
       this.resumenDataSource.data = resumen;
     } catch (error) {
-      console.error('Error loading data:', error);
+      // Error loading data
     }
   }
 
@@ -199,7 +199,7 @@ export class EvaluacionesComponent implements OnInit {
         await this.loadData();
         
       } catch (error: any) {
-        console.error('Error creating evaluacion:', error);
+        // Error creating evaluacion
         
         // Mostrar mensaje de error específico
         const errorMessage = error.message || 'Error desconocido al crear la evaluación';
@@ -310,7 +310,7 @@ export class EvaluacionesComponent implements OnInit {
       await this.loadData();
       this.showMessage('Datos actualizados');
     } catch (error) {
-      console.error('Error refreshing data:', error);
+      // Error refreshing data
       this.showMessage('Error al actualizar los datos');
     } finally {
       this.loading = false;

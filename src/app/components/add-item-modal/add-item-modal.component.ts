@@ -72,7 +72,7 @@ export class AddItemModalComponent {
         },
         error: (error) => {
           this.isLoading = false;
-          console.error('Error creating item:', error);
+          // Error creating item
           this.snackBar.open('Error al crear la partida', 'Cerrar', { duration: 3000 });
         }
       });

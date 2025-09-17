@@ -249,7 +249,7 @@ export class PerfilComponent implements OnInit {
     this.authService.updateProfile(formValue).subscribe({
       next: (result) => {
         if (result.error) {
-          console.error('Error updating profile:', result.error);
+          // Error updating profile
           this.snackBar.open('Error al actualizar el perfil: ' + result.error.message, 'Cerrar', { duration: 5000 });
         } else {
           this.snackBar.open('Perfil actualizado correctamente', 'Cerrar', { duration: 3000 });
@@ -258,7 +258,7 @@ export class PerfilComponent implements OnInit {
         this.saving = false;
       },
       error: (error) => {
-        console.error('Error updating profile:', error);
+        // Error updating profile
         this.snackBar.open('Error al actualizar el perfil', 'Cerrar', { duration: 3000 });
         this.saving = false;
       }

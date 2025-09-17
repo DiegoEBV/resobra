@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, from } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { SupabaseService } from './supabase.service';
-import { AuthService } from './auth.service';
 import { Tarea } from '../interfaces/database.interface';
 
 @Injectable({
@@ -11,22 +10,19 @@ export class TareasService {
   private tareasSubject = new BehaviorSubject<Tarea[]>([]);
   public tareas$ = this.tareasSubject.asObservable();
 
-  constructor(
-    private supabase: SupabaseService,
-    private authService: AuthService
-  ) {
-    console.log('🔧 [TareasService] Servicio inicializado');
+  constructor(private supabase: SupabaseService) {
   }
 
   // Crear nueva tarea
-  async createTarea(tarea: Omit<Tarea, 'id' | 'created_at' | 'updated_at'>): Promise<Tarea> {
+  async createTarea(tarea: Omit<Tarea, 'id' | 'created_at' | 'updated_at' | 'fecha_creacion'>): Promise<Tarea | null> {
     try {
-      console.log('📝 [TareasService] Creando nueva tarea:', tarea);
-      
       const tareaData = {
-        ...tarea,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        actividad_id: tarea.actividad_id,
+        nombre: tarea.nombre,
+        descripcion: tarea.descripcion,
+        orden: tarea.orden || 0,
+        completada: tarea.completada || false,
+        fecha_creacion: new Date().toISOString()
       };
 
       const { data, error } = await this.supabase.client
@@ -36,14 +32,10 @@ export class TareasService {
         .single();
 
       if (error) {
-        console.error('❌ [TareasService] Error creando tarea:', error);
         throw error;
       }
-
-      console.log('✅ [TareasService] Tarea creada exitosamente:', data);
       return data;
     } catch (error) {
-      console.error('❌ [TareasService] Error en createTarea:', error);
       throw error;
     }
   }
@@ -51,8 +43,6 @@ export class TareasService {
   // Obtener tareas por actividad
   async getTareasByActividad(actividadId: string): Promise<Tarea[]> {
     try {
-      console.log('🔍 [TareasService] Obteniendo tareas para actividad:', actividadId);
-      
       const { data, error } = await this.supabase.client
         .from('tareas')
         .select('*')
@@ -60,34 +50,23 @@ export class TareasService {
         .order('orden', { ascending: true });
 
       if (error) {
-        console.error('❌ [TareasService] Error obteniendo tareas:', error);
         throw error;
       }
-
-      console.log('✅ [TareasService] Tareas obtenidas:', data?.length || 0);
+      
       return data || [];
     } catch (error) {
-      console.error('❌ [TareasService] Error en getTareasByActividad:', error);
-      return [];
+      throw error;
     }
   }
 
   // Actualizar estado de tarea (completada/no completada)
-  async updateTareaEstado(tareaId: string, completada: boolean): Promise<Tarea> {
+  async updateTareaEstado(tareaId: string, completada: boolean): Promise<Tarea | null> {
     try {
-      console.log('🔄 [TareasService] Actualizando estado de tarea:', tareaId, 'completada:', completada);
-      
-      const updateData: any = {
+      const updateData = {
         completada,
+        fecha_completado: completada ? new Date().toISOString() : null,
         updated_at: new Date().toISOString()
       };
-
-      // Si se marca como completada, agregar fecha de completado
-      if (completada) {
-        updateData.fecha_completado = new Date().toISOString();
-      } else {
-        updateData.fecha_completado = null;
-      }
 
       const { data, error } = await this.supabase.client
         .from('tareas')
@@ -97,23 +76,18 @@ export class TareasService {
         .single();
 
       if (error) {
-        console.error('❌ [TareasService] Error actualizando tarea:', error);
         throw error;
       }
-
-      console.log('✅ [TareasService] Estado de tarea actualizado:', data);
+      
       return data;
     } catch (error) {
-      console.error('❌ [TareasService] Error en updateTareaEstado:', error);
       throw error;
     }
   }
 
   // Actualizar tarea completa
-  async updateTarea(tareaId: string, updates: Partial<Tarea>): Promise<Tarea> {
+  async updateTarea(tareaId: string, updates: Partial<Tarea>): Promise<Tarea | null> {
     try {
-      console.log('🔄 [TareasService] Actualizando tarea:', tareaId, updates);
-      
       const updateData = {
         ...updates,
         updated_at: new Date().toISOString()
@@ -127,14 +101,11 @@ export class TareasService {
         .single();
 
       if (error) {
-        console.error('❌ [TareasService] Error actualizando tarea:', error);
         throw error;
       }
-
-      console.log('✅ [TareasService] Tarea actualizada:', data);
+      
       return data;
     } catch (error) {
-      console.error('❌ [TareasService] Error en updateTarea:', error);
       throw error;
     }
   }
@@ -142,21 +113,15 @@ export class TareasService {
   // Eliminar tarea
   async deleteTarea(tareaId: string): Promise<void> {
     try {
-      console.log('🗑️ [TareasService] Eliminando tarea:', tareaId);
-      
       const { error } = await this.supabase.client
         .from('tareas')
         .delete()
         .eq('id', tareaId);
 
       if (error) {
-        console.error('❌ [TareasService] Error eliminando tarea:', error);
         throw error;
       }
-
-      console.log('✅ [TareasService] Tarea eliminada exitosamente');
     } catch (error) {
-      console.error('❌ [TareasService] Error en deleteTarea:', error);
       throw error;
     }
   }
@@ -164,22 +129,17 @@ export class TareasService {
   // Calcular progreso de actividad basado en tareas
   async calcularProgresoActividad(actividadId: string): Promise<number> {
     try {
-      console.log('📊 [TareasService] Calculando progreso para actividad:', actividadId);
-      
       const tareas = await this.getTareasByActividad(actividadId);
       
       if (tareas.length === 0) {
-        console.log('📊 [TareasService] No hay tareas, progreso: 0%');
         return 0;
       }
-
-      const tareasCompletadas = tareas.filter(tarea => tarea.completada).length;
+      
+      const tareasCompletadas = tareas.filter(t => t.completada).length;
       const progreso = Math.round((tareasCompletadas / tareas.length) * 100);
       
-      console.log(`📊 [TareasService] Progreso calculado: ${tareasCompletadas}/${tareas.length} = ${progreso}%`);
       return progreso;
     } catch (error) {
-      console.error('❌ [TareasService] Error calculando progreso:', error);
       return 0;
     }
   }
@@ -204,7 +164,6 @@ export class TareasService {
         progreso
       };
     } catch (error) {
-      console.error('❌ [TareasService] Error obteniendo estadísticas:', error);
       return {
         total: 0,
         completadas: 0,
@@ -215,23 +174,16 @@ export class TareasService {
   }
 
   // Reordenar tareas
-  async reordenarTareas(actividadId: string, tareasOrdenadas: { id: string; orden: number }[]): Promise<void> {
+  async reorderTareas(actividadId: string, tareasOrdenadas: { id: string; orden: number }[]): Promise<void> {
     try {
-      console.log('🔄 [TareasService] Reordenando tareas para actividad:', actividadId);
-      
+      // Actualizar el orden de cada tarea
       for (const tarea of tareasOrdenadas) {
         await this.supabase.client
           .from('tareas')
-          .update({ 
-            orden: tarea.orden,
-            updated_at: new Date().toISOString()
-          })
+          .update({ orden: tarea.orden })
           .eq('id', tarea.id);
       }
-
-      console.log('✅ [TareasService] Tareas reordenadas exitosamente');
     } catch (error) {
-      console.error('❌ [TareasService] Error reordenando tareas:', error);
       throw error;
     }
   }

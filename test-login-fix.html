@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Login - Verificación de Corrección</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .result {
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .success { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .info { background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 16px;
+        }
+        button:hover { background-color: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Test de Corrección de Login</h1>
+        <p>Verificando que el login funcione correctamente después de las correcciones.</p>
+        
+        <button onclick="testLogin()">🔐 Probar Login Residente</button>
+        <button onclick="checkUsers()">👥 Verificar Usuarios</button>
+        <button onclick="clearResults()">🧹 Limpiar</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // Configuración de Supabase
+        const supabaseUrl = 'https://ugecshlhptnyeemmedoy.supabase.co';
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnZWNzaGxocHRueWVlbW1lZG95Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU5MDA2NTAsImV4cCI6MjA3MTQ3NjY1MH0.Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8';
+        
+        const supabase = supabase.createClient(supabaseUrl, supabaseAnonKey);
+
+        function showResult(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            results.appendChild(div);
+            results.scrollTop = results.scrollHeight;
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testLogin() {
+            showResult('🔐 Iniciando test de login...', 'info');
+            
+            try {
+                // Intentar login
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: 'RESIDENTE@CVH.COM',
+                    password: '123456'
+                });
+
+                if (error) {
+                    showResult(`❌ Error en login: ${error.message}`, 'error');
+                    return;
+                }
+
+                if (data?.user && data?.session) {
+                    showResult(`✅ Login exitoso! Usuario ID: ${data.user.id}`, 'success');
+                    
+                    // Ahora intentar cargar el perfil desde la tabla users
+                    showResult('🔍 Cargando perfil desde tabla users...', 'info');
+                    
+                    const { data: profile, error: profileError } = await supabase
+                        .from('users')
+                        .select('*')
+                        .eq('id', data.user.id)
+                        .single();
+                    
+                    if (profileError) {
+                        showResult(`❌ Error cargando perfil: ${profileError.message}`, 'error');
+                        showResult(`Detalles del error: ${JSON.stringify(profileError, null, 2)}`, 'error');
+                    } else if (profile) {
+                        showResult(`✅ Perfil cargado exitosamente!`, 'success');
+                        showResult(`📋 Datos del perfil:\n${JSON.stringify(profile, null, 2)}`, 'success');
+                        showResult(`👤 Rol del usuario: ${profile.rol}`, 'success');
+                    } else {
+                        showResult('⚠️ No se encontró perfil para este usuario', 'error');
+                    }
+                    
+                    // Cerrar sesión
+                    await supabase.auth.signOut();
+                    showResult('🚪 Sesión cerrada', 'info');
+                } else {
+                    showResult('❌ No se recibió token de acceso', 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Error inesperado: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkUsers() {
+            showResult('👥 Verificando usuarios en la base de datos...', 'info');
+            
+            try {
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .order('created_at');
+
+                if (error) {
+                    showResult(`❌ Error consultando usuarios: ${error.message}`, 'error');
+                } else {
+                    showResult(`✅ Usuarios encontrados: ${data.length}`, 'success');
+                    data.forEach((user, index) => {
+                        showResult(`${index + 1}. ${user.email} - ${user.nombre} (${user.rol})`, 'info');
+                    });
+                }
+            } catch (error) {
+                showResult(`❌ Error inesperado: ${error.message}`, 'error');
+            }
+        }
+
+        // Ejecutar verificación inicial al cargar la página
+        window.onload = function() {
+            showResult('🚀 Test de corrección de login iniciado', 'info');
+            checkUsers();
+        };
+    </script>
+</body>
+</html>

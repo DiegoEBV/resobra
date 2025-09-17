@@ -199,7 +199,7 @@ export class ProductivityService {
         project: project
       };
     } catch (error) {
-      console.error('Error copiando reporte anterior:', error);
+      // Error copiando reporte anterior
       throw error;
     }
   }
@@ -268,7 +268,7 @@ export class ProductivityService {
 
       return { items };
     } catch (error) {
-      console.error('Error creando reporte desde plantilla:', error);
+      // Error creando reporte desde plantilla
       throw error;
     }
   }
@@ -339,8 +339,8 @@ export class ProductivityService {
   // Inicializar backup automático (método interno)
   private initializeAutoBackupInternal(): void {
     // DESHABILITADO: Timer de backup automático para resolver NavigatorLockAcquireTimeoutError
-    console.log('Backup automático deshabilitado para resolver problemas de concurrencia con NavigatorLockManager');
-    console.log('Use performBackup() manualmente cuando sea necesario');
+    // Backup automático deshabilitado para resolver problemas de concurrencia con NavigatorLockManager
+    // Use performBackup() manualmente cuando sea necesario
     
     // Verificar si es necesario hacer backup (cada 24 horas)
     const lastBackup = localStorage.getItem(this.STORAGE_KEYS.LAST_BACKUP);
@@ -378,9 +378,9 @@ export class ProductivityService {
       // Actualizar timestamp del último backup
       localStorage.setItem(this.STORAGE_KEYS.LAST_BACKUP, new Date().getTime().toString());
 
-      console.log('Backup automático completado:', new Date().toISOString());
+      // Backup automático completado
     } catch (error) {
-      console.error('Error en backup automático:', error);
+      // Error en backup automático
     }
   }
 
@@ -423,10 +423,10 @@ export class ProductivityService {
         localStorage.setItem(this.STORAGE_KEYS.QUICK_TEMPLATES, backup.templates);
       }
 
-      console.log('Backup restaurado exitosamente:', backupDate);
+      // Backup restaurado exitosamente
       return true;
     } catch (error) {
-      console.error('Error restaurando backup:', error);
+      // Error restaurando backup
       return false;
     }
   }

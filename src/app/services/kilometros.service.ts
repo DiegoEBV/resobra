@@ -16,6 +16,7 @@ export class KilometrosService {
 
   // CRUD para Kilómetros
   getKilometros(): Observable<Kilometro[]> {
+
     return from(
       this.supabase.client
         .from('kilometros')
@@ -25,13 +26,14 @@ export class KilometrosService {
     ).pipe(
       map(response => {
         if (response.error) {
-          console.error('Error fetching all kilómetros:', response.error);
+
           return [];
         }
+
         return response.data || [];
       }),
       catchError(error => {
-        console.error('Error in getKilometros:', error);
+
         return of([]);
       })
     );
@@ -47,13 +49,13 @@ export class KilometrosService {
     ).pipe(
       map(response => {
         if (response.error) {
-          console.error('Error fetching kilómetros:', response.error);
+
           return [];
         }
         return response.data || [];
       }),
       catchError(error => {
-        console.error('Error in getKilometrosByFrente:', error);
+
         return of([]);
       })
     );
@@ -70,13 +72,13 @@ export class KilometrosService {
     ).pipe(
       map(response => {
         if (response.error) {
-          console.error('Error fetching kilómetro:', response.error);
+
           return null;
         }
         return response.data;
       }),
       catchError(error => {
-        console.error('Error in getKilometro:', error);
+
         return of(null);
       })
     );
@@ -99,13 +101,13 @@ export class KilometrosService {
     ).pipe(
       map(response => {
         if (response.error) {
-          console.error('Error creating kilómetro:', response.error);
+
           return null;
         }
         return response.data;
       }),
       catchError(error => {
-        console.error('Error in createKilometro:', error);
+
         return of(null);
       })
     );
@@ -127,13 +129,13 @@ export class KilometrosService {
     ).pipe(
       map(response => {
         if (response.error) {
-          console.error('Error updating kilómetro:', response.error);
+
           return null;
         }
         return response.data;
       }),
       catchError(error => {
-        console.error('Error in updateKilometro:', error);
+
         return of(null);
       })
     );
@@ -161,19 +163,19 @@ export class KilometrosService {
         ).pipe(
           map(response => {
             if (response.error) {
-              console.error('Error updating kilómetro estado:', response.error);
+
               return null;
             }
             return response.data;
           }),
           catchError(error => {
-            console.error('Error in updateKilometroEstado:', error);
+
             return of(null);
           })
         );
       }),
       catchError(error => {
-        console.error('Error in updateKilometroEstado:', error);
+
         return of(null);
       })
     );
@@ -188,13 +190,13 @@ export class KilometrosService {
     ).pipe(
       map(response => {
         if (response.error) {
-          console.error('Error deleting kilómetro:', response.error);
+
           return false;
         }
         return true;
       }),
       catchError(error => {
-        console.error('Error in deleteKilometro:', error);
+
         return of(false);
       })
     );
@@ -227,13 +229,13 @@ export class KilometrosService {
     ).pipe(
       map(response => {
         if (response.error) {
-          console.error('Error generating kilómetros:', response.error);
+
           return [];
         }
         return response.data || [];
       }),
       catchError(error => {
-        console.error('Error in generateKilometrosForFrente:', error);
+
         return of([]);
       })
     );
@@ -250,13 +252,13 @@ export class KilometrosService {
     ).pipe(
       map(response => {
         if (response.error) {
-          console.error('Error fetching estados config:', response.error);
+
           return [];
         }
         return response.data || [];
       }),
       catchError(error => {
-        console.error('Error in getEstadosConfig:', error);
+
         return of([]);
       })
     );
@@ -273,13 +275,13 @@ export class KilometrosService {
     ).pipe(
       map(response => {
         if (response.error) {
-          console.error('Error fetching color by estado:', response.error);
+
           return null;
         }
         return response.data?.color_hex || null;
       }),
       catchError(error => {
-        console.error('Error in getColorByEstado:', error);
+
         return of(null);
       })
     );
@@ -296,13 +298,13 @@ export class KilometrosService {
     ).pipe(
       map(response => {
         if (response.error) {
-          console.error('Error updating estado config:', response.error);
+
           return null;
         }
         return response.data;
       }),
       catchError(error => {
-        console.error('Error in updateEstadoConfig:', error);
+
         return of(null);
       })
     );
@@ -329,13 +331,13 @@ export class KilometrosService {
     ).pipe(
       map(response => {
         if (response.error) {
-          console.error('Error fetching kilómetros con actividades:', response.error);
+
           return [];
         }
         return response.data || [];
       }),
       catchError(error => {
-        console.error('Error in getKilometrosConActividades:', error);
+
         return of([]);
       })
     );

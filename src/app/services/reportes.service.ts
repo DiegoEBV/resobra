@@ -125,7 +125,7 @@ export class ReportesService {
         };
       });
     } catch (error) {
-      console.error('Error al obtener reporte de rendimiento:', error);
+      // Error al obtener reporte de rendimiento
       return [];
     }
   }
@@ -181,7 +181,7 @@ export class ReportesService {
         };
       });
     } catch (error) {
-      console.error('Error al obtener reporte de personal:', error);
+      // Error al obtener reporte de personal
       return [];
     }
   }
@@ -225,7 +225,7 @@ export class ReportesService {
         observaciones: actividad.observaciones || 'Sin observaciones'
       })) || [];
     } catch (error) {
-      console.error('Error al obtener reporte de actividades:', error);
+      // Error al obtener reporte de actividades
       return [];
     }
   }
@@ -264,7 +264,7 @@ export class ReportesService {
         tendencia_cumplimiento
       };
     } catch (error) {
-      console.error('Error al obtener reporte de KPIs:', error);
+      // Error al obtener reporte de KPIs
       return {
         periodo: 'Error',
         obras_activas: 0,
@@ -362,7 +362,7 @@ export class ReportesService {
   private calcularRendimientoDiario(actividades: any[]): number {
     if (!actividades || actividades.length === 0) return 0;
     
-    const actividadesCompletadas = actividades.filter(a => a.estado === 'completada');
+    const actividadesCompletadas = actividades.filter(a => a.estado === 'finalizado');
     const diasTrabajo = new Set(actividades.map(a => format(new Date(a.fecha), 'yyyy-MM-dd'))).size;
     
     return diasTrabajo > 0 ? Math.round((actividadesCompletadas.length / diasTrabajo) * 100) / 100 : 0;
@@ -463,7 +463,7 @@ export class ReportesService {
       .eq('estado', 'activa');
     
     if (error) {
-      console.error('Error al obtener obras:', error);
+      // Error al obtener obras
       return [];
     }
     
@@ -476,7 +476,7 @@ export class ReportesService {
       .select('id, nombre, obra_id');
     
     if (error) {
-      console.error('Error al obtener frentes:', error);
+      // Error al obtener frentes
       return [];
     }
     
@@ -489,7 +489,7 @@ export class ReportesService {
       .select('id, nombre, rol');
     
     if (error) {
-      console.error('Error al obtener empleados:', error);
+      // Error al obtener empleados
       return [];
     }
     

@@ -81,13 +81,13 @@ export class AdminItemsComponent implements OnInit {
           this.isLoading = false;
         },
         error: (error) => {
-          console.error('Error loading items:', error);
+          // Error loading items
           this.showMessage('Error al cargar las partidas', 'error');
           this.isLoading = false;
         }
       });
     } catch (error) {
-      console.error('Error loading items:', error);
+      // Error loading items
       this.showMessage('Error al cargar las partidas', 'error');
       this.isLoading = false;
     }
@@ -174,7 +174,7 @@ export class AdminItemsComponent implements OnInit {
               this.showMessage('Partida creada exitosamente', 'success');
             },
             error: (error) => {
-              console.error('Error creating item:', error);
+              // Error creating item
               this.showMessage('Error al crear la partida', 'error');
             }
           });
@@ -231,7 +231,7 @@ export class AdminItemsComponent implements OnInit {
           this.showMessage('Partida actualizada exitosamente', 'success');
         },
         error: (error) => {
-          console.error('Error updating item:', error);
+          // Error updating item
           this.showMessage('Error al actualizar la partida', 'error');
         }
       });
@@ -251,7 +251,7 @@ export class AdminItemsComponent implements OnInit {
           this.showMessage('Partida eliminada exitosamente', 'success');
         },
         error: (error) => {
-          console.error('Error deleting item:', error);
+          // Error deleting item
           this.showMessage('Error al eliminar la partida', 'error');
         }
       });

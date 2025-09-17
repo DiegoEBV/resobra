@@ -279,25 +279,26 @@
       </mat-card-header>
       <mat-card-content>
         <div class="alerts-list">
-          <div *ngFor="let item of progresoKilometrico" class="alert-item" 
-               *ngIf="item.estado === 'en_progreso' && item.progreso < 30">
-            <div class="alert-icon">
-              <mat-icon>warning</mat-icon>
-            </div>
-            <div class="alert-content">
-              <div class="alert-title">Kilómetro {{ item.kilometro }} - Progreso Bajo</div>
-              <div class="alert-description">
-                Solo {{ item.progreso }}% completado con {{ item.actividades }} actividades registradas
+          <div *ngFor="let item of progresoKilometrico" class="alert-item">
+            <ng-container *ngIf="item.estado === 'en_progreso' && item.progreso < 30">
+              <div class="alert-icon">
+                <mat-icon>warning</mat-icon>
               </div>
-            </div>
-            <div class="alert-actions">
-              <button mat-button 
-                      color="primary" 
-                      (click)="viewKilometroDetails(item.kilometro)">
-                <mat-icon>visibility</mat-icon>
-                Ver Detalles
-              </button>
-            </div>
+              <div class="alert-content">
+                <div class="alert-title">Kilómetro {{ item.kilometro }} - Progreso Bajo</div>
+                <div class="alert-description">
+                  Solo {{ item.progreso }}% completado con {{ item.actividades }} actividades registradas
+                </div>
+              </div>
+              <div class="alert-actions">
+                <button mat-button 
+                        color="primary" 
+                        (click)="viewKilometroDetails(item.kilometro)">
+                  <mat-icon>visibility</mat-icon>
+                  Ver Detalles
+                </button>
+              </div>
+            </ng-container>
           </div>
         </div>
       </mat-card-content>

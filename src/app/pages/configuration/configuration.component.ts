@@ -111,7 +111,7 @@ export class ConfigurationComponent implements OnInit, OnDestroy {
           this.isLoadingProjects = false;
         },
         error: (error) => {
-          console.error('Error loading projects:', error);
+          // Error loading projects
           this.snackBar.open('Error al cargar proyectos', 'Cerrar', { duration: 3000 });
           this.isLoadingProjects = false;
         }
@@ -138,7 +138,7 @@ export class ConfigurationComponent implements OnInit, OnDestroy {
           this.isLoadingReports = false;
         },
         error: (error) => {
-          console.error('Error loading reports:', error);
+          // Error loading reports
           this.snackBar.open('Error al cargar historial de informes', 'Cerrar', { duration: 3000 });
           this.isLoadingReports = false;
         }
@@ -167,7 +167,7 @@ export class ConfigurationComponent implements OnInit, OnDestroy {
           this.snackBar.open('Proyecto creado exitosamente', 'Cerrar', { duration: 3000 });
         },
         error: (error) => {
-          console.error('Error creating project:', error);
+          // Error creating project
           this.snackBar.open('Error al crear proyecto', 'Cerrar', { duration: 3000 });
         }
       });
@@ -191,7 +191,7 @@ export class ConfigurationComponent implements OnInit, OnDestroy {
             this.snackBar.open('Informe eliminado exitosamente', 'Cerrar', { duration: 3000 });
           },
           error: (error) => {
-            console.error('Error deleting report:', error);
+            // Error deleting report
             this.snackBar.open('Error al eliminar informe', 'Cerrar', { duration: 3000 });
           }
         });

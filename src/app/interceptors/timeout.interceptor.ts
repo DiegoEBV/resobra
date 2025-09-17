@@ -13,7 +13,7 @@ export class TimeoutInterceptor implements HttpInterceptor {
     // Configurar timeout más largo para requests de autenticación
     const timeoutDuration = this.getTimeoutForRequest(req);
     
-    console.log(`⏱️ Configurando timeout de ${timeoutDuration}ms para:`, req.url);
+    // Configurando timeout
 
     return next.handle(req).pipe(
       timeout(timeoutDuration),
@@ -37,11 +37,7 @@ export class TimeoutInterceptor implements HttpInterceptor {
       catchError((error: any) => {
         // Mejorar el manejo de errores de timeout
         if (error.name === 'TimeoutError') {
-          console.error('❌ Timeout definitivo en request:', {
-            url: req.url,
-            timeout: timeoutDuration,
-            method: req.method
-          });
+          // Timeout definitivo en request
           
           const timeoutError = new HttpErrorResponse({
             error: {

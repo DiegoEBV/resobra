@@ -4,7 +4,7 @@ import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/rou
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { AuthService } from './services/auth.service';
+import { DirectAuthService } from './services/direct-auth.service';
 
 @Component({
   selector: 'app-root',
@@ -29,58 +29,62 @@ export class AppComponent implements OnInit {
   currentProfile: any = null;
 
   constructor(
-    private authService: AuthService, 
+    private directAuthService: DirectAuthService, 
     private router: Router,
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone
   ) {}
 
   ngOnInit() {
-    console.log('🚀 AppComponent inicializando...');
+    // AppComponent inicializando
     
-    // Suscribirse al estado de autenticación con mejor manejo
-    this.authService.isAuthenticated$.subscribe(isAuth => {
-      this.ngZone.run(() => {
-        console.log('🔐 Estado de autenticación cambió:', isAuth);
-        this.isAuthenticated = isAuth;
-        
-        // Si el usuario se autentica, asegurar que la UI se actualice
-        if (isAuth) {
-          console.log('✅ Usuario autenticado, actualizando UI...');
-          setTimeout(() => {
-            this.cdr.detectChanges();
-          }, 100);
-        }
-        
-        this.cdr.detectChanges();
-      });
-    });
-
-    // Suscribirse al usuario actual
-    this.authService.currentUser$.subscribe(user => {
-      this.ngZone.run(() => {
-        console.log('👤 Usuario actual:', user);
-        this.cdr.detectChanges();
-      });
-    });
-
-    // Suscribirse al perfil actual
-    this.authService.currentProfile$.subscribe(profile => {
-      this.ngZone.run(() => {
-        console.log('📋 Perfil actual:', profile);
-        this.currentProfile = profile;
-        this.cdr.detectChanges();
-      });
+    // Verificar estado de autenticación inicial
+    this.ngZone.run(() => {
+      this.updateAuthState();
     });
 
     // Marcar como inicializado
     setTimeout(() => {
       this.ngZone.run(() => {
         this.isInitialized = true;
-        console.log('✅ AppComponent inicializado');
+        // AppComponent inicializado
         this.cdr.detectChanges();
       });
     }, 300);
+
+    // Verificar periódicamente si el perfil se ha cargado
+    this.checkProfileUpdates();
+  }
+
+  private updateAuthState(): void {
+    this.isAuthenticated = this.directAuthService.isAuthenticated();
+    this.currentUser = this.directAuthService.getCurrentUser();
+    this.currentProfile = this.directAuthService.getCurrentProfile();
+    console.log('🔄 AppComponent - Estado actualizado:', {
+      authenticated: this.isAuthenticated,
+      user: this.currentUser?.email,
+      profile: this.currentProfile?.rol
+    });
+    this.cdr.detectChanges();
+  }
+
+  private checkProfileUpdates(): void {
+    // Verificar cada 1 segundo si el perfil se ha actualizado
+    const interval = setInterval(() => {
+      const newProfile = this.directAuthService.getCurrentProfile();
+      if (newProfile && (!this.currentProfile || newProfile.rol !== this.currentProfile?.rol)) {
+        console.log('✅ AppComponent - Perfil actualizado detectado');
+        this.ngZone.run(() => {
+          this.updateAuthState();
+        });
+        clearInterval(interval); // Detener verificación una vez que se carga el perfil
+      }
+    }, 1000);
+
+    // Limpiar el intervalo después de 30 segundos para evitar bucles infinitos
+    setTimeout(() => {
+      clearInterval(interval);
+    }, 30000);
   }
 
   getCurrentDate(): string {
@@ -96,20 +100,18 @@ export class AppComponent implements OnInit {
 
 
 
-  logout() {
-    console.log('🚪 Iniciando logout...');
-    this.authService.signOut().subscribe({
-      next: (result) => {
-        if (!result.error) {
-          console.log('✅ Logout completado');
-          this.router.navigate(['/login']);
-        } else {
-          console.error('❌ Error durante logout:', result.error);
-        }
-      },
-      error: (error) => {
-        console.error('❌ Error durante logout:', error);
-      }
-    });
+  async logout() {
+    // Iniciando logout
+    try {
+      await this.directAuthService.logout();
+      // Logout completado
+      this.isAuthenticated = false;
+      this.currentUser = null;
+      this.currentProfile = null;
+      this.router.navigate(['/login']);
+      this.cdr.detectChanges();
+    } catch (error) {
+      console.error('Error durante logout:', error);
+    }
   }
 }

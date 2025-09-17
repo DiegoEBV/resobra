@@ -312,7 +312,7 @@ export class ImportEstructuraDialogComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error during import:', error);
+        // Error during import
         this.importing = false;
         this.progress.errors.push(`Error general: ${error.message || error}`);
       }

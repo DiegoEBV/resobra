@@ -97,7 +97,7 @@ export class MainComponent implements OnInit, OnDestroy {
           this.isLoading = false;
         },
         error: (error) => {
-          console.error('Error searching items:', error);
+          // Error searching items
           this.isLoading = false;
           this.snackBar.open('Error al buscar partidas', 'Cerrar', { duration: 3000 });
         }
@@ -148,7 +148,7 @@ export class MainComponent implements OnInit, OnDestroy {
           this.isLoading = false;
         },
         error: (error) => {
-          console.error('Error loading grouped items:', error);
+          // Error loading grouped items
           this.isLoading = false;
           this.snackBar.open('Error al cargar partidas', 'Cerrar', { duration: 3000 });
         }
@@ -307,7 +307,7 @@ export class MainComponent implements OnInit, OnDestroy {
         try {
           this.selectedItems = JSON.parse(saved);
         } catch (error) {
-          console.error('Error loading selected items:', error);
+          // Error loading selected items
           this.selectedItems = [];
         }
       }
@@ -323,7 +323,7 @@ export class MainComponent implements OnInit, OnDestroy {
           this.favoriteItems = favorites.map(fav => fav.item);
         },
         error: (error) => {
-          console.error('Error loading favorite items:', error);
+          // Error loading favorite items
           this.favoriteItems = [];
         }
       });
@@ -385,7 +385,7 @@ export class MainComponent implements OnInit, OnDestroy {
         this.snackBar.open(`Se copiaron ${copiedItems.length} partidas del reporte anterior`, 'Cerrar', { duration: 3000 });
       }
     } catch (error) {
-      console.error('Error copiando reporte anterior:', error);
+      // Error copiando reporte anterior
       this.snackBar.open('Error al copiar el reporte anterior', 'Cerrar', { duration: 3000 });
     }
   }
@@ -445,7 +445,7 @@ export class MainComponent implements OnInit, OnDestroy {
         this.snackBar.open(`Reporte rápido creado con ${quickItems.length} partidas favoritas`, 'Cerrar', { duration: 3000 });
       }
     } catch (error) {
-      console.error('Error creando reporte rápido:', error);
+      // Error creando reporte rápido
       this.snackBar.open('Error al crear el reporte rápido', 'Cerrar', { duration: 3000 });
     }
   }
@@ -480,7 +480,7 @@ export class MainComponent implements OnInit, OnDestroy {
       
       this.snackBar.open('Plantilla guardada exitosamente', 'Cerrar', { duration: 3000 });
     } catch (error) {
-      console.error('Error guardando plantilla:', error);
+      // Error guardando plantilla
       this.snackBar.open('Error al guardar la plantilla', 'Cerrar', { duration: 3000 });
     }
   }
@@ -491,7 +491,7 @@ export class MainComponent implements OnInit, OnDestroy {
       await this.productivityService.performBackup();
       this.snackBar.open('Backup realizado exitosamente', 'Cerrar', { duration: 3000 });
     } catch (error) {
-      console.error('Error realizando backup:', error);
+      // Error realizando backup
       this.snackBar.open('Error al realizar el backup', 'Cerrar', { duration: 3000 });
     }
   }
@@ -506,7 +506,7 @@ export class MainComponent implements OnInit, OnDestroy {
           this.allItems = items;
         },
         error: (error) => {
-          console.error('Error loading all items:', error);
+          // Error loading all items
           this.snackBar.open('Error al cargar partidas', 'Cerrar', { duration: 3000 });
         }
       });
@@ -544,9 +544,9 @@ export class MainComponent implements OnInit, OnDestroy {
         this.saveSelectedItems();
         
         // Mostrar mensaje de éxito
-        console.log(`Se importaron ${itemsToAdd.length} partidas desde Excel`);
+        // Se importaron partidas desde Excel
       } else {
-        console.log('Todas las partidas del Excel ya estaban seleccionadas');
+        // Todas las partidas del Excel ya estaban seleccionadas
       }
     }
     

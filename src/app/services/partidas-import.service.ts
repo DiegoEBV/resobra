@@ -53,7 +53,7 @@ export class PartidasImportService {
         metrado: 0
       };
     } catch (error) {
-      console.error('Error parsing line:', line, error);
+      // Error parsing line
       return null;
     }
   }
@@ -132,7 +132,7 @@ export class PartidasImportService {
         this.cleanQuotes(item.trim())
       ).filter(item => item.length > 0);
     } catch (error) {
-      console.error('Error parsing array field:', arrayStr, error);
+      // Error parsing array field
       return [];
     }
   }
@@ -224,7 +224,7 @@ export class PartidasImportService {
         })
     ).pipe(
       catchError(error => {
-        console.error('Error loading partestr.txt:', error);
+        // Error loading partestr.txt
         throw error;
       })
     );
