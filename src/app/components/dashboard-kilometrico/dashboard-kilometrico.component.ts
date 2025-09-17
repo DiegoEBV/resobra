@@ -12,15 +12,14 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { RouterModule } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, firstValueFrom } from 'rxjs';
 import { Chart, ChartConfiguration, ChartType, registerables } from 'chart.js';
 
 import { KilometrosService } from '../../services/kilometros.service';
 import { FrentesService } from '../../services/frentes.service';
 import { ActividadesService } from '../../services/actividades.service';
-import { Frente } from '../../interfaces/frente.interface';
-import { Kilometro } from '../../interfaces/kilometro.interface';
-import { Actividad } from '../../interfaces/actividad.interface';
+import { TareasService } from '../../services/tareas.service';
+import { Frente, Kilometro, Actividad } from '../../interfaces/database.interface';
 
 Chart.register(...registerables);
 
@@ -110,10 +109,14 @@ export class DashboardKilometricoComponent implements OnInit, OnDestroy {
   constructor(
     private kilometrosService: KilometrosService,
     private frentesService: FrentesService,
-    private actividadesService: ActividadesService
-  ) {}
+    private actividadesService: ActividadesService,
+    private tareasService: TareasService
+  ) {
+    // Dashboard Kilométrico initialized
+  }
 
   ngOnInit(): void {
+    console.log('🚀 [DashboardKilometrico] ngOnInit ejecutado - iniciando carga de datos');
     this.loadDashboardData();
   }
 
@@ -125,30 +128,27 @@ export class DashboardKilometricoComponent implements OnInit, OnDestroy {
 
   private async loadDashboardData(): Promise<void> {
     try {
+      console.log('🔄 [Dashboard] Iniciando carga de datos del dashboard kilométrico');
       this.isLoading = true;
       
-      // Cargar frentes
-      await this.loadFrente();
+      // Cargar datos en paralelo
+      await Promise.all([
+        this.loadFrente(),
+        this.loadMetricasKilometricas(),
+        this.loadEstadisticasPorEstado(),
+        this.loadProgresoKilometrico(),
+        this.loadTendenciaProgreso()
+      ]);
       
-      // Cargar métricas kilométricas
-      await this.loadMetricasKilometricas();
+      // Datos cargados
       
-      // Cargar estadísticas por estado
-      await this.loadEstadisticasPorEstado();
-      
-      // Cargar progreso kilométrico
-      await this.loadProgresoKilometrico();
-      
-      // Cargar tendencia de progreso
-      await this.loadTendenciaProgreso();
-      
-      // Crear gráficos
+      // Crear gráficos después de cargar los datos
       setTimeout(() => {
         this.createCharts();
       }, 100);
       
     } catch (error) {
-      console.error('Error loading dashboard data:', error);
+      // Error cargando datos
     } finally {
       this.isLoading = false;
     }
@@ -156,118 +156,281 @@ export class DashboardKilometricoComponent implements OnInit, OnDestroy {
 
   private async loadFrente(): Promise<void> {
     try {
-      this.frentes = await this.frentesService.getFrente().toPromise() || [];
+      console.log('🔄 [Dashboard] Cargando frentes...');
+      this.frentes = await firstValueFrom(this.frentesService.getFrente()) || [];
+      console.log('✅ [Dashboard] Frentes cargados:', this.frentes.length, this.frentes);
     } catch (error) {
-      console.error('Error loading frentes:', error);
+      console.error('❌ [Dashboard] Error loading frentes:', error);
       this.frentes = [];
     }
   }
 
   private async loadMetricasKilometricas(): Promise<void> {
     try {
-      // Obtener todos los kilómetros
-      const kilometros = await this.kilometrosService.getKilometros().toPromise() || [];
+      console.log('📊 [DashboardKilometrico] Cargando métricas kilométricas basadas en tareas');
       
-      // Filtrar por frente si está seleccionado
-      const kilometrosFiltrados = this.frenteSeleccionado === 'todos' 
-        ? kilometros 
-        : kilometros.filter(k => k.frente_id === this.frenteSeleccionado);
-      
-      // Calcular métricas
-      this.metricas.totalKilometros = kilometrosFiltrados.length;
-      this.metricas.kilometrosCompletados = kilometrosFiltrados.filter(k => k.estado === 'completado').length;
-      this.metricas.kilometrosEnProgreso = kilometrosFiltrados.filter(k => k.estado === 'en_progreso').length;
-      this.metricas.kilometrosPendientes = kilometrosFiltrados.filter(k => k.estado === 'pendiente').length;
-      
-      // Calcular progreso promedio
-      if (kilometrosFiltrados.length > 0) {
-        const progresoTotal = kilometrosFiltrados.reduce((sum, k) => sum + (k.progreso_porcentaje || 0), 0);
-        this.metricas.progresoPromedio = Math.round(progresoTotal / kilometrosFiltrados.length);
-      }
-      
-      // Obtener actividades relacionadas
-      const actividades = await this.actividadesService.getActividades().toPromise() || [];
-      const actividadesKilometricas = actividades.filter(a => a.kilometro !== null && a.kilometro !== undefined);
-      
-      this.metricas.actividadesTotales = actividadesKilometricas.length;
-      this.metricas.actividadesCompletadas = actividadesKilometricas.filter(a => a.estado === 'completada').length;
-      
-      // Contar frentes activos (que tienen kilómetros)
-      const frentesConKilometros = new Set(kilometrosFiltrados.map(k => k.frente_id));
-      this.metricas.frentesActivos = frentesConKilometros.size;
-      
-      // Calcular alertas (kilómetros con progreso bajo)
-      this.metricas.alertasKilometricas = kilometrosFiltrados.filter(k => 
-        k.estado === 'en_progreso' && (k.progreso_porcentaje || 0) < 30
-      ).length;
-      
+      // Obtener kilómetros usando Observable
+      this.kilometrosService.getKilometros().subscribe({
+        next: async (kilometros) => {
+          // Filtrar por frente si está seleccionado
+          const kilometrosFiltrados = this.frenteSeleccionado === 'todos' 
+            ? kilometros 
+            : kilometros.filter((k: any) => k.frente_id === this.frenteSeleccionado);
+          
+          try {
+            // Obtener actividades
+            const actividades = await this.actividadesService.getActividades() || [];
+            
+            // Calcular métricas para cada kilómetro basado en tareas
+            const metricasPromises = kilometrosFiltrados.map(async (k: any) => {
+              const actividadesKm = actividades.filter((a: any) => a.kilometro === k.kilometro);
+              
+              if (actividadesKm.length === 0) {
+                return {
+                  progreso: 0,
+                  estado: 'pendiente'
+                };
+              }
+              
+              // Calcular progreso promedio de las actividades del kilómetro
+              const progresosActividades = await Promise.all(
+                actividadesKm.map(async (actividad: any) => {
+                  try {
+                    const estadisticas = await this.tareasService.getEstadisticasTareas(actividad.id);
+                    return estadisticas.progreso;
+                  } catch (error) {
+                    return actividad.progreso_porcentaje || 0;
+                  }
+                })
+              );
+              
+              const progresoPromedio = progresosActividades.length > 0 
+                ? progresosActividades.reduce((sum, p) => sum + p, 0) / progresosActividades.length
+                : 0;
+              
+              // Determinar estado basado en el progreso
+              let estado = 'pendiente';
+              if (progresoPromedio === 0) {
+                estado = 'pendiente';
+              } else if (progresoPromedio >= 100) {
+                estado = 'completado';
+              } else {
+                estado = 'en_progreso';
+              }
+              
+              return {
+                progreso: progresoPromedio,
+                estado: estado
+              };
+            });
+            
+            const metricas = await Promise.all(metricasPromises);
+            
+            // Calcular métricas finales
+            this.metricas.totalKilometros = kilometrosFiltrados.length;
+            this.metricas.kilometrosCompletados = metricas.filter(m => m.estado === 'completado').length;
+            this.metricas.kilometrosEnProgreso = metricas.filter(m => m.estado === 'en_progreso').length;
+            this.metricas.kilometrosPendientes = metricas.filter(m => m.estado === 'pendiente').length;
+            
+            // Calcular progreso promedio
+            if (metricas.length > 0) {
+              const progresoTotal = metricas.reduce((sum, m) => sum + m.progreso, 0);
+              this.metricas.progresoPromedio = Math.round(progresoTotal / metricas.length);
+            }
+            
+            // Obtener actividades relacionadas
+            const actividadesKilometricas = actividades.filter((a: any) => a.kilometro !== null && a.kilometro !== undefined);
+            
+            this.metricas.actividadesTotales = actividadesKilometricas.length;
+            this.metricas.actividadesCompletadas = actividadesKilometricas.filter((a: any) => a.estado === 'finalizado').length;
+            
+            // Contar frentes activos (que tienen kilómetros)
+            const frentesConKilometros = new Set(kilometrosFiltrados.map((k: any) => k.frente_id));
+            this.metricas.frentesActivos = frentesConKilometros.size;
+            
+            // Calcular alertas (kilómetros con progreso bajo)
+            this.metricas.alertasKilometricas = metricas.filter(m => 
+              m.estado === 'en_progreso' && m.progreso < 30
+            ).length;
+            
+            console.log('✅ [DashboardKilometrico] Métricas kilométricas calculadas:', this.metricas);
+          } catch (error) {
+            console.error('❌ [DashboardKilometrico] Error calculando métricas:', error);
+          }
+        },
+        error: (error) => {
+          console.error('❌ [DashboardKilometrico] Error loading métricas kilométricas:', error);
+        }
+      });
     } catch (error) {
-      console.error('Error loading métricas kilométricas:', error);
+      console.error('❌ [DashboardKilometrico] Error in loadMetricasKilometricas:', error);
     }
   }
 
   private async loadEstadisticasPorEstado(): Promise<void> {
     try {
-      const kilometros = await this.kilometrosService.getKilometros().toPromise() || [];
+      console.log('📊 [DashboardKilometrico] Cargando estadísticas por estado basadas en tareas');
       
-      // Filtrar por frente si está seleccionado
-      const kilometrosFiltrados = this.frenteSeleccionado === 'todos' 
-        ? kilometros 
-        : kilometros.filter(k => k.frente_id === this.frenteSeleccionado);
-      
-      // Contar por estado
-      const estadosCount = kilometrosFiltrados.reduce((acc, k) => {
-        acc[k.estado] = (acc[k.estado] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-      
-      // Convertir a array con colores
-      const colores = {
-        'pendiente': '#ff9800',
-        'en_progreso': '#2196f3',
-        'completado': '#4caf50',
-        'pausado': '#f44336'
-      };
-      
-      this.estadisticasPorEstado = Object.entries(estadosCount).map(([estado, cantidad]) => ({
-        estado: this.getEstadoLabel(estado),
-        cantidad,
-        porcentaje: Math.round((cantidad / kilometrosFiltrados.length) * 100),
-        color: colores[estado as keyof typeof colores] || '#9e9e9e'
-      }));
-      
+      // Obtener kilómetros usando Observable
+      this.kilometrosService.getKilometros().subscribe({
+        next: async (kilometros) => {
+          // Filtrar por frente si está seleccionado
+          const kilometrosFiltrados = this.frenteSeleccionado === 'todos' 
+            ? kilometros 
+            : kilometros.filter((k: any) => k.frente_id === this.frenteSeleccionado);
+          
+          try {
+            // Obtener actividades
+            const actividades = await this.actividadesService.getActividades() || [];
+            
+            // Calcular estado para cada kilómetro basado en tareas
+            const estadosPromises = kilometrosFiltrados.map(async (k: any) => {
+              const actividadesKm = actividades.filter((a: any) => a.kilometro === k.kilometro);
+              
+              if (actividadesKm.length === 0) {
+                return 'pendiente';
+              }
+              
+              // Calcular progreso promedio de las actividades del kilómetro
+              const progresosActividades = await Promise.all(
+                actividadesKm.map(async (actividad: any) => {
+                  try {
+                    const estadisticas = await this.tareasService.getEstadisticasTareas(actividad.id);
+                    return estadisticas.progreso;
+                  } catch (error) {
+                    return actividad.progreso_porcentaje || 0;
+                  }
+                })
+              );
+              
+              const progresoPromedio = progresosActividades.length > 0 
+                ? progresosActividades.reduce((sum, p) => sum + p, 0) / progresosActividades.length
+                : 0;
+              
+              // Determinar estado basado en el progreso
+              if (progresoPromedio === 0) {
+                return 'pendiente';
+              } else if (progresoPromedio >= 100) {
+                return 'completado';
+              } else {
+                return 'en_progreso';
+              }
+            });
+            
+            const estados = await Promise.all(estadosPromises);
+            
+            // Contar por estado
+            const estadosCount = estados.reduce((acc, estado) => {
+              acc[estado] = (acc[estado] || 0) + 1;
+              return acc;
+            }, {} as Record<string, number>);
+            
+            // Convertir a array con colores
+            const colores = {
+              'pendiente': '#ff9800',
+              'en_progreso': '#2196f3',
+              'completado': '#4caf50',
+              'pausado': '#f44336'
+            };
+            
+            this.estadisticasPorEstado = Object.entries(estadosCount).map(([estado, cantidad]) => ({
+              estado: this.getEstadoLabel(estado),
+              cantidad,
+              porcentaje: Math.round((cantidad / kilometrosFiltrados.length) * 100),
+              color: colores[estado as keyof typeof colores] || '#9e9e9e'
+            }));
+            
+            console.log('✅ [DashboardKilometrico] Estadísticas por estado calculadas:', estadosCount);
+          } catch (error) {
+            console.error('❌ [DashboardKilometrico] Error calculando estadísticas:', error);
+          }
+        },
+        error: (error) => {
+          console.error('❌ [DashboardKilometrico] Error loading estadísticas por estado:', error);
+        }
+      });
     } catch (error) {
-      console.error('Error loading estadísticas por estado:', error);
+      console.error('❌ [DashboardKilometrico] Error in loadEstadisticasPorEstado:', error);
     }
   }
 
   private async loadProgresoKilometrico(): Promise<void> {
     try {
-      const kilometros = await this.kilometrosService.getKilometros().toPromise() || [];
+      console.log('📊 [DashboardKilometrico] Cargando progreso kilométrico con cálculo basado en tareas');
       
-      // Filtrar por frente si está seleccionado
-      const kilometrosFiltrados = this.frenteSeleccionado === 'todos' 
-        ? kilometros 
-        : kilometros.filter(k => k.frente_id === this.frenteSeleccionado);
-      
-      // Obtener actividades para contar por kilómetro
-      const actividades = await this.actividadesService.getActividades().toPromise() || [];
-      
-      this.progresoKilometrico = kilometrosFiltrados.map(k => {
-        const actividadesKm = actividades.filter(a => a.kilometro === k.kilometro);
-        const frente = this.frentes.find(f => f.id === k.frente_id);
-        
-        return {
-          kilometro: k.kilometro,
-          progreso: k.progreso_porcentaje || 0,
-          actividades: actividadesKm.length,
-          estado: k.estado,
-          frente: frente?.nombre || 'Sin frente'
-        };
-      }).sort((a, b) => a.kilometro - b.kilometro);
-      
+      // Obtener kilómetros usando Observable
+      this.kilometrosService.getKilometros().subscribe({
+        next: async (kilometros) => {
+          // Filtrar por frente si está seleccionado
+          const kilometrosFiltrados = this.frenteSeleccionado === 'todos' 
+            ? kilometros 
+            : kilometros.filter((k: any) => k.frente_id === this.frenteSeleccionado);
+          
+          try {
+            // Obtener actividades usando Promise
+            const actividades = await this.actividadesService.getActividades() || [];
+            
+            // Calcular progreso para cada kilómetro basado en tareas
+            const progresoPromises = kilometrosFiltrados.map(async (k: any) => {
+              const actividadesKm = actividades.filter((a: any) => a.kilometro === k.kilometro);
+              const frente = this.frentes.find((f: any) => f.id === k.frente_id);
+              
+              // Calcular progreso promedio basado en tareas de todas las actividades del kilómetro
+              let progresoPromedio = 0;
+              let estadoCalculado = 'pendiente';
+              
+              if (actividadesKm.length > 0) {
+                const progresosActividades = await Promise.all(
+                  actividadesKm.map(async (actividad: any) => {
+                    try {
+                      const estadisticas = await this.tareasService.getEstadisticasTareas(actividad.id);
+                      return estadisticas.progreso;
+                    } catch (error) {
+                      console.warn(`No se pudieron obtener tareas para actividad ${actividad.id}:`, error);
+                      return actividad.progreso_porcentaje || 0;
+                    }
+                  })
+                );
+                
+                progresoPromedio = progresosActividades.length > 0 
+                  ? Math.round(progresosActividades.reduce((sum, p) => sum + p, 0) / progresosActividades.length)
+                  : 0;
+                
+                // Calcular estado basado en el progreso promedio
+                if (progresoPromedio === 0) {
+                  estadoCalculado = 'pendiente';
+                } else if (progresoPromedio >= 100) {
+                  estadoCalculado = 'completado';
+                } else {
+                  estadoCalculado = 'en_progreso';
+                }
+              }
+              
+              console.log(`📊 [DashboardKilometrico] KM ${k.kilometro}: ${actividadesKm.length} actividades, progreso: ${progresoPromedio}%, estado: ${estadoCalculado}`);
+              
+              return {
+                kilometro: k.kilometro,
+                progreso: progresoPromedio,
+                actividades: actividadesKm.length,
+                estado: estadoCalculado,
+                frente: frente?.nombre || 'Sin frente'
+              };
+            });
+            
+            this.progresoKilometrico = (await Promise.all(progresoPromises))
+              .sort((a: any, b: any) => a.kilometro - b.kilometro);
+              
+            console.log('✅ [DashboardKilometrico] Progreso kilométrico calculado:', this.progresoKilometrico);
+          } catch (error) {
+            console.error('❌ [DashboardKilometrico] Error loading actividades:', error);
+          }
+        },
+        error: (error) => {
+          console.error('❌ [DashboardKilometrico] Error loading progreso kilométrico:', error);
+        }
+      });
     } catch (error) {
-      console.error('Error loading progreso kilométrico:', error);
+      console.error('❌ [DashboardKilometrico] Error in loadProgresoKilometrico:', error);
     }
   }
 
@@ -483,6 +646,7 @@ export class DashboardKilometricoComponent implements OnInit, OnDestroy {
   }
 
   refreshData(): void {
+    // Refrescando datos
     this.loadDashboardData();
   }
 

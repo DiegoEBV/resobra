@@ -30,7 +30,7 @@ export class ItemsService {
         .limit(50)
         .then(({ data, error }) => {
           if (error) {
-            console.error('Error searching items:', error);
+            // Error searching items
             throw error;
           }
           return data || [];
@@ -48,7 +48,7 @@ export class ItemsService {
         .order('name', { ascending: true })
         .then(({ data, error }) => {
           if (error) {
-            console.error('Error fetching items:', error);
+            // Error fetching items
             return []; // Return empty array instead of throwing
           }
           return data || [];
@@ -66,7 +66,7 @@ export class ItemsService {
         .order('name', { ascending: true })
         .then(({ data, error }) => {
           if (error) {
-            console.error('Error fetching items by specialty:', error);
+            // Error fetching items by specialty
             // Return empty groups instead of throwing error
             const emptyGroups: { [key in Specialty]: Item[] } = {
               'arquitectura': [],
@@ -109,7 +109,7 @@ export class ItemsService {
         .single()
         .then(({ data, error }) => {
           if (error) {
-            console.error('Error fetching item:', error);
+            // Error fetching item
             throw error;
           }
           return data;
@@ -131,7 +131,7 @@ export class ItemsService {
         .single()
         .then(({ data, error }) => {
           if (error) {
-            console.error('Error creating item:', error);
+            // Error creating item
             throw error;
           }
           return data;
@@ -159,7 +159,7 @@ export class ItemsService {
         .single()
         .then(({ data, error }) => {
           if (error) {
-            console.error('Error updating item:', error);
+            // Error updating item
             throw error;
           }
           return data;
@@ -176,7 +176,7 @@ export class ItemsService {
         .eq('id', id)
         .then(({ error }) => {
           if (error) {
-            console.error('Error deleting item:', error);
+            // Error deleting item
             throw error;
           }
         })

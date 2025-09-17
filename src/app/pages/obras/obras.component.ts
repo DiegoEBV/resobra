@@ -249,11 +249,11 @@ export class ObrasComponent implements OnInit {
     private snackBar: MatSnackBar,
     private router: Router
   ) {
-    console.log('🏗️ ObrasComponent: Constructor ejecutado');
+    // ObrasComponent: Constructor ejecutado
   }
 
   ngOnInit(): void {
-    console.log('ObrasComponent ngOnInit called');
+    // ObrasComponent ngOnInit called
     this.loadObras();
   }
 
@@ -263,26 +263,26 @@ export class ObrasComponent implements OnInit {
   }
 
   async loadObras(): Promise<void> {
-    console.log('🔄 ObrasComponent: Iniciando carga de obras');
+    // ObrasComponent: Iniciando carga de obras
     this.loading = true;
     try {
-      console.log('🔍 ObrasComponent: Llamando a obrasService.getAllObras()');
+      // ObrasComponent: Llamando a obrasService.getAllObras()
       const obras = await this.obrasService.getAllObras();
-      console.log('📋 ObrasComponent: Obras recibidas:', obras);
-      console.log('📊 ObrasComponent: Número de obras:', obras ? obras.length : 0);
+      // ObrasComponent: Obras recibidas
+      // ObrasComponent: Número de obras
       
       if (!obras || obras.length === 0) {
-        console.warn('⚠️ ObrasComponent: No se encontraron obras');
+        // ObrasComponent: No se encontraron obras
       }
       
       this.dataSource.data = obras || [];
-      console.log('✅ ObrasComponent: DataSource actualizado con', this.dataSource.data.length, 'obras');
+      // ObrasComponent: DataSource actualizado
     } catch (error) {
-      console.error('❌ Error loading obras:', error);
-      console.error('❌ Error details:', JSON.stringify(error, null, 2));
+      // Error loading obras
+      // Error details
     } finally {
       this.loading = false;
-      console.log('🏁 ObrasComponent: Carga de obras finalizada');
+      // ObrasComponent: Carga de obras finalizada
     }
   }
 
@@ -335,7 +335,7 @@ export class ObrasComponent implements OnInit {
         this.showMessage('Error al crear la obra');
       }
     } catch (error) {
-      console.error('Error creating obra:', error);
+      // Error creating obra
       this.showMessage('Error al crear la obra');
     }
   }
@@ -350,7 +350,7 @@ export class ObrasComponent implements OnInit {
         this.showMessage('Error al actualizar la obra');
       }
     } catch (error) {
-      console.error('Error updating obra:', error);
+      // Error updating obra
       this.showMessage('Error al actualizar la obra');
     }
   }
@@ -366,7 +366,7 @@ export class ObrasComponent implements OnInit {
           this.showMessage('Error al eliminar la obra');
         }
       } catch (error) {
-        console.error('Error deleting obra:', error);
+        // Error deleting obra
         this.showMessage('Error al eliminar la obra');
       }
     }
@@ -391,7 +391,7 @@ export class ObrasComponent implements OnInit {
   }
 
   logComponentLoaded(): string {
-    console.log('🎯 ObrasComponent: Template renderizado');
+    // ObrasComponent: Template renderizado
     return '';
   }
 }

@@ -46,7 +46,7 @@ import { UnauthorizedComponent } from './components/shared/unauthorized/unauthor
 import { NotFoundComponent } from './components/shared/not-found/not-found.component';
 
 // Services
-import { AuthService } from './services/auth.service';
+import { DirectAuthService } from './services/direct-auth.service';
 import { SupabaseService } from './services/supabase.service';
 import { ActividadesService } from './services/actividades.service';
 import { KpisService } from './services/kpis.service';
@@ -54,7 +54,7 @@ import { MapService } from './services/map.service';
 import { ReportesService } from './services/reportes.service';
 
 // Guards
-import { AuthGuard } from './guards/auth.guard';
+import { DirectAuthGuard } from './guards/direct-auth.guard';
 import { RoleGuard } from './guards/role.guard';
 
 @NgModule({
@@ -104,13 +104,13 @@ import { RoleGuard } from './guards/role.guard';
     MatTooltipModule
   ],
   providers: [
-    AuthService,
+    DirectAuthService,
     SupabaseService,
     ActividadesService,
     KpisService,
     MapService,
     ReportesService,
-    AuthGuard,
+    DirectAuthGuard,
     RoleGuard,
     {
       provide: DateAdapter,

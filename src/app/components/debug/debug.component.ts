@@ -86,29 +86,25 @@ export class DebugComponent implements OnInit {
   async runDiagnostic(): Promise<void> {
     try {
       this.error = null;
-      console.log('🔧 [DEBUG COMPONENT] Iniciando diagnóstico...');
+      // 🔧 [DEBUG COMPONENT] Iniciando diagnóstico...
       
       // 1. Verificar configuración de Supabase
-      console.log('🔧 [DEBUG] Verificando configuración de Supabase...');
+      // 🔧 [DEBUG] Verificando configuración de Supabase...
       const supabaseClient = this.actividadesService['supabase'].client;
-      console.log('🔧 [DEBUG] Cliente Supabase:', supabaseClient ? 'Configurado' : 'No configurado');
+      // 🔧 [DEBUG] Cliente Supabase: configured check
       
       // 2. Verificar estado de autenticación
-      console.log('🔐 [DEBUG] Verificando estado de autenticación...');
+      // 🔐 [DEBUG] Verificando estado de autenticación...
       try {
         const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
-        console.log('🔐 [DEBUG] Sesión actual:', sessionData?.session ? 'Activa' : 'No activa');
-        console.log('🔐 [DEBUG] Error de sesión:', sessionError);
+        // 🔐 [DEBUG] Sesión actual: session check
+        // 🔐 [DEBUG] Error de sesión: error check
         
         if (sessionData?.session?.user) {
-          console.log('👤 [DEBUG] Usuario de sesión:', {
-            id: sessionData.session.user.id,
-            email: sessionData.session.user.email,
-            role: sessionData.session.user.role
-          });
+          // 👤 [DEBUG] Usuario de sesión: user info logged
         }
       } catch (authError: any) {
-        console.error('❌ [DEBUG] Error verificando autenticación:', authError);
+        // ❌ [DEBUG] Error verificando autenticación: logged
         if (authError.message?.includes('NavigatorLockAcquireTimeoutError')) {
           this.error = 'Error de locks de autenticación de Supabase. Esto puede deberse a múltiples pestañas abiertas o problemas de sincronización.';
           return;
@@ -124,7 +120,7 @@ export class DebugComponent implements OnInit {
         profile: profile ? { id: profile.id, nombre: profile.nombre, rol: profile.rol } : 'No profile'
       };
       
-      console.log('👤 [DEBUG] Usuario del servicio:', this.userInfo);
+      // 👤 [DEBUG] Usuario del servicio: user info set
       
       if (!user) {
         this.error = 'No hay usuario autenticado. Intente cerrar otras pestañas y volver a iniciar sesión.';
@@ -132,17 +128,17 @@ export class DebugComponent implements OnInit {
       }
 
       // 4. Verificar obras asignadas
-      console.log('🔍 [DEBUG] Consultando user_obras...');
+      // 🔍 [DEBUG] Consultando user_obras...
       const userObrasResult = await supabaseClient
         .from('user_obras')
         .select('*')
         .eq('user_id', user.id);
         
       this.userObras = userObrasResult.data || [];
-      console.log('📊 [DEBUG] user_obras:', userObrasResult);
+      // 📊 [DEBUG] user_obras: result logged
       
       // 5. Verificar todas las actividades
-      console.log('🔍 [DEBUG] Consultando todas las actividades...');
+      // 🔍 [DEBUG] Consultando todas las actividades...
       const allActResult = await supabaseClient
         .from('actividades')
         .select('id, titulo, obra_id, user_id, created_at')
@@ -150,12 +146,12 @@ export class DebugComponent implements OnInit {
         .limit(10);
         
       this.allActividades = allActResult.data || [];
-      console.log('📊 [DEBUG] Todas las actividades:', allActResult);
+      // 📊 [DEBUG] Todas las actividades: result logged
       
       // 6. Si hay obras asignadas, verificar actividades específicas
       if (this.userObras.length > 0) {
         const obraIds = this.userObras.map(uo => uo.obra_id);
-        console.log('🔍 [DEBUG] Consultando actividades para obras:', obraIds);
+        // 🔍 [DEBUG] Consultando actividades para obras: obra IDs
         
         const obraActResult = await supabaseClient
           .from('actividades')
@@ -164,13 +160,13 @@ export class DebugComponent implements OnInit {
           .order('created_at', { ascending: false });
           
         this.obraActividades = obraActResult.data || [];
-        console.log('📊 [DEBUG] Actividades de obras asignadas:', obraActResult);
+        // 📊 [DEBUG] Actividades de obras asignadas: result logged
       }
       
-      console.log('✅ [DEBUG] Diagnóstico completado');
+      // ✅ [DEBUG] Diagnóstico completado
       
     } catch (error) {
-      console.error('❌ [DEBUG] Error en diagnóstico:', error);
+      // ❌ [DEBUG] Error en diagnóstico: logged
       this.error = error;
     }
   }

@@ -154,21 +154,13 @@ export class FrenteFormComponent implements OnInit {
 
   private async loadObras(): Promise<void> {
     try {
-      console.log('🔍 [FrenteForm] loadObras() - Iniciando carga de obras');
-      console.log('🔍 [FrenteForm] Llamando a actividadesService.getUserObras()');
+      // Iniciando carga de obras
       
       this.obras = await this.actividadesService.getUserObras();
       
-      console.log('📊 [FrenteForm] Resultado recibido de getUserObras():', this.obras);
-      console.log('📈 [FrenteForm] Cantidad de obras cargadas:', this.obras?.length || 0);
-      
-      if (!this.obras || this.obras.length === 0) {
-        console.warn('⚠️ [FrenteForm] No se encontraron obras para el usuario');
-      } else {
-        console.log('✅ [FrenteForm] Obras cargadas exitosamente:', this.obras.map(o => ({ id: o.id, nombre: o.nombre })));
-      }
+      // Obras cargadas exitosamente
     } catch (error) {
-      console.error('❌ [FrenteForm] Error loading obras:', error);
+      // Error loading obras
       this.snackBar.open('Error al cargar las obras', 'Cerrar', {
         duration: 3000,
         panelClass: ['error-snackbar']
@@ -210,7 +202,7 @@ export class FrenteFormComponent implements OnInit {
 
         this.dialogRef.close(result);
       } catch (error) {
-        console.error('Error saving frente:', error);
+        // Error saving frente
         this.snackBar.open(
           this.isEditMode ? 'Error al actualizar el frente' : 'Error al crear el frente', 
           'Cerrar', 

@@ -1,10 +1,31 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatSelectModule } from '@angular/material/select';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-register',
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    RouterModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatIconModule,
+    MatSelectModule,
+    MatProgressSpinnerModule
+  ],
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.css']
 })
@@ -63,12 +84,15 @@ export class RegisterComponent implements OnInit {
 
       const { email, password, nombre, rol } = this.registerForm.value;
 
+      // Iniciando registro
       this.authService.signUp(email, password, nombre, rol).subscribe({
         next: ({ user, error }) => {
           this.loading = false;
           if (error) {
+            // Error en el registro
             this.error = this.getErrorMessage(error);
           } else if (user) {
+            // Registro exitoso
             this.success = true;
             setTimeout(() => {
               this.router.navigate(['/login']);
@@ -77,8 +101,9 @@ export class RegisterComponent implements OnInit {
         },
         error: (err) => {
           this.loading = false;
+          // Error general en registro
           this.error = 'Error de conexión. Intente nuevamente.';
-          console.error('Register error:', err);
+          // Register error
         }
       });
     }

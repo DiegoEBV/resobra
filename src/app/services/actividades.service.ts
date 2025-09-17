@@ -2,7 +2,7 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable, Subject, from } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
 import { SupabaseService } from './supabase.service';
-import { AuthService } from './auth.service';
+import { DirectAuthService } from './direct-auth.service';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
 export interface Actividad {
@@ -96,20 +96,14 @@ export class ActividadesService implements OnDestroy {
   private actividadesSubject = new BehaviorSubject<Actividad[]>([]);
   public actividades$ = this.actividadesSubject.asObservable().pipe(
     tap(actividades => {
-      console.log('📡 [ActividadesService] Emitiendo actividades:', {
-        count: actividades.length,
-        data: actividades
-      });
+      // Emitiendo actividades
     })
   );
 
   private frentesSubject = new BehaviorSubject<Frente[]>([]);
   public frentes$ = this.frentesSubject.asObservable().pipe(
     tap(frentes => {
-      console.log('📡 [ActividadesService] Emitiendo frentes:', {
-        count: frentes.length,
-        data: frentes
-      });
+      // Emitiendo frentes
     })
   );
   private progresoUpdatedSubject = new Subject<{actividadId: string, progreso: number}>();
@@ -121,39 +115,22 @@ export class ActividadesService implements OnDestroy {
 
   constructor(
     private supabase: SupabaseService,
-    private authService: AuthService
+    private directAuthService: DirectAuthService
   ) {
-    console.log('🏗️ [ActividadesService] Constructor iniciado');
+    // Constructor iniciado
     
-    // Escuchar cambios en la autenticación
-    this.authService.currentUser$.subscribe({
-      next: (user) => {
-        console.log('👤 [ActividadesService] Estado de autenticación cambió:', {
-          authenticated: !!user,
-          userId: user?.id,
-          email: user?.email
-        });
-        
-        if (user) {
-          console.log('✅ [ActividadesService] Usuario autenticado, cargando datos...');
-          this.loadUserActividades().catch(error => {
-            console.error('❌ [ActividadesService] Error cargando actividades:', error);
-          });
-          this.loadUserFrente().catch(error => {
-            console.error('❌ [ActividadesService] Error cargando frentes:', error);
-          });
-          this.setupRealtimeSubscriptions();
-        } else {
-          console.log('❌ [ActividadesService] Usuario no autenticado, limpiando datos');
-          this.actividadesSubject.next([]);
-          this.frentesSubject.next([]);
-          this.cleanupRealtimeSubscriptions();
-        }
-      },
-      error: (error) => {
-        console.error('❌ [ActividadesService] Error en suscripción de autenticación:', error);
-      }
-    });
+    // Cargar datos iniciales si hay usuario autenticado
+    const user = this.directAuthService.getCurrentUser();
+    if (user) {
+      // Usuario autenticado, cargando datos
+      this.loadUserActividades().catch(error => {
+        // Error cargando actividades
+      });
+      this.loadUserFrente().catch(error => {
+        // Error cargando frentes
+      });
+      this.setupRealtimeSubscriptions();
+    }
   }
 
   ngOnDestroy(): void {
@@ -162,14 +139,14 @@ export class ActividadesService implements OnDestroy {
 
   // Configurar suscripciones en tiempo real
   private setupRealtimeSubscriptions(): void {
-    console.log('🔄 [ActividadesService] Configurando suscripciones en tiempo real');
+    // Configurando suscripciones en tiempo real
     
     // Limpiar suscripciones existentes
     this.cleanupRealtimeSubscriptions();
     
-    const user = this.authService.getCurrentUser();
+    const user = this.directAuthService.getCurrentUser();
     if (!user) {
-      console.log('❌ [ActividadesService] No hay usuario para configurar suscripciones');
+      // No hay usuario para configurar suscripciones
       return;
     }
 
@@ -184,7 +161,7 @@ export class ActividadesService implements OnDestroy {
           table: 'actividades'
         },
         (payload) => {
-          console.log('🔄 [ActividadesService] Cambio en actividades:', payload);
+          // Cambio en actividades
           this.handleActividadChange(payload);
         }
       )
@@ -201,18 +178,18 @@ export class ActividadesService implements OnDestroy {
           table: 'frentes'
         },
         (payload) => {
-          console.log('🔄 [ActividadesService] Cambio en frentes:', payload);
+          // Cambio en frentes
           this.handleFrenteChange(payload);
         }
       )
       .subscribe();
 
-    console.log('✅ [ActividadesService] Suscripciones en tiempo real configuradas');
+    // Suscripciones en tiempo real configuradas
   }
 
   // Limpiar suscripciones en tiempo real
   private cleanupRealtimeSubscriptions(): void {
-    console.log('🧹 [ActividadesService] Limpiando suscripciones en tiempo real');
+    // Limpiando suscripciones en tiempo real
     
     if (this.actividadesChannel) {
       this.supabase.client.removeChannel(this.actividadesChannel);
@@ -227,37 +204,37 @@ export class ActividadesService implements OnDestroy {
 
   // Manejar cambios en actividades
   private async handleActividadChange(payload: any): Promise<void> {
-    const user = this.authService.getCurrentUser();
+    const user = this.directAuthService.getCurrentUser();
     if (!user) return;
 
-    console.log('🔄 [ActividadesService] Procesando cambio en actividad:', payload.eventType);
+    // Procesando cambio en actividad
     
     // Verificar si el cambio es relevante para el usuario actual
     const isRelevant = await this.isActividadRelevantForUser(payload, user.id);
     
     if (isRelevant) {
-      console.log('✅ [ActividadesService] Cambio relevante, recargando actividades');
+      // Cambio relevante, recargando actividades
       await this.loadUserActividades();
     } else {
-      console.log('⏭️ [ActividadesService] Cambio no relevante para el usuario actual');
+      // Cambio no relevante para el usuario actual
     }
   }
 
   // Manejar cambios en frentes
   private async handleFrenteChange(payload: any): Promise<void> {
-    const user = this.authService.getCurrentUser();
+    const user = this.directAuthService.getCurrentUser();
     if (!user) return;
 
-    console.log('🔄 [ActividadesService] Procesando cambio en frente:', payload.eventType);
+    // Procesando cambio en frente
     
     // Verificar si el cambio es relevante para el usuario actual
     const isRelevant = await this.isFrenteRelevantForUser(payload, user.id);
     
     if (isRelevant) {
-      console.log('✅ [ActividadesService] Cambio relevante, recargando frentes');
+      // Cambio relevante, recargando frentes
       await this.loadUserFrente();
     } else {
-      console.log('⏭️ [ActividadesService] Cambio no relevante para el usuario actual');
+      // Cambio no relevante para el usuario actual
     }
   }
 
@@ -271,7 +248,7 @@ export class ActividadesService implements OnDestroy {
       // Esto permite que las actividades se comuniquen entre usuarios
       return true;
     } catch (error) {
-      console.error('Error verificando relevancia de actividad:', error);
+      // Error verificando relevancia de actividad
       return false;
     }
   }
@@ -285,59 +262,48 @@ export class ActividadesService implements OnDestroy {
       // Todos los frentes son relevantes para ambos usuarios (residente y logística)
       return true;
     } catch (error) {
-      console.error('Error verificando relevancia del frente:', error);
+      // Error verificando relevancia del frente
       return false;
     }
   }
 
   // Cargar actividades del usuario
   async loadUserActividades(): Promise<void> {
-    console.log('🚀 [SERVICE] ===== INICIANDO loadUserActividades =====');
+    // Iniciando loadUserActividades
     try {
-      console.log('🔍 [SERVICE] Verificando usuario autenticado...');
-      const user = this.authService.getCurrentUser();
-      console.log('👤 [SERVICE] Usuario obtenido:', user);
+      // Verificando usuario autenticado
+      const user = this.directAuthService.getCurrentUser();
+      // Usuario obtenido
       
       if (!user) {
-        console.log('❌ [SERVICE] No hay usuario autenticado para cargar actividades');
-        console.log('🔍 [SERVICE] AuthService estado:', this.authService);
+        // No hay usuario autenticado para cargar actividades
         return;
       }
 
-      console.log('🔍 [DEBUG] Usuario actual:', {
-        id: user.id,
-        email: user.email,
-        rol: this.authService.getCurrentProfile()?.rol
-      });
+      // Usuario actual obtenido
 
-      console.log('🔗 [DEBUG] Estado de conexión Supabase:', {
-        client: !!this.supabase.client,
-        connected: this.supabase.client ? 'Conectado' : 'Desconectado'
-      });
+      // Estado de conexión Supabase verificado
 
       let data, error;
 
       // Verificar el rol del usuario para aplicar filtros diferentes
       // Cargar todas las actividades para ambos roles (residente y logística)
       // Esto permite que ambos usuarios vean todas las actividades del sistema
-      console.log('👥 [DEBUG] Cargando todas las actividades para usuario:', this.authService.isResident() ? 'residente' : 'logística');
+      // Cargando todas las actividades para usuario
       
-      console.log('📡 [DEBUG] Ejecutando consulta a Supabase...');
+      // Ejecutando consulta a Supabase
       
       // Primero intentar una consulta simple sin joins
-      console.log('🔍 [DEBUG] Probando consulta simple sin joins...');
+      // Probando consulta simple sin joins
       const simpleResult = await this.supabase.client
         .from('actividades')
         .select('*')
         .limit(10);
         
-      console.log('📊 [DEBUG] Resultado consulta simple:', simpleResult);
-      console.log('📊 [DEBUG] Datos simples:', simpleResult.data);
-      console.log('📊 [DEBUG] Error simple:', simpleResult.error);
-      console.log('📊 [DEBUG] Count simple:', simpleResult.data?.length || 0);
+      // Resultado consulta simple obtenido
       
       // Ahora la consulta completa
-      console.log('📡 [DEBUG] Ejecutando consulta completa con joins...');
+      // Ejecutando consulta completa con joins
       const result = await this.supabase.client
         .from('actividades')
         .select(`
@@ -348,15 +314,11 @@ export class ActividadesService implements OnDestroy {
         `)
         .order('created_at', { ascending: false });
         
-      console.log('📊 [DEBUG] Resultado completo de actividades:', result);
-      console.log('📊 [DEBUG] Datos:', result.data);
-      console.log('📊 [DEBUG] Error:', result.error);
-      console.log('📊 [DEBUG] Status:', result.status);
-      console.log('📊 [DEBUG] StatusText:', result.statusText);
+      // Resultado completo de actividades obtenido
       
       // Verificar si hay diferencia entre consulta simple y completa
        if (simpleResult.data && simpleResult.data.length > 0 && (!result.data || result.data.length === 0)) {
-         console.log('⚠️ [DEBUG] La consulta simple tiene datos pero la completa no. Usando datos simples.');
+         // La consulta simple tiene datos pero la completa no. Usando datos simples
          data = simpleResult.data;
          error = simpleResult.error;
        } else {
@@ -365,36 +327,31 @@ export class ActividadesService implements OnDestroy {
        }
 
       if (error) {
-        console.error('❌ [DEBUG] Error en consulta Supabase:', error);
+        // Error en consulta Supabase
         throw error;
       }
       
       // Debug: Verificar los datos que llegan de Supabase
-      console.log('🔍 [ActividadesService] Datos recibidos de Supabase:', data);
-      console.log('🔍 [ActividadesService] Tipo de datos:', typeof data);
-      console.log('🔍 [ActividadesService] Es array:', Array.isArray(data));
-      console.log('🔍 [ActividadesService] Longitud:', data?.length || 0);
+      // Datos recibidos de Supabase
       
       if (data && data.length > 0) {
-        console.log('🔍 [ActividadesService] Primera actividad:', data[0]);
-        console.log('🔍 [ActividadesService] ID de primera actividad:', data[0].id);
-        console.log('🔍 [ActividadesService] Claves de primera actividad:', Object.keys(data[0]));
+        // Primera actividad obtenida
       } else {
-        console.log('⚠️ [ActividadesService] No se encontraron actividades en la base de datos');
+        // No se encontraron actividades en la base de datos
       }
       
-      console.log('📤 [DEBUG] Enviando datos al BehaviorSubject...');
+      // Enviando datos al BehaviorSubject
       this.actividadesSubject.next(data || []);
-      console.log('✅ [DEBUG] Datos enviados al BehaviorSubject');
+      // Datos enviados al BehaviorSubject
       
       // Verificar el estado actual del BehaviorSubject
       const currentValue = this.actividadesSubject.value;
-      console.log('🔍 [DEBUG] Valor actual del BehaviorSubject:', currentValue);
-      console.log('🔍 [DEBUG] Longitud del BehaviorSubject:', currentValue.length);
+      // Debug: Valor actual del BehaviorSubject
+    // Debug: Longitud del BehaviorSubject
       
     } catch (error: any) {
-      console.error('❌ [DEBUG] Error completo en loadUserActividades:', error);
-      console.error('❌ [DEBUG] Stack trace:', error?.stack || 'No stack trace available');
+      // Error completo en loadUserActividades
+      // Stack trace del error
     }
   }
 
@@ -406,13 +363,13 @@ export class ActividadesService implements OnDestroy {
   // Cargar frentes del usuario
   private async loadUserFrente(): Promise<void> {
     try {
-      const user = this.authService.getCurrentUser();
+      const user = this.directAuthService.getCurrentUser();
       if (!user) {
-        console.log('No hay usuario autenticado para cargar frentes');
+        // No hay usuario autenticado para cargar frentes
         return;
       }
       
-      console.log('Cargando frentes para usuario:', user.email);
+      // Cargando frentes para usuario
 
       // Cargar todos los frentes activos para ambos usuarios (residente y logística)
       const { data, error } = await this.supabase.client
@@ -422,21 +379,21 @@ export class ActividadesService implements OnDestroy {
         .order('nombre');
 
       if (error) {
-        console.error('Error obteniendo frentes:', error);
+        // Error obteniendo frentes
         throw error;
       }
       
-      console.log('Frentes encontrados:', data);
+      // Frentes encontrados
       this.frentesSubject.next(data || []);
     } catch (error) {
-      console.error('Error loading frentes:', error);
+      // Error loading frentes
     }
   }
 
   // Crear nueva actividad
   async createActividad(actividad: Omit<Actividad, 'id' | 'created_at' | 'updated_at'>): Promise<Actividad> {
     try {
-      const user = this.authService.getCurrentUser();
+      const user = this.directAuthService.getCurrentUser();
       if (!user) throw new Error('Usuario no autenticado');
 
       const actividadData = {
@@ -462,7 +419,7 @@ export class ActividadesService implements OnDestroy {
       
       return data;
     } catch (error) {
-      console.error('Error creating actividad:', error);
+      // Error creating actividad
       throw error;
     }
   }
@@ -492,7 +449,7 @@ export class ActividadesService implements OnDestroy {
       
       return data;
     } catch (error) {
-      console.error('Error updating actividad:', error);
+      // Error updating actividad
       throw error;
     }
   }
@@ -500,14 +457,14 @@ export class ActividadesService implements OnDestroy {
   // Eliminar actividad
   async deleteActividad(id: string): Promise<void> {
     try {
-      console.log('🗑️ [ActividadesService] Intentando eliminar actividad con ID:', id);
-      console.log('🗑️ [ActividadesService] Tipo de ID:', typeof id);
-      console.log('🗑️ [ActividadesService] Valor del ID:', JSON.stringify(id));
+      // Intentando eliminar actividad con ID
+    // Tipo de ID
+    // Valor del ID
       
       // Validar que el ID sea un UUID válido
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
       if (!uuidRegex.test(id)) {
-        console.error('❌ [ActividadesService] ID no es un UUID válido:', id);
+        // ID no es un UUID válido
         throw new Error(`ID no es un UUID válido: ${id}`);
       }
       
@@ -517,16 +474,16 @@ export class ActividadesService implements OnDestroy {
         .eq('id', id);
 
       if (error) {
-        console.error('❌ [ActividadesService] Error de Supabase al eliminar:', error);
+        // Error de Supabase al eliminar
         throw error;
       }
       
-      console.log('✅ [ActividadesService] Actividad eliminada exitosamente');
+      // Actividad eliminada exitosamente
 
       // Actualizar la lista local
       await this.loadUserActividades();
     } catch (error) {
-      console.error('❌ [ActividadesService] Error deleting actividad:', error);
+      // Error deleting actividad
       throw error;
     }
   }
@@ -548,7 +505,7 @@ export class ActividadesService implements OnDestroy {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error getting actividad:', error);
+      // Error getting actividad
       return null;
     }
   }
@@ -574,7 +531,7 @@ export class ActividadesService implements OnDestroy {
       
       return data;
     } catch (error) {
-      console.error('Error adding evidencia:', error);
+      // Error adding evidencia
       throw error;
     }
   }
@@ -600,7 +557,7 @@ export class ActividadesService implements OnDestroy {
       
       return data;
     } catch (error) {
-      console.error('Error adding recurso:', error);
+      // Error adding recurso
       throw error;
     }
   }
@@ -622,7 +579,7 @@ export class ActividadesService implements OnDestroy {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error getting actividades by frente:', error);
+      // Error getting actividades by frente
       return [];
     }
   }
@@ -630,13 +587,13 @@ export class ActividadesService implements OnDestroy {
   // Obtener todas las actividades del usuario
   async getActividades(): Promise<Actividad[]> {
     try {
-      const user = this.authService.getCurrentUser();
+      const user = this.directAuthService.getCurrentUser();
       if (!user) {
-        console.log('🔍 DEBUG: No hay usuario autenticado');
+        // DEBUG: No hay usuario autenticado
         return [];
       }
 
-      console.log('🔍 DEBUG: Obteniendo actividades para usuario:', user.id);
+      // DEBUG: Obteniendo actividades para usuario
       
       const { data, error } = await this.supabase.client
         .from('actividades')
@@ -650,21 +607,21 @@ export class ActividadesService implements OnDestroy {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('🔍 DEBUG: Error de Supabase:', error);
+        // DEBUG: Error de Supabase
         throw error;
       }
       
-      console.log('🔍 DEBUG: Datos recibidos de Supabase:', data);
-      console.log('🔍 DEBUG: Número de actividades:', data?.length || 0);
+      // DEBUG: Datos recibidos de Supabase
+    // DEBUG: Número de actividades
       
       if (data && data.length > 0) {
-        console.log('🔍 DEBUG: Primera actividad completa:', JSON.stringify(data[0], null, 2));
-        console.log('🔍 DEBUG: ID de primera actividad:', data[0].id, 'Tipo:', typeof data[0].id);
+        // DEBUG: Primera actividad completa
+      // DEBUG: ID de primera actividad
       }
       
       return data || [];
     } catch (error) {
-      console.error('🔍 DEBUG: Error en getActividades:', error);
+      // DEBUG: Error en getActividades
       return [];
     }
   }
@@ -672,7 +629,7 @@ export class ActividadesService implements OnDestroy {
   // Obtener estadísticas de actividades
   async getActividadesStats(): Promise<any> {
     try {
-      const user = await this.authService.getCurrentUser();
+      const user = await this.directAuthService.getCurrentUser();
       if (!user) return null;
 
       const { data, error } = await this.supabase.client
@@ -691,7 +648,7 @@ export class ActividadesService implements OnDestroy {
 
       return stats;
     } catch (error) {
-      console.error('Error getting actividades stats:', error);
+      // Error getting actividades stats
       return null;
     }
   }
@@ -701,7 +658,7 @@ export class ActividadesService implements OnDestroy {
   // Crear nueva tarea
   async createTarea(tarea: any): Promise<any> {
     try {
-      console.log('📝 [ActividadesService] Creando nueva tarea:', tarea);
+      // Creando nueva tarea
       
       const tareaData = {
         ...tarea,
@@ -716,14 +673,14 @@ export class ActividadesService implements OnDestroy {
         .single();
 
       if (error) {
-        console.error('❌ [ActividadesService] Error creando tarea:', error);
+        // Error creando tarea
         throw error;
       }
 
-      console.log('✅ [ActividadesService] Tarea creada exitosamente:', data);
+      // Tarea creada exitosamente
       return data;
     } catch (error) {
-      console.error('❌ [ActividadesService] Error en createTarea:', error);
+      // Error en createTarea
       throw error;
     }
   }
@@ -731,8 +688,8 @@ export class ActividadesService implements OnDestroy {
   // Obtener tareas por actividad
   async getTareasByActividad(actividadId: string): Promise<any[]> {
     try {
-      console.log('📋 [ActividadesService] Obteniendo tareas para actividad:', actividadId);
-      console.log('📋 [ActividadesService] Tipo de actividadId:', typeof actividadId, 'Valor:', actividadId);
+      // Obteniendo tareas para actividad
+    // Tipo de actividadId
       
       const { data, error } = await this.supabase.client
         .from('tareas')
@@ -741,15 +698,15 @@ export class ActividadesService implements OnDestroy {
         .order('orden', { ascending: true });
 
       if (error) {
-        console.error('❌ [ActividadesService] Error obteniendo tareas:', error);
+        // Error obteniendo tareas
         throw error;
       }
 
-      console.log('✅ [ActividadesService] Tareas obtenidas:', data?.length || 0);
-      console.log('📋 [ActividadesService] Datos completos:', data);
+      // Tareas obtenidas
+    // Datos completos
       return data || [];
     } catch (error) {
-      console.error('❌ [ActividadesService] Error en getTareasByActividad:', error);
+      // Error en getTareasByActividad
       throw error;
     }
   }
@@ -766,10 +723,10 @@ export class ActividadesService implements OnDestroy {
       const tareasCompletadas = tareas.filter(tarea => tarea.completada).length;
       const progreso = Math.round((tareasCompletadas / tareas.length) * 100);
       
-      console.log(`📊 [ActividadesService] Progreso actividad ${actividadId}: ${progreso}% (${tareasCompletadas}/${tareas.length})`);
+      // Progreso actividad calculado
       return progreso;
     } catch (error) {
-      console.error('❌ [ActividadesService] Error calculando progreso:', error);
+      // Error calculando progreso
       return 0;
     }
   }
@@ -777,7 +734,7 @@ export class ActividadesService implements OnDestroy {
   // Actualizar estado de tarea
   async updateTareaEstado(tareaId: string, completada: boolean): Promise<any> {
     try {
-      console.log('🔄 [ActividadesService] Actualizando estado de tarea:', tareaId, completada);
+      // Actualizando estado de tarea
       
       // Primero obtener la actividad_id de la tarea
       const { data: tarea, error: tareaError } = await this.supabase.client
@@ -787,7 +744,7 @@ export class ActividadesService implements OnDestroy {
         .single();
 
       if (tareaError) {
-        console.error('❌ [ActividadesService] Error obteniendo tarea:', tareaError);
+        // Error obteniendo tarea
         throw tareaError;
       }
       
@@ -811,7 +768,7 @@ export class ActividadesService implements OnDestroy {
         .single();
 
       if (error) {
-        console.error('❌ [ActividadesService] Error actualizando tarea:', error);
+        // Error actualizando tarea
         throw error;
       }
 
@@ -822,10 +779,10 @@ export class ActividadesService implements OnDestroy {
         progreso: nuevoProgreso
       });
 
-      console.log('✅ [ActividadesService] Tarea actualizada exitosamente:', data);
+      // Tarea actualizada exitosamente
       return data;
     } catch (error) {
-      console.error('❌ [ActividadesService] Error en updateTareaEstado:', error);
+      // Error en updateTareaEstado
       throw error;
     }
   }
@@ -835,7 +792,7 @@ export class ActividadesService implements OnDestroy {
   // Crear nuevo frente
   async createFrente(frente: Omit<Frente, 'id' | 'created_at'>): Promise<Frente> {
     try {
-      const user = this.authService.getCurrentUser();
+      const user = this.directAuthService.getCurrentUser();
       if (!user) throw new Error('Usuario no autenticado');
 
       const frenteData = {
@@ -856,7 +813,7 @@ export class ActividadesService implements OnDestroy {
       
       return data;
     } catch (error) {
-      console.error('Error creating frente:', error);
+      // Error creating frente
       throw error;
     }
   }
@@ -878,7 +835,7 @@ export class ActividadesService implements OnDestroy {
       
       return data;
     } catch (error) {
-      console.error('Error updating frente:', error);
+      // Error updating frente
       throw error;
     }
   }
@@ -903,7 +860,7 @@ export class ActividadesService implements OnDestroy {
       
       return data;
     } catch (error) {
-      console.error('Error updating frente location:', error);
+      // Error updating frente location
       throw error;
     }
   }
@@ -921,7 +878,7 @@ export class ActividadesService implements OnDestroy {
       // Actualizar la lista local
       await this.loadUserFrente();
     } catch (error) {
-      console.error('Error deleting frente:', error);
+      // Error deleting frente
       throw error;
     }
   }
@@ -938,7 +895,7 @@ export class ActividadesService implements OnDestroy {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error getting frente:', error);
+      // Error getting frente
       return null;
     }
   }
@@ -946,44 +903,41 @@ export class ActividadesService implements OnDestroy {
   // Método de debug para diagnosticar problemas de carga
   async debugUserData(): Promise<void> {
     try {
-      console.log('🔧 [DEBUG] === INICIANDO DIAGNÓSTICO COMPLETO ===');
+      // === INICIANDO DIAGNÓSTICO COMPLETO ===
       
-      const user = this.authService.getCurrentUser();
-      const profile = this.authService.getCurrentProfile();
+      const user = this.directAuthService.getCurrentUser();
+      const profile = this.directAuthService.getCurrentProfile();
       
-      console.log('👤 [DEBUG] Usuario actual:', {
-        user: user ? { id: user.id, email: user.email } : 'No autenticado',
-        profile: profile ? { id: profile.id, nombre: profile.nombre, rol: profile.rol } : 'No profile'
-      });
+      // Usuario actual
       
       if (!user) {
-        console.error('❌ [DEBUG] No hay usuario autenticado');
+        // No hay usuario autenticado
         return;
       }
 
       // 1. Verificar obras asignadas
-      console.log('🔍 [DEBUG] 1. Verificando obras asignadas...');
+      // Verificando obras asignadas...
       const { data: userObras, error: userObrasError } = await this.supabase.client
         .from('user_obras')
         .select('*')
         .eq('user_id', user.id);
         
-      console.log('📊 [DEBUG] user_obras resultado:', { userObras, userObrasError });
+      // user_obras resultado
       
       // 2. Verificar todas las actividades en la base de datos
-      console.log('🔍 [DEBUG] 2. Verificando todas las actividades...');
+      // Verificando todas las actividades...
       const { data: allActividades, error: allActError } = await this.supabase.client
         .from('actividades')
         .select('id, tipo_actividad, obra_id, user_id, created_at, estado')
         .order('created_at', { ascending: false })
         .limit(10);
         
-      console.log('📊 [DEBUG] Últimas 10 actividades:', { allActividades, allActError });
+      // Últimas 10 actividades
       
       // 3. Si hay obras asignadas, verificar actividades específicas
       if (userObras && userObras.length > 0) {
         const obraIds = userObras.map(uo => uo.obra_id);
-        console.log('🔍 [DEBUG] 3. Verificando actividades para obras:', obraIds);
+        // Verificando actividades para obras
         
         const { data: obraActividades, error: obraActError } = await this.supabase.client
           .from('actividades')
@@ -991,30 +945,30 @@ export class ActividadesService implements OnDestroy {
           .in('obra_id', obraIds)
           .order('created_at', { ascending: false });
           
-        console.log('📊 [DEBUG] Actividades de obras asignadas:', { obraActividades, obraActError });
+        // Actividades de obras asignadas
       }
       
-      console.log('🔧 [DEBUG] === FIN DEL DIAGNÓSTICO ===');
+      // === FIN DEL DIAGNÓSTICO ===
       
     } catch (error) {
-      console.error('❌ [DEBUG] Error en diagnóstico:', error);
+      // Error en diagnóstico
     }
   }
 
   // Obtener obras disponibles para el usuario
   async getUserObras(): Promise<any[]> {
     try {
-      console.log('🔍 [ActividadesService] getUserObras() - Iniciando carga de obras del usuario');
+      // getUserObras() - Iniciando carga de obras del usuario
       
-      const user = this.authService.getCurrentUser();
-      console.log('👤 [ActividadesService] Usuario actual:', user ? { id: user.id, email: user.email } : 'No autenticado');
+      const user = this.directAuthService.getCurrentUser();
+      // Usuario actual
       
       if (!user) {
-        console.error('❌ [ActividadesService] Usuario no autenticado');
+        // Usuario no autenticado
         throw new Error('Usuario no autenticado');
       }
 
-      console.log('🔍 [ActividadesService] Ejecutando consulta a user_obras para user_id:', user.id);
+      // Ejecutando consulta a user_obras para user_id
       
       const { data, error } = await this.supabase.client
         .from('user_obras')
@@ -1024,21 +978,21 @@ export class ActividadesService implements OnDestroy {
         `)
         .eq('user_id', user.id);
 
-      console.log('📊 [ActividadesService] Datos recibidos de user_obras:', data);
-      console.log('⚠️ [ActividadesService] Error en consulta:', error);
+      // Datos recibidos de user_obras
+      // Error en consulta
 
       if (error) {
-        console.error('❌ [ActividadesService] Error en consulta user_obras:', error);
+        // Error en consulta user_obras
         throw error;
       }
       
       const obras = data?.map(uo => uo.obras) || [];
-      console.log('🏗️ [ActividadesService] Obras mapeadas (resultado final):', obras);
-      console.log('📈 [ActividadesService] Cantidad de obras encontradas:', obras.length);
+      // Obras mapeadas (resultado final)
+      // Cantidad de obras encontradas
       
       return obras;
     } catch (error) {
-      console.error('❌ [ActividadesService] Error getting user obras:', error);
+      // Error getting user obras
       return [];
     }
   }

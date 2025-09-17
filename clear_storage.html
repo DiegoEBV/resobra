@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Limpiar Storage</title>
+</head>
+<body>
+    <h1>Limpiar Storage del Navegador</h1>
+    <button onclick="clearAllStorage()">Limpiar Todo el Storage</button>
+    <button onclick="loginDirectly()">Login Directo</button>
+    <div id="result"></div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        function clearAllStorage() {
+            // Limpiar localStorage
+            localStorage.clear();
+            
+            // Limpiar sessionStorage
+            sessionStorage.clear();
+            
+            // Limpiar cookies
+            document.cookie.split(";").forEach(function(c) { 
+                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+            });
+            
+            document.getElementById('result').innerHTML = '<p style="color: green;">Storage limpiado completamente</p>';
+            
+            // Recargar la página después de 2 segundos
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        }
+        
+        async function loginDirectly() {
+            const supabaseUrl = 'https://ugecshlhptnyeemmedoy.supabase.co';
+            const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnZWNzaGxocHRueWVlbW1lZG95Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU5MDA2NTAsImV4cCI6MjA3MTQ3NjY1MH0.qQU8nSWX-6r89n_-OWHfPcYOHS1oxDcPOXXGuS0LxbY';
+            
+            const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+            
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: 'test@resobra.com',
+                    password: '123456'
+                });
+                
+                if (error) {
+                    document.getElementById('result').innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+                } else {
+                    document.getElementById('result').innerHTML = '<p style="color: green;">Login exitoso! Redirigiendo...</p>';
+                    
+                    // Redirigir al dashboard
+                    setTimeout(() => {
+                        window.location.href = 'http://localhost:4200/dashboard';
+                    }, 2000);
+                }
+            } catch (err) {
+                document.getElementById('result').innerHTML = `<p style="color: red;">Error: ${err.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -80,13 +80,13 @@ export class AdminProjectsComponent implements OnInit {
           this.isLoading = false;
         },
         error: (error) => {
-          console.error('Error loading projects:', error);
+          // Error loading projects
           this.showMessage('Error al cargar las obras', 'error');
           this.isLoading = false;
         }
       });
     } catch (error) {
-      console.error('Error loading projects:', error);
+      // Error loading projects
       this.showMessage('Error al cargar las obras', 'error');
       this.isLoading = false;
     }
@@ -128,7 +128,7 @@ export class AdminProjectsComponent implements OnInit {
       this.showMessage('Obra creada exitosamente', 'success');
       this.loadProjects();
     } catch (error) {
-      console.error('Error creating project:', error);
+      // Error creating project
       this.showMessage('Error al crear la obra', 'error');
     }
   }
@@ -171,7 +171,7 @@ export class AdminProjectsComponent implements OnInit {
           this.showMessage('Obra actualizada exitosamente', 'success');
         },
         error: (error) => {
-          console.error('Error updating project:', error);
+          // Error updating project
           this.showMessage('Error al actualizar la obra', 'error');
         }
       });
@@ -191,7 +191,7 @@ export class AdminProjectsComponent implements OnInit {
           this.showMessage('Obra eliminada exitosamente', 'success');
         },
         error: (error) => {
-          console.error('Error deleting project:', error);
+          // Error deleting project
           this.showMessage('Error al eliminar la obra', 'error');
         }
       });

@@ -19,7 +19,7 @@ export class ProjectsService {
         .order('created_at', { ascending: false })
         .then(({ data, error }) => {
           if (error) {
-            console.error('Error fetching projects:', error);
+            // Error fetching projects
             throw error;
           }
           return data || [];
@@ -37,7 +37,7 @@ export class ProjectsService {
         .single()
         .then(({ data, error }) => {
           if (error) {
-            console.error('Error fetching project:', error);
+            // Error fetching project
             throw error;
           }
           return data;
@@ -55,7 +55,7 @@ export class ProjectsService {
         .single()
         .then(({ data, error }) => {
           if (error) {
-            console.error('Error creating project:', error);
+            // Error creating project
             throw error;
           }
           return data;
@@ -74,7 +74,7 @@ export class ProjectsService {
         .single()
         .then(({ data, error }) => {
           if (error) {
-            console.error('Error updating project:', error);
+            // Error updating project
             throw error;
           }
           return data;
@@ -91,7 +91,7 @@ export class ProjectsService {
         .eq('id', id)
         .then(({ error }) => {
           if (error) {
-            console.error('Error deleting project:', error);
+            // Error deleting project
             throw error;
           }
         })

@@ -172,7 +172,7 @@ export class ActividadesKilometroComponent implements OnInit, OnDestroy {
             const progreso = await this.actividadesService.calcularProgresoActividad(actividad.id!);
             (actividad as ActividadKilometro).progreso_porcentaje = progreso;
           } catch (error) {
-            console.error(`Error calculando progreso para actividad ${actividad.id}:`, error);
+            // Error calculando progreso para actividad
             (actividad as ActividadKilometro).progreso_porcentaje = 0;
           }
         }
@@ -186,7 +186,7 @@ export class ActividadesKilometroComponent implements OnInit, OnDestroy {
       }
       
     } catch (error) {
-      console.error('Error loading data:', error);
+      // Error loading data
       this.snackBar.open('Error al cargar los datos', 'Cerrar', { duration: 3000 });
     } finally {
       this.loading = false;
@@ -281,7 +281,7 @@ export class ActividadesKilometroComponent implements OnInit, OnDestroy {
         await this.loadData();
         
       } catch (error) {
-        console.error('Error saving actividad:', error);
+        // Error saving actividad
         this.snackBar.open('Error al guardar la actividad', 'Cerrar', { duration: 3000 });
       } finally {
         this.loading = false;
@@ -297,7 +297,7 @@ export class ActividadesKilometroComponent implements OnInit, OnDestroy {
         this.snackBar.open('Actividad eliminada correctamente', 'Cerrar', { duration: 3000 });
         await this.loadData();
       } catch (error) {
-        console.error('Error deleting actividad:', error);
+        // Error deleting actividad
         this.snackBar.open('Error al eliminar la actividad', 'Cerrar', { duration: 3000 });
       } finally {
         this.loading = false;
@@ -473,7 +473,7 @@ export class ActividadesKilometroComponent implements OnInit, OnDestroy {
           this.snackBar.open('Ubicación obtenida correctamente', 'Cerrar', { duration: 3000 });
         },
         (error) => {
-          console.error('Error getting location:', error);
+          // Error getting location
           let errorMessage = 'Error al obtener la ubicación';
           
           switch (error.code) {

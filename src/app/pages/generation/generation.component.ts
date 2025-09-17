@@ -92,22 +92,19 @@ export class GenerationComponent implements OnInit, OnDestroy {
       const storedItems = localStorage.getItem('selectedItems');
       const storedProject = localStorage.getItem('selectedProject');
       
-      console.log('🔍 Datos en localStorage:');
-      console.log('editingReport raw:', editingReport);
-      console.log('selectedItems raw:', storedItems);
-      console.log('selectedProject raw:', storedProject);
+      // Datos en localStorage
       
       // Si estamos visualizando un informe existente
       if (editingReport) {
         try {
           const report = JSON.parse(editingReport);
-          console.log('📋 Cargando informe existente:', report);
+          // Cargando informe existente
           
           // Cargar el informe completo con sus partidas desde el servicio
            this.reportsService.getReportById(report.id).subscribe({
              next: (fullReport: any) => {
                if (fullReport) {
-                 console.log('✅ Informe completo cargado:', fullReport);
+                 // Informe completo cargado
                  
                  // Establecer el proyecto
                  this.selectedProject = fullReport.project || null;
@@ -120,8 +117,7 @@ export class GenerationComponent implements OnInit, OnDestroy {
                    previousQuantity: reportItem.previous_quantity || 0
                  }));
                  
-                 console.log('✅ Proyecto cargado:', this.selectedProject);
-                 console.log('✅ Partidas cargadas:', this.selectedItems);
+                 // Proyecto y partidas cargadas
                  
                  // Generar la vista previa con los datos cargados
                  this.generateReportPreview(fullReport);
@@ -133,7 +129,7 @@ export class GenerationComponent implements OnInit, OnDestroy {
                }
              },
             error: (error) => {
-              console.error('❌ Error cargando informe:', error);
+              // Error cargando informe
               this.snackBar.open('Error al cargar el informe', 'Cerrar', {
                 duration: 3000
               });
@@ -143,7 +139,7 @@ export class GenerationComponent implements OnInit, OnDestroy {
           
           return; // Salir temprano para el flujo de informe existente
         } catch (error) {
-          console.error('❌ Error parseando editingReport:', error);
+          // Error parseando editingReport
           localStorage.removeItem('editingReport');
         }
       }
@@ -151,21 +147,18 @@ export class GenerationComponent implements OnInit, OnDestroy {
       // Flujo normal para crear nuevo informe
       if (storedItems) {
         this.selectedItems = JSON.parse(storedItems);
-        console.log('✅ selectedItems parseados:', this.selectedItems);
-        console.log('📊 Cantidad de partidas:', this.selectedItems.length);
+        // selectedItems parseados
       }
       
       if (storedProject) {
         this.selectedProject = JSON.parse(storedProject);
-        console.log('✅ selectedProject parseado:', this.selectedProject);
+        // selectedProject parseado
       }
     }
     
     // Validar que tenemos los datos necesarios (solo para flujo de nuevo informe)
     if (!this.selectedItems.length || !this.selectedProject) {
-      console.error('❌ Faltan datos para generar el informe');
-      console.log('selectedItems.length:', this.selectedItems.length);
-      console.log('selectedProject:', this.selectedProject);
+      // Faltan datos para generar el informe
       this.snackBar.open('No hay datos para generar el informe', 'Cerrar', {
         duration: 3000
       });
@@ -190,7 +183,7 @@ export class GenerationComponent implements OnInit, OnDestroy {
       acumulado: (selectedItem.previousQuantity || 0) + (selectedItem.currentQuantity || 0)
     }));
     
-    console.log('🔍 Partidas mapeadas para mostrar:', mappedPartidas);
+    // Partidas mapeadas para mostrar
     
     this.reportData = {
       numero: reportNumber,
@@ -234,22 +227,17 @@ export class GenerationComponent implements OnInit, OnDestroy {
 
   
   private mapSelectedItemsForExport(): any[] {
-    console.log('🔄 Mapeando partidas para exportación...');
-    console.log('selectedItems antes del mapeo:', this.selectedItems);
+    // Mapeando partidas para exportación
     
     const mappedItems = this.selectedItems.map(selectedItem => {
-      console.log('📝 Procesando partida:', selectedItem);
       const mapped = {
         ...selectedItem.item,
         current_quantity: selectedItem.currentQuantity || 0,
         previous_quantity: selectedItem.previousQuantity || 0,
         accumulated_quantity: (selectedItem.previousQuantity || 0) + (selectedItem.currentQuantity || 0)
       };
-      console.log('✅ Partida mapeada:', mapped);
       return mapped;
     });
-    
-    console.log('🎯 Resultado final del mapeo:', mappedItems);
     return mappedItems;
   }
 
@@ -272,20 +260,16 @@ export class GenerationComponent implements OnInit, OnDestroy {
     this.isExporting = true;
     
     try {
-      console.log('📄 Iniciando exportación a PDF...');
+      // Iniciando exportación a PDF
       const mappedItems = this.mapSelectedItemsForExport();
       const mappedReport = this.mapReportDataForExport();
-      
-      console.log('📊 Datos enviados al export service:');
-      console.log('mappedReport:', mappedReport);
-      console.log('mappedItems:', mappedItems);
       
       await this.exportService.exportToPDF(mappedReport, mappedItems);
       this.snackBar.open('PDF exportado exitosamente', 'Cerrar', {
         duration: 3000
       });
     } catch (error) {
-      console.error('❌ Error al exportar PDF:', error);
+      // Error al exportar PDF
       this.snackBar.open('Error al exportar PDF', 'Cerrar', {
         duration: 3000
       });
@@ -300,20 +284,16 @@ export class GenerationComponent implements OnInit, OnDestroy {
     this.isExporting = true;
     
     try {
-      console.log('📝 Iniciando exportación a Word...');
+      // Iniciando exportación a Word
       const mappedItems = this.mapSelectedItemsForExport();
       const mappedReport = this.mapReportDataForExport();
-      
-      console.log('📊 Datos enviados al export service:');
-      console.log('mappedReport:', mappedReport);
-      console.log('mappedItems:', mappedItems);
       
       await this.exportService.exportToWord(mappedReport, mappedItems);
       this.snackBar.open('Documento Word exportado exitosamente', 'Cerrar', {
         duration: 3000
       });
     } catch (error) {
-      console.error('❌ Error al exportar Word:', error);
+      // Error al exportar Word
       this.snackBar.open('Error al exportar documento Word', 'Cerrar', {
         duration: 3000
       });
@@ -346,7 +326,7 @@ export class GenerationComponent implements OnInit, OnDestroy {
       // Inicializar backup automático
       await this.productivityService.initializeAutoBackup();
     } catch (error) {
-      console.error('Error inicializando funcionalidades de productividad:', error);
+      // Error inicializando funcionalidades de productividad
     }
   }
   
@@ -374,7 +354,7 @@ export class GenerationComponent implements OnInit, OnDestroy {
       
       this.snackBar.open('Reporte anterior copiado exitosamente', 'Cerrar', { duration: 3000 });
     } catch (error) {
-      console.error('Error copiando reporte anterior:', error);
+      // Error copiando reporte anterior
       this.snackBar.open('Error al copiar reporte anterior', 'Cerrar', { duration: 3000 });
     }
   }
@@ -420,7 +400,7 @@ export class GenerationComponent implements OnInit, OnDestroy {
             this.snackBar.open('Reporte rápido creado con partidas favoritas', 'Cerrar', { duration: 3000 });
           },
           error: (error) => {
-            console.error('Error obteniendo partidas favoritas:', error);
+            // Error obteniendo partidas favoritas
             this.snackBar.open('Error al obtener partidas favoritas', 'Cerrar', { duration: 3000 });
           }
         });
@@ -435,7 +415,7 @@ export class GenerationComponent implements OnInit, OnDestroy {
       }
       
     } catch (error) {
-      console.error('Error creando reporte rápido:', error);
+      // Error creando reporte rápido
       this.snackBar.open('Error al crear reporte rápido', 'Cerrar', { duration: 3000 });
     } finally {
       this.showQuickReportOptions = false;
@@ -463,7 +443,7 @@ export class GenerationComponent implements OnInit, OnDestroy {
       
       this.snackBar.open('Plantilla guardada exitosamente', 'Cerrar', { duration: 3000 });
     } catch (error) {
-      console.error('Error guardando plantilla:', error);
+      // Error guardando plantilla
       this.snackBar.open('Error al guardar plantilla', 'Cerrar', { duration: 3000 });
     }
   }
@@ -474,7 +454,7 @@ export class GenerationComponent implements OnInit, OnDestroy {
       await this.productivityService.performBackup();
       this.snackBar.open('Backup realizado exitosamente', 'Cerrar', { duration: 3000 });
     } catch (error) {
-      console.error('Error al realizar backup:', error);
+      // Error al realizar backup
       this.snackBar.open('Error al realizar el backup. Inténtelo nuevamente.', 'Cerrar', { duration: 3000 });
     }
   }
@@ -496,7 +476,7 @@ export class GenerationComponent implements OnInit, OnDestroy {
         }
       }
     } catch (error) {
-      console.error('Error actualizando datos de auto-completado:', error);
+      // Error actualizando datos de auto-completado
     }
   }
   
@@ -542,7 +522,7 @@ export class GenerationComponent implements OnInit, OnDestroy {
       }, 2000);
       
     } catch (error) {
-      console.error('Error al guardar informe:', error);
+      // Error al guardar informe
       this.snackBar.open('Error al guardar el informe', 'Cerrar', {
         duration: 3000
       });

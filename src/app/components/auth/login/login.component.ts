@@ -46,19 +46,19 @@ export class LoginComponent implements OnInit {
       const { email, password } = this.loginForm.value;
       
       try {
-        console.log('🔐 Iniciando proceso de login para:', email);
+        // Iniciando proceso de login
         
         const result = await firstValueFrom(
           this.authService.signIn(email, password)
         );
         
         if (result.user && !result.error) {
-          console.log('✅ Login exitoso, esperando autenticación completa...');
+          // Login exitoso, esperando autenticación completa
           
           // Esperar a que la autenticación se complete totalmente
-          await this.waitForCompleteAuth();
+          await new Promise(resolve => setTimeout(resolve, 500));
           
-          console.log('🎯 Navegando al dashboard...');
+          // Navegando al dashboard
           
           // Usar NgZone para asegurar que Angular detecte los cambios
           this.ngZone.run(async () => {
@@ -73,17 +73,17 @@ export class LoginComponent implements OnInit {
               const navigationSuccess = await this.router.navigate(['/dashboard']);
               
               if (navigationSuccess) {
-                console.log('✅ Navegación al dashboard exitosa');
+                // Navegación al dashboard exitosa
                 
                 // Forzar recarga completa del estado de la aplicación
                 window.location.reload();
               } else {
-                console.error('❌ Error en la navegación al dashboard');
+                // Error en la navegación al dashboard
                 // Fallback: recargar la página
                 window.location.href = '/dashboard';
               }
             } catch (navError) {
-              console.error('❌ Error durante la navegación:', navError);
+              // Error durante la navegación
               // Fallback final: recargar completamente
               window.location.href = '/dashboard';
             }
@@ -93,12 +93,12 @@ export class LoginComponent implements OnInit {
           });
           
         } else {
-          console.error('❌ Error en el login:', result.error);
+          // Error en el login
           this.error = result.error?.message || 'Error de autenticación';
         }
         
       } catch (error: any) {
-        console.error('❌ Error durante el login:', error);
+        // Error durante el login
         this.error = error.message || 'Error de conexión';
       } finally {
         this.loading = false;

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, combineLatest } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { SupabaseService } from './supabase.service';
-import { AuthService } from './auth.service';
+import { DirectAuthService } from './direct-auth.service';
 import { EvaluacionesService } from './evaluaciones.service';
 import { EvidenciaFotograficaService } from './evidencia-fotografica.service';
 import { KpisService } from './kpis.service';
@@ -81,7 +81,7 @@ export class DashboardService {
 
   constructor(
     private supabase: SupabaseService,
-    private authService: AuthService,
+    private directAuthService: DirectAuthService,
     private evaluacionesService: EvaluacionesService,
     private evidenciaService: EvidenciaFotograficaService,
     private kpisService: KpisService
@@ -92,11 +92,11 @@ export class DashboardService {
    */
   async loadDashboardData(): Promise<void> {
     try {
-      console.log('📊 [DashboardService] Iniciando carga de datos del dashboard...');
+      // Cargando estadísticas del dashboard
       
-      const user = await this.authService.getCurrentUser();
+      const user = this.directAuthService.getCurrentUser();
       if (!user) {
-        console.warn('⚠️ [DashboardService] No hay usuario autenticado');
+        // No hay usuario autenticado
         return;
       }
 
@@ -109,9 +109,9 @@ export class DashboardService {
       this.statsSubject.next(stats);
       this.chartsSubject.next(charts);
       
-      console.log('✅ [DashboardService] Datos del dashboard cargados exitosamente');
+      // Estadísticas cargadas
     } catch (error) {
-      console.error('❌ [DashboardService] Error cargando datos del dashboard:', error);
+      // Error cargando estadísticas
       throw error;
     }
   }
@@ -121,8 +121,9 @@ export class DashboardService {
    */
   private async loadDashboardStats(): Promise<DashboardStats> {
     try {
-      const user = await this.authService.getCurrentUser();
-      if (!user) throw new Error('Usuario no autenticado');
+      const user = this.directAuthService.getCurrentUser();
+      const token = this.directAuthService.getAccessToken();
+      if (!user || !token) throw new Error('Usuario no autenticado');
 
       // Obtener obras del usuario
       const { data: userObras } = await this.supabase.client
@@ -133,7 +134,7 @@ export class DashboardService {
       const obraIds = userObras?.map(uo => uo.obra_id) || [];
       
       if (obraIds.length === 0) {
-        console.warn('⚠️ [DashboardService] Usuario no tiene obras asignadas');
+        // Usuario no tiene obras asignadas
         return this.getEmptyStats();
       }
 
@@ -165,7 +166,7 @@ export class DashboardService {
       
       return stats;
     } catch (error) {
-      console.error('❌ [DashboardService] Error cargando estadísticas:', error);
+      // Error cargando estadísticas
       return this.getEmptyStats();
     }
   }
@@ -175,6 +176,9 @@ export class DashboardService {
    */
   private async getEvaluacionesStats(): Promise<Partial<DashboardStats>> {
     try {
+      const token = this.directAuthService.getAccessToken();
+      if (!token) throw new Error('Token de autenticación no disponible');
+
       const { data: evaluaciones, error } = await this.supabase.client
         .from('evaluaciones')
         .select('id, estado, created_at');
@@ -191,7 +195,7 @@ export class DashboardService {
         evaluacionesPendientes: pendientes
       };
     } catch (error) {
-      console.error('❌ [DashboardService] Error obteniendo estadísticas de evaluaciones:', error);
+      // Error obteniendo estadísticas de evaluaciones
       return {
         totalEvaluaciones: 0,
         evaluacionesCompletadas: 0,
@@ -205,6 +209,9 @@ export class DashboardService {
    */
   private async getEvidenciasStats(obraIds: string[]): Promise<Partial<DashboardStats>> {
     try {
+      const token = this.directAuthService.getAccessToken();
+      if (!token) throw new Error('Token de autenticación no disponible');
+
       // Obtener actividades de las obras
       const { data: actividades } = await this.supabase.client
         .from('actividades')
@@ -253,7 +260,7 @@ export class DashboardService {
         evidenciasPorObra
       };
     } catch (error) {
-      console.error('❌ [DashboardService] Error obteniendo estadísticas de evidencias:', error);
+      // Cargando datos de rendimiento
       return {
         totalEvidencias: 0,
         evidenciasEstesMes: 0,
@@ -267,6 +274,9 @@ export class DashboardService {
    */
   private async getKPIsStats(obraIds: string[]): Promise<Partial<DashboardStats>> {
     try {
+      const token = this.directAuthService.getAccessToken();
+      if (!token) throw new Error('Token de autenticación no disponible');
+
       const { data: kpis, error } = await this.supabase.client
         .from('kpis')
         .select('avance_fisico, productividad, calidad, desviacion_cronograma, created_at')
@@ -321,7 +331,7 @@ export class DashboardService {
         tendenciaGeneral: tendencia
       };
     } catch (error) {
-      console.error('❌ [DashboardService] Error obteniendo estadísticas de KPIs:', error);
+      // Datos de rendimiento cargados
       return {
         promedioKPIs: 0,
         kpisCriticos: 0,
@@ -335,6 +345,9 @@ export class DashboardService {
    */
   private async getActividadesStats(obraIds: string[]): Promise<Partial<DashboardStats>> {
     try {
+      const token = this.directAuthService.getAccessToken();
+      if (!token) throw new Error('Token de autenticación no disponible');
+
       const { data: actividades, error } = await this.supabase.client
         .from('actividades')
         .select('id, estado')
@@ -343,8 +356,8 @@ export class DashboardService {
       if (error) throw error;
 
       const total = actividades?.length || 0;
-      const completadas = actividades?.filter(a => a.estado === 'completada').length || 0;
-      const enProgreso = actividades?.filter(a => a.estado === 'en_progreso').length || 0;
+      const completadas = actividades?.filter(a => a.estado === 'finalizado').length || 0;
+      const enProgreso = actividades?.filter(a => a.estado === 'ejecucion').length || 0;
 
       return {
         actividadesTotales: total,
@@ -352,7 +365,7 @@ export class DashboardService {
         actividadesEnProgreso: enProgreso
       };
     } catch (error) {
-      console.error('❌ [DashboardService] Error obteniendo estadísticas de actividades:', error);
+      // Error loading recent activities
       return {
         actividadesTotales: 0,
         actividadesCompletadas: 0,
@@ -366,6 +379,9 @@ export class DashboardService {
    */
   private async getObrasStats(obraIds: string[]): Promise<Partial<DashboardStats>> {
     try {
+      const token = this.directAuthService.getAccessToken();
+      if (!token) throw new Error('Token de autenticación no disponible');
+
       const { data: obras, error } = await this.supabase.client
         .from('obras')
         .select('id, estado, progreso')
@@ -373,7 +389,7 @@ export class DashboardService {
 
       if (error) throw error;
 
-      const activas = obras?.filter(o => o.estado === 'activa' || o.estado === 'en_progreso').length || 0;
+      const activas = obras?.filter(o => o.estado === 'activa').length || 0;
       const progresoPromedio = obras && obras.length > 0 ? 
         obras.reduce((sum, obra) => sum + (obra.progreso || 0), 0) / obras.length : 0;
 
@@ -382,7 +398,7 @@ export class DashboardService {
         progresoPromedio: Math.round(progresoPromedio)
       };
     } catch (error) {
-      console.error('❌ [DashboardService] Error obteniendo estadísticas de obras:', error);
+      // Error obteniendo estadísticas de obras
       return {
         obrasActivas: 0,
         progresoPromedio: 0
@@ -395,8 +411,9 @@ export class DashboardService {
    */
   private async loadDashboardCharts(): Promise<DashboardCharts> {
     try {
-      const user = await this.authService.getCurrentUser();
-      if (!user) throw new Error('Usuario no autenticado');
+      const user = this.directAuthService.getCurrentUser();
+      const token = this.directAuthService.getAccessToken();
+      if (!user || !token) throw new Error('Usuario no autenticado');
 
       // Obtener obras del usuario
       const { data: userObras } = await this.supabase.client
@@ -427,7 +444,7 @@ export class DashboardService {
         tendenciaCalidad
       };
     } catch (error) {
-      console.error('❌ [DashboardService] Error cargando gráficos:', error);
+      // Error loading alerts
       return this.getEmptyCharts();
     }
   }
@@ -437,6 +454,9 @@ export class DashboardService {
    */
   private async getEvaluacionesPorMesChart(): Promise<ChartData> {
     try {
+      const token = this.directAuthService.getAccessToken();
+      if (!token) throw new Error('Token de autenticación no disponible');
+
       const { data: evaluaciones, error } = await this.supabase.client
         .from('evaluaciones')
         .select('created_at, estado')
@@ -490,7 +510,7 @@ export class DashboardService {
         ]
       };
     } catch (error) {
-      console.error('❌ [DashboardService] Error en gráfico de evaluaciones por mes:', error);
+      // Error en gráfico de evaluaciones por mes
       return this.getEmptyChart(['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun']);
     }
   }
@@ -500,6 +520,9 @@ export class DashboardService {
    */
   private async getEvidenciasPorObraChart(obraIds: string[]): Promise<ChartData> {
     try {
+      const token = this.directAuthService.getAccessToken();
+      if (!token) throw new Error('Token de autenticación no disponible');
+
       // Obtener nombres de obras
       const { data: obras } = await this.supabase.client
         .from('obras')
@@ -549,7 +572,7 @@ export class DashboardService {
         }]
       };
     } catch (error) {
-      console.error('❌ [DashboardService] Error en gráfico de evidencias por obra:', error);
+      // Error en gráfico de evidencias por obra
       return this.getEmptyChart(['Obra 1', 'Obra 2', 'Obra 3']);
     }
   }
@@ -559,6 +582,9 @@ export class DashboardService {
    */
   private async getKPIsPorCategoriaChart(obraIds: string[]): Promise<ChartData> {
     try {
+      const token = this.directAuthService.getAccessToken();
+      if (!token) throw new Error('Token de autenticación no disponible');
+
       const { data: kpis, error } = await this.supabase.client
         .from('kpis')
         .select('avance_fisico, productividad, calidad, desviacion_cronograma')
@@ -597,7 +623,7 @@ export class DashboardService {
         }]
       };
     } catch (error) {
-      console.error('❌ [DashboardService] Error en gráfico de KPIs por categoría:', error);
+      // Error en gráfico de KPIs por categoría
       return this.getEmptyChart(['Avance Físico', 'Productividad', 'Calidad', 'Cronograma']);
     }
   }
@@ -607,6 +633,9 @@ export class DashboardService {
    */
   private async getProgresoActividadesChart(obraIds: string[]): Promise<ChartData> {
     try {
+      const token = this.directAuthService.getAccessToken();
+      if (!token) throw new Error('Token de autenticación no disponible');
+
       const { data: actividades, error } = await this.supabase.client
         .from('actividades')
         .select('estado')
@@ -614,9 +643,9 @@ export class DashboardService {
 
       if (error) throw error;
 
-      const completadas = actividades?.filter(a => a.estado === 'completada').length || 0;
-      const enProgreso = actividades?.filter(a => a.estado === 'en_progreso').length || 0;
-      const pendientes = actividades?.filter(a => a.estado === 'pendiente' || a.estado === 'planificada').length || 0;
+      const completadas = actividades?.filter(a => a.estado === 'finalizado').length || 0;
+      const enProgreso = actividades?.filter(a => a.estado === 'ejecucion').length || 0;
+      const pendientes = actividades?.filter(a => a.estado === 'programado').length || 0;
 
       return {
         labels: ['Completadas', 'En Progreso', 'Pendientes'],
@@ -628,7 +657,7 @@ export class DashboardService {
         }]
       };
     } catch (error) {
-      console.error('❌ [DashboardService] Error en gráfico de progreso de actividades:', error);
+      // Error en gráfico de progreso de actividades
       return {
         labels: ['Completadas', 'En Progreso', 'Pendientes'],
         datasets: [{
@@ -646,6 +675,9 @@ export class DashboardService {
    */
   private async getTendenciaCalidadChart(obraIds: string[]): Promise<ChartData> {
     try {
+      const token = this.directAuthService.getAccessToken();
+      if (!token) throw new Error('Token de autenticación no disponible');
+
       const { data: kpis, error } = await this.supabase.client
         .from('kpis')
         .select('calidad, created_at')
@@ -693,7 +725,7 @@ export class DashboardService {
         }]
       };
     } catch (error) {
-      console.error('❌ [DashboardService] Error en gráfico de tendencia de calidad:', error);
+      // Error en gráfico de tendencia de calidad
       const labels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
       return {
         labels,

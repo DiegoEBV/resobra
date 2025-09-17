@@ -31,25 +31,83 @@ export class AuthService {
     // Suscribirse a cambios en el estado de locks
     this.lockMonitor.lockStatus$.subscribe(locksCleaned => {
       if (locksCleaned) {
-        console.log('🔄 AuthService: Locks limpiados, reintentando operaciones...');
+        // AuthService: Locks limpiados, reintentando operaciones
         // Opcional: reintentar la última operación fallida
       }
     });
     
+    // Configurar listener de eventos de autenticación
+    this.setupAuthStateListener();
+    
     this.loadInitialSession();
+  }
+
+  // Configurar listener para cambios de estado de autenticación
+  private setupAuthStateListener(): void {
+    // Configurando listener de estado de autenticación
+    
+    this.supabase.auth.onAuthStateChange((event, session) => {
+      // Evento de autenticación
+      
+      switch (event) {
+        case 'SIGNED_IN':
+          // Usuario autenticado
+          this.sessionSubject.next(session);
+          this.currentUserSubject.next(session?.user || null);
+          if (session?.user) {
+            this.loadUserProfile(session.user.id);
+          }
+          break;
+          
+        case 'SIGNED_OUT':
+          // Usuario desautenticado
+          this.sessionSubject.next(null);
+          this.currentUserSubject.next(null);
+          this.currentProfileSubject.next(null);
+          break;
+          
+        case 'TOKEN_REFRESHED':
+          // Token renovado
+          this.sessionSubject.next(session);
+          break;
+          
+        case 'USER_UPDATED':
+          // Usuario actualizado
+          if (session?.user) {
+            this.currentUserSubject.next(session.user);
+            this.loadUserProfile(session.user.id);
+          }
+          break;
+      }
+    });
   }
 
   // Limpiar locks de autenticación de manera agresiva
   private async clearAuthLocks(): Promise<void> {
     try {
-      console.log('🧹 Limpiando locks de autenticación...');
+      // Limpiando locks de autenticación
       
-      // Usar el servicio de monitoreo para limpieza coordinada
-      await this.lockMonitor.forceCleanLocks();
+      // Limpiar storage directamente sin usar lockMonitor
+      const lockKeys = [
+        'lock:sb-auth-token',
+        'lock:sb-auth-token-resobra',
+        'sb-auth-token',
+        'supabase.auth.token',
+        'sb-' + window.location.hostname + '-auth-token'
+      ];
       
-      console.log('✅ Locks de autenticación limpiados');
+      lockKeys.forEach(key => {
+        try {
+          localStorage.removeItem(key);
+          sessionStorage.removeItem(key);
+        } catch (e) {
+          // Error removing key
+        }
+      });
+      
+      // Locks de autenticación limpiados
     } catch (error) {
-      console.warn('⚠️ Error limpiando locks:', error);
+      // Error limpiando locks
     }
   }
 
@@ -60,7 +118,7 @@ export class AuthService {
     
     while (attempt < maxRetries) {
       try {
-        console.log(`🔄 Intento ${attempt + 1}/${maxRetries} de carga de sesión inicial...`);
+        // Intento de carga de sesión inicial
         
         const sessionPromise = this.supabase.auth.getSession();
         const timeoutPromise = new Promise((_, reject) => 
@@ -73,7 +131,7 @@ export class AuthService {
         ]) as any;
         
         if (error) {
-          console.warn(`⚠️ Error loading initial session (attempt ${attempt + 1}):`, error);
+          // Error loading initial session
           
           // Si es un error de NavigatorLockAcquireTimeoutError, limpiar locks y reintentar
           if (error.message && (
@@ -81,12 +139,12 @@ export class AuthService {
             error.message.includes('lock') ||
             error.message.includes('timeout')
           )) {
-            console.log('🔓 Detected lock-related error, clearing locks and retrying...');
+            // Detected lock-related error, clearing locks and retrying
             await this.clearAuthLocks();
             
             // Esperar con exponential backoff
             const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
-            console.log(`⏳ Esperando ${delay}ms antes del siguiente intento...`);
+            // Esperando antes del siguiente intento
             await this.delay(delay);
             
             attempt++;
@@ -94,22 +152,16 @@ export class AuthService {
           }
           
           // Para otros errores, salir del bucle
-          console.error('❌ Error no relacionado con locks:', error);
+          // Error no relacionado con locks
           return;
         }
 
         // Éxito - procesar la sesión
-        console.log('✅ Sesión cargada exitosamente');
-        console.log('📋 Contenido de la sesión:', {
-          hasSession: !!session,
-          hasUser: !!session?.user,
-          userEmail: session?.user?.email,
-          sessionId: session?.access_token ? 'presente' : 'ausente'
-        });
+        // Sesión cargada exitosamente
+        // Contenido de la sesión
         
         if (session?.user) {
-          console.log('👤 Usuario de sesión:', session.user.email);
-          console.log('🔑 Token de acceso:', session.access_token ? 'presente' : 'ausente');
+          // Usuario de sesión y token de acceso
         }
         
         this.sessionSubject.next(session);
@@ -117,15 +169,15 @@ export class AuthService {
         
         if (session?.user) {
           await this.loadUserProfile(session.user.id);
-          console.log('🔐 Estado de autenticación actualizado a: true');
+          // Estado de autenticación actualizado a: true
         } else {
-          console.log('🔐 Estado de autenticación actualizado a: false');
-          console.log('❌ No hay usuario en la sesión - usuario debe hacer login');
+          // Estado de autenticación actualizado a: false
+          // No hay usuario en la sesión - usuario debe hacer login
         }
         return;
         
       } catch (error: any) {
-        console.warn(`⚠️ Error en intento ${attempt + 1}:`, error);
+        // Error en intento
         
         // Si es timeout o error de lock, reintentar
         if (error.message && (
@@ -136,7 +188,7 @@ export class AuthService {
           await this.clearAuthLocks();
           
           const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
-          console.log(`⏳ Esperando ${delay}ms antes del siguiente intento...`);
+          // Esperando antes del siguiente intento
           await this.delay(delay);
           
           attempt++;
@@ -144,52 +196,47 @@ export class AuthService {
         }
         
         // Para otros errores, salir del bucle
-        console.error('❌ Error no recuperable:', error);
+        // Error no recuperable
         return;
       }
     }
     
-    console.error('❌ Se agotaron todos los intentos de carga de sesión');
+    // Se agotaron todos los intentos de carga de sesión
   }
 
   async loadSession(): Promise<void> {
     try {
-      console.log('🔄 Cargando sesión...');
+      // Cargando sesión
       const { data: { session }, error } = await this.supabase.auth.getSession();
       
       if (error) {
-        console.error('❌ Error al cargar sesión:', error);
+        // Error al cargar sesión
         this.sessionSubject.next(null);
         return;
       }
       
-      console.log('✅ Sesión cargada exitosamente');
-      console.log('📋 Contenido de la sesión:', {
-        hasSession: !!session,
-        hasUser: !!session?.user,
-        userEmail: session?.user?.email,
-        sessionId: session?.access_token ? 'presente' : 'ausente'
-      });
+      // Sesión cargada exitosamente
+      // Contenido de la sesión
       
       this.sessionSubject.next(session);
       this.currentUserSubject.next(session?.user || null);
       
       if (session?.user) {
         await this.loadUserProfile(session.user.id);
-        console.log('🔐 Estado de autenticación actualizado a: true');
+        // Estado de autenticación actualizado a: true
       } else {
-        console.log('🔐 Estado de autenticación actualizado a: false');
-        console.log('❌ No hay usuario en la sesión - usuario debe hacer login');
+        // Estado de autenticación actualizado a: false
+        // No hay usuario en la sesión - usuario debe hacer login
       }
     } catch (error) {
-      console.error('❌ Error inesperado al cargar sesión:', error);
+      // Error inesperado al cargar sesión
       this.sessionSubject.next(null);
     }
   }
 
   private async loadUserProfile(userId: string) {
     try {
-      console.log('👤 Cargando perfil del usuario:', userId);
+      // Cargando perfil del usuario
       const { data, error } = await this.supabase.db
         .from('users')
         .select('*')
@@ -197,22 +244,22 @@ export class AuthService {
         .single();
 
       if (error) {
-        console.warn('Could not load user profile:', error.message);
+        // Could not load user profile
         // Si el perfil no existe, crear uno básico
         if (error.code === 'PGRST116') {
-          console.log('User profile not found, creating basic profile...');
+          // User profile not found, creating basic profile
           await this.createBasicProfile(userId);
         }
         return;
       }
 
       if (data) {
-        console.log('✅ Perfil cargado:', data.nombre, '-', data.rol);
+        // Perfil cargado
         this.currentProfileSubject.next(data);
-        console.log('📊 Perfil actualizado en BehaviorSubject');
+        // Perfil actualizado en BehaviorSubject
       }
     } catch (error) {
-      console.warn('Error loading user profile:', error);
+      // Error loading user profile
       // Continuar sin perfil en lugar de fallar completamente
     }
   }
@@ -223,15 +270,15 @@ export class AuthService {
       map(({ data, error }) => {
         // Si el login es exitoso, cargar el perfil del usuario
         if (data?.user && !error) {
-          console.log('✅ Login exitoso para:', email);
+          // Login exitoso
           this.loadUserProfile(data.user.id);
           return { user: data.user, error: null };
         }
         
         // Manejar errores específicos de Supabase
         if (error) {
-          console.log('❌ Error de autenticación:', error);
-          console.log('📝 Mensaje de error:', error.message);
+          // Error de autenticación
+          // Mensaje de error
           
           // Traducir errores comunes
           let translatedError = error;
@@ -283,7 +330,7 @@ export class AuthService {
     
     while (attempt < maxRetries) {
       try {
-        console.log(`🔄 Intento de login ${attempt + 1}/${maxRetries} para: ${email}`);
+        // Intento de login
         
         // Crear promesa con timeout personalizado (45 segundos)
         const signInPromise = this.supabase.auth.signInWithPassword({ email, password });
@@ -299,12 +346,12 @@ export class AuthService {
           result.error.message.includes('lock') ||
           result.error.message.includes('timeout')
         )) {
-          console.log(`🔓 Error de lock detectado en intento ${attempt + 1}, limpiando locks...`);
+          // Error de lock detectado, limpiando locks
           await this.clearAuthLocks();
           
           // Esperar con exponential backoff
           const delay = Math.min(2000 * Math.pow(2, attempt), 8000);
-          console.log(`⏳ Esperando ${delay}ms antes del siguiente intento...`);
+          // Esperando antes del siguiente intento
           await this.delay(delay);
           
           attempt++;
@@ -312,11 +359,11 @@ export class AuthService {
         }
         
         // Si no hay error de lock, devolver el resultado
-        console.log(`✅ Login completado en intento ${attempt + 1}`);
+        // Login completado
         return result;
         
       } catch (error: any) {
-        console.warn(`⚠️ Error en intento de login ${attempt + 1}:`, error);
+        // Error en intento de login
         
         // Si es timeout o error de lock, reintentar
         if (error.message && (
@@ -327,7 +374,7 @@ export class AuthService {
           await this.clearAuthLocks();
           
           const delay = Math.min(2000 * Math.pow(2, attempt), 8000);
-          console.log(`⏳ Esperando ${delay}ms antes del siguiente intento...`);
+          // Esperando antes del siguiente intento
           await this.delay(delay);
           
           attempt++;
@@ -335,12 +382,12 @@ export class AuthService {
         }
         
         // Para otros errores, devolver inmediatamente
-        console.error('❌ Error no recuperable en login:', error);
+        // Error no recuperable en login
         return { data: null, error };
       }
     }
     
-    console.error('❌ Se agotaron todos los intentos de login');
+    // Se agotaron todos los intentos de login
     return { 
       data: null, 
       error: { 
@@ -361,13 +408,13 @@ export class AuthService {
         .single();
 
       if (error) {
-        console.error('Error buscando usuario por email:', error);
+        // Error buscando usuario por email
         return null;
       }
 
       return data;
     } catch (error) {
-      console.error('Error buscando usuario por email:', error);
+      // Error buscando usuario por email
       return null;
     }
   }
@@ -399,13 +446,13 @@ export class AuthService {
         });
 
       if (error) {
-        console.error('Error creating user profile:', error);
+        // Error creating user profile
       } else {
         // Cargar el perfil recién creado
         await this.loadUserProfile(userId);
       }
     } catch (error) {
-      console.error('Error creating user profile:', error);
+      // Error creating user profile
     }
   }
 
@@ -424,31 +471,31 @@ export class AuthService {
         });
 
       if (error) {
-        console.error('Error creating basic profile:', error);
+        // Error creating basic profile
       } else {
         // Cargar el perfil recién creado
         await this.loadUserProfile(userId);
       }
     } catch (error) {
-      console.error('Error creating basic profile:', error);
+      // Error creating basic profile
     }
   }
 
   // Forzar actualización del estado de autenticación
   async forceAuthStateUpdate(): Promise<void> {
     try {
-      console.log('🔄 Forzando actualización del estado de autenticación...');
+      // Forzando actualización del estado de autenticación
       
       // Obtener la sesión actual
       const { data: { session }, error } = await this.supabase.auth.getSession();
       
       if (error) {
-        console.error('❌ Error obteniendo sesión:', error);
+        // Error obteniendo sesión
         return;
       }
       
       if (session?.user) {
-        console.log('✅ Sesión válida encontrada, actualizando estado...');
+        // Sesión válida encontrada, actualizando estado
         
         // Actualizar todos los subjects
         this.currentUserSubject.next(session.user);
@@ -457,15 +504,15 @@ export class AuthService {
         // Cargar el perfil del usuario
         await this.loadUserProfile(session.user.id);
         
-        console.log('✅ Estado de autenticación actualizado correctamente');
+        // Estado de autenticación actualizado correctamente
       } else {
-        console.log('⚠️ No hay sesión válida');
+        // No hay sesión válida
         this.currentUserSubject.next(null);
         this.currentProfileSubject.next(null);
         this.sessionSubject.next(null);
       }
     } catch (error) {
-      console.error('❌ Error forzando actualización del estado:', error);
+      // Error forzando actualización del estado
     }
   }
 

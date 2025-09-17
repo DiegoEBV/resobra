@@ -1031,7 +1031,7 @@ export class DetalleActividadComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
       this.actividadId = params['id'];
-      console.log('🔍 [DetalleActividad] ID de actividad obtenido:', this.actividadId);
+      // ID de actividad obtenido
       if (this.actividadId) {
         this.loadActividad();
         // Cargar tareas después de un pequeño delay para asegurar que la actividad esté cargada
@@ -1072,7 +1072,7 @@ export class DetalleActividadComponent implements OnInit, OnDestroy {
         return;
       }
     } catch (error) {
-      console.error('Error cargando actividad:', error);
+      // Error cargando actividad
       this.snackBar.open('Error cargando actividad', 'Cerrar', { duration: 3000 });
     } finally {
       this.loading = false;
@@ -1082,19 +1082,19 @@ export class DetalleActividadComponent implements OnInit, OnDestroy {
   async loadTareas() {
     try {
       this.loadingTareas = true;
-      console.log('🔍 [DetalleActividad] Cargando tareas para actividad ID:', this.actividadId);
+      // Cargando tareas para actividad ID
       
       if (!this.actividadId) {
-        console.error('❌ [DetalleActividad] No hay actividadId disponible');
+        // No hay actividadId disponible
         return;
       }
       
       this.tareas = await this.actividadesService.getTareasByActividad(this.actividadId!);
-      console.log('📋 [DetalleActividad] Tareas obtenidas:', this.tareas.length, this.tareas);
+      // Tareas obtenidas
       
       this.calcularProgreso();
     } catch (error) {
-      console.error('❌ [DetalleActividad] Error cargando tareas:', error);
+      // Error cargando tareas
       this.snackBar.open('Error cargando tareas', 'Cerrar', { duration: 3000 });
     } finally {
       this.loadingTareas = false;
@@ -1140,7 +1140,7 @@ export class DetalleActividadComponent implements OnInit, OnDestroy {
       }
       this.calcularProgreso();
       
-      console.error('Error actualizando tarea:', error);
+      // Error actualizando tarea
       this.snackBar.open('Error actualizando tarea', 'Cerrar', { duration: 3000 });
     }
   }
@@ -1164,63 +1164,36 @@ export class DetalleActividadComponent implements OnInit, OnDestroy {
 
   // Método para refrescar las tareas manualmente
   async refreshTareas() {
-    console.log('🔄 [DetalleActividad] Refrescando tareas manualmente');
+    // Refrescando tareas manualmente
     await this.loadTareas();
   }
 
   // Métodos para evidencia fotográfica
   async loadEvidencias(): Promise<void> {
     if (!this.actividadId) {
-      console.warn('❌ No se puede cargar evidencias: actividadId no definido');
+      // No se puede cargar evidencias: actividadId no definido
       return;
     }
 
     try {
       this.loadingEvidencias = true;
-      console.log('🔄 INICIANDO CARGA DE EVIDENCIAS', { 
-        actividadId: this.actividadId,
-        timestamp: new Date().toISOString()
-      });
+      // INICIANDO CARGA DE EVIDENCIAS
       
       const evidencias = await firstValueFrom(this.evidenciaService.obtenerEvidenciasPorActividad(this.actividadId));
       
       if (evidencias) {
         this.evidencias = evidencias;
-        console.log('✅ EVIDENCIAS CARGADAS EXITOSAMENTE', { 
-          actividadId: this.actividadId,
-          cantidadEvidencias: evidencias.length,
-          evidenciasIds: evidencias.map(e => e.id),
-          timestamp: new Date().toISOString()
-        });
+        // EVIDENCIAS CARGADAS EXITOSAMENTE
         
         // Log detallado de cada evidencia
-        evidencias.forEach((evidencia, index) => {
-          console.log(`📸 Evidencia ${index + 1}:`, {
-            id: evidencia.id,
-            nombre_archivo: evidencia.nombre_archivo,
-            url_imagen: evidencia.url_imagen,
-            descripcion: evidencia.descripcion,
-            fecha_subida: evidencia.fecha_subida,
-            subido_por: evidencia.subido_por
-          });
-        });
         
       } else {
         this.evidencias = [];
-        console.log('ℹ️ NO SE ENCONTRARON EVIDENCIAS', { 
-          actividadId: this.actividadId,
-          timestamp: new Date().toISOString()
-        });
+        // NO SE ENCONTRARON EVIDENCIAS
       }
       
     } catch (error) {
-      console.error('❌ ERROR CARGANDO EVIDENCIAS', {
-        actividadId: this.actividadId,
-        errorName: (error as Error).name,
-        errorMessage: (error as Error).message,
-        errorStack: (error as Error).stack,
-        timestamp: new Date().toISOString()
-      });
+      // ERROR CARGANDO EVIDENCIAS
       
       this.evidencias = [];
       this.snackBar.open('Error cargando evidencias fotográficas', 'Cerrar', {
@@ -1228,11 +1201,7 @@ export class DetalleActividadComponent implements OnInit, OnDestroy {
       });
     } finally {
       this.loadingEvidencias = false;
-      console.log('🏁 CARGA DE EVIDENCIAS FINALIZADA', { 
-        actividadId: this.actividadId,
-        cantidadFinal: this.evidencias.length,
-        timestamp: new Date().toISOString()
-      });
+      // CARGA DE EVIDENCIAS FINALIZADA
     }
   }
 
@@ -1262,7 +1231,7 @@ export class DetalleActividadComponent implements OnInit, OnDestroy {
   }
 
   private handleFiles(files: File[]) {
-    console.log('📁 Procesando archivos:', files.length);
+    // Procesando archivos
     
     // Verificar límite de archivos
     const totalFiles = this.previewImages.length + files.length;
@@ -1288,14 +1257,14 @@ export class DetalleActividadComponent implements OnInit, OnDestroy {
       return true;
     });
     
-    console.log('✅ Archivos válidos:', validFiles.length);
+    // Archivos válidos
     
     // Crear previsualizaciones inmediatas
     validFiles.forEach(file => {
       const reader = new FileReader();
       const previewId = this.generateId();
       
-      console.log('📖 Leyendo archivo:', file.name, 'ID:', previewId);
+      // Leyendo archivo
       
       reader.onload = (e) => {
         const previewImage: PreviewImage = {
@@ -1306,16 +1275,16 @@ export class DetalleActividadComponent implements OnInit, OnDestroy {
           descripcion: ''
         };
         
-        console.log('📷 Imagen cargada:', file.name, 'URL length:', previewImage.url.length);
+        // Imagen cargada
         this.previewImages.push(previewImage);
         
         // Forzar detección de cambios para mostrar la imagen inmediatamente
         this.cdr.detectChanges();
-        console.log('🔄 Vista actualizada. Total imágenes:', this.previewImages.length);
+        // Vista actualizada
       };
       
       reader.onerror = (error) => {
-        console.error('❌ Error leyendo archivo:', file.name, error);
+        // Error leyendo archivo
         this.snackBar.open(`Error cargando ${file.name}`, 'Cerrar', { duration: 3000 });
       };
       
@@ -1324,7 +1293,7 @@ export class DetalleActividadComponent implements OnInit, OnDestroy {
     
     // Mantener compatibilidad con el código existente
     this.selectedFiles = [...this.selectedFiles, ...validFiles];
-    console.log('📋 Total selectedFiles:', this.selectedFiles.length);
+    // Total selectedFiles
   }
 
   async uploadFiles() {
@@ -1416,7 +1385,7 @@ export class DetalleActividadComponent implements OnInit, OnDestroy {
       previewImage.status = 'success';
       
     } catch (error) {
-      console.error('Error subiendo evidencia:', error);
+      // Error subiendo evidencia
       previewImage.status = 'error';
       previewImage.error = this.getErrorMessage(error);
     }
@@ -1445,34 +1414,34 @@ export class DetalleActividadComponent implements OnInit, OnDestroy {
   }
 
   removePreviewImage(previewId: string) {
-    console.log('🗑️ Eliminando imagen de previsualización:', previewId);
+    // Eliminando imagen de previsualización
     const index = this.previewImages.findIndex(img => img.id === previewId);
     if (index > -1) {
       // Liberar memoria de la URL del objeto
       const previewImage = this.previewImages[index];
-      console.log('📷 Imagen encontrada para eliminar:', previewImage.file.name);
+      // Imagen encontrada para eliminar
       
       if (previewImage.url.startsWith('blob:')) {
         URL.revokeObjectURL(previewImage.url);
-        console.log('🧹 URL de blob revocada');
+        // URL de blob revocada
       }
       
       // Eliminar de previewImages
       this.previewImages.splice(index, 1);
-      console.log('✅ Imagen eliminada del array previewImages. Total restante:', this.previewImages.length);
+      // Imagen eliminada del array previewImages
       
       // También remover del array de selectedFiles
       const fileIndex = this.selectedFiles.findIndex(file => file.name === previewImage.file.name);
       if (fileIndex > -1) {
         this.selectedFiles.splice(fileIndex, 1);
-        console.log('✅ Archivo eliminado del array selectedFiles. Total restante:', this.selectedFiles.length);
+        // Archivo eliminado del array selectedFiles
       }
       
       // Forzar detección de cambios para actualizar la vista
       this.cdr.detectChanges();
-      console.log('🔄 Detección de cambios forzada');
+      // Detección de cambios forzada
     } else {
-      console.warn('⚠️ No se encontró la imagen con ID:', previewId);
+      // No se encontró la imagen con ID
     }
   }
 
@@ -1509,11 +1478,11 @@ export class DetalleActividadComponent implements OnInit, OnDestroy {
     const fileName = previewImage.file.name;
     
     try {
-      console.log('🚀 INICIANDO SUBIDA INDIVIDUAL', { fileName, timestamp: new Date().toISOString() });
+      // INICIANDO SUBIDA INDIVIDUAL
       
       previewImage.status = 'uploading';
       previewImage.progress = 0;
-      console.log('📊 Estado actualizado a uploading', { fileName });
+      // Estado actualizado a uploading
       
       const progressInterval = setInterval(() => {
         if (previewImage.progress! < 90) {
@@ -1522,11 +1491,7 @@ export class DetalleActividadComponent implements OnInit, OnDestroy {
       }, 200);
       
       // Timeout para evitar bloqueos
-      console.log('📤 Llamando al servicio de evidencia', { 
-        fileName, 
-        actividadId: this.actividadId,
-        descripcion: previewImage.descripcion
-      });
+      // Llamando al servicio de evidencia
       
       const uploadPromise = this.evidenciaService.subirEvidencia(
         previewImage.file,
@@ -1540,44 +1505,34 @@ export class DetalleActividadComponent implements OnInit, OnDestroy {
       
       const evidencia = await Promise.race([uploadPromise, timeoutPromise]) as EvidenciaFotografica;
       
-      console.log('✅ EVIDENCIA SUBIDA EXITOSAMENTE', { 
-        fileName, 
-        evidenciaId: evidencia?.id,
-        timestamp: new Date().toISOString()
-      });
+      // EVIDENCIA SUBIDA EXITOSAMENTE
       
       clearInterval(progressInterval);
       previewImage.progress = 100;
       previewImage.status = 'success';
-      console.log('✅ Estado actualizado a success', { fileName });
+      // Estado actualizado a success
       
       setTimeout(() => {
         this.removePreviewImage(previewImage.id);
       }, 2000);
       
-      console.log('🔄 Recargando evidencias...', { timestamp: new Date().toISOString() });
+      // Recargando evidencias
       await this.loadEvidencias();
-      console.log('✅ Evidencias recargadas exitosamente', { timestamp: new Date().toISOString() });
+      // Evidencias recargadas exitosamente
       
       this.snackBar.open('Evidencia subida correctamente', 'Cerrar', { duration: 2000 });
-      console.log('🔔 Notificación de éxito mostrada', { fileName });
+      // Notificación de éxito mostrada
       
     } catch (error) {
-      console.error('❌ ERROR EN SUBIDA INDIVIDUAL', {
-        fileName,
-        errorName: (error as Error).name,
-        errorMessage: (error as Error).message,
-        errorStack: (error as Error).stack,
-        timestamp: new Date().toISOString()
-      });
+      // ERROR EN SUBIDA INDIVIDUAL
       
       previewImage.status = 'error';
       previewImage.error = this.getErrorMessage(error);
-      console.log('❌ Estado actualizado a error', { fileName, error: this.getErrorMessage(error) });
+      // Estado actualizado a error
       
       const errorMessage = this.getErrorMessage(error);
       this.snackBar.open(`Error subiendo "${fileName}": ${errorMessage}`, 'Cerrar', { duration: 3000 });
-      console.log('🔔 Notificación de error mostrada', { fileName, errorMessage });
+      // Notificación de error mostrada
     } finally {
       this.currentUploads--;
     }
@@ -1622,13 +1577,13 @@ export class DetalleActividadComponent implements OnInit, OnDestroy {
   }
 
   clearAllPreviews(): void {
-    console.log('🧹 Limpiando todas las previsualizaciones. Total actual:', this.previewImages.length);
+    // Limpiando todas las previsualizaciones
     
     // Liberar URLs de objeto para evitar memory leaks
     this.previewImages.forEach(preview => {
       if (preview.url.startsWith('blob:')) {
         URL.revokeObjectURL(preview.url);
-        console.log('🧹 URL de blob revocada para:', preview.file.name);
+        // URL de blob revocada
       }
     });
     
@@ -1637,12 +1592,12 @@ export class DetalleActividadComponent implements OnInit, OnDestroy {
     
     // Forzar detección de cambios para actualizar la vista
     this.cdr.detectChanges();
-    console.log('✅ Todas las previsualizaciones limpiadas y vista actualizada');
+    // Todas las previsualizaciones limpiadas y vista actualizada
   }
 
   eliminarEvidencia(evidencia: EvidenciaFotografica) {
     if (!evidencia.id) {
-      console.error('ID de evidencia no válido');
+      // ID de evidencia no válido
       this.snackBar.open('Error: ID de evidencia no válido', 'Cerrar', { duration: 3000 });
       return;
     }
@@ -1650,11 +1605,7 @@ export class DetalleActividadComponent implements OnInit, OnDestroy {
     const confirmMessage = `¿Estás seguro de que deseas eliminar esta evidencia?\n\nArchivo: ${evidencia.nombre_archivo || 'Sin nombre'}\nDescripción: ${evidencia.descripcion || 'Sin descripción'}`;
     
     if (confirm(confirmMessage)) {
-      console.log('🗑️ Iniciando eliminación de evidencia:', {
-        id: evidencia.id,
-        nombre: evidencia.nombre_archivo,
-        url: evidencia.url_imagen
-      });
+      // Iniciando eliminación de evidencia
       
       // Mostrar indicador de carga
       this.snackBar.open('Eliminando evidencia...', '', { duration: 1000 });
@@ -1662,7 +1613,7 @@ export class DetalleActividadComponent implements OnInit, OnDestroy {
       this.evidenciaService.eliminarEvidencia(evidencia.id).subscribe({
         next: (success) => {
           if (success) {
-            console.log('✅ Evidencia eliminada exitosamente:', evidencia.id);
+            // Evidencia eliminada exitosamente
             
             // Remover la evidencia de la lista local inmediatamente
             this.evidencias = this.evidencias.filter(e => e.id !== evidencia.id);
@@ -1675,7 +1626,7 @@ export class DetalleActividadComponent implements OnInit, OnDestroy {
               panelClass: ['success-snackbar']
             });
           } else {
-            console.error('❌ La eliminación no fue exitosa');
+            // La eliminación no fue exitosa
             this.snackBar.open('Error: La eliminación no fue exitosa', 'Cerrar', { 
               duration: 5000,
               panelClass: ['error-snackbar']
@@ -1683,12 +1634,7 @@ export class DetalleActividadComponent implements OnInit, OnDestroy {
           }
         },
         error: (error) => {
-          console.error('❌ Error eliminando evidencia:', {
-            evidenciaId: evidencia.id,
-            error: error,
-            errorMessage: error?.message,
-            errorCode: error?.code
-          });
+          // Error eliminando evidencia
           
           let errorMessage = 'Error eliminando evidencia';
           
@@ -1717,7 +1663,7 @@ export class DetalleActividadComponent implements OnInit, OnDestroy {
 
   async actualizarDescripcion(evidencia: EvidenciaFotografica, nuevaDescripcion: string) {
     if (!evidencia.id) {
-      console.error('ID de evidencia no válido');
+      // ID de evidencia no válido
       return;
     }
     
@@ -1726,7 +1672,7 @@ export class DetalleActividadComponent implements OnInit, OnDestroy {
       evidencia.descripcion = nuevaDescripcion;
       this.snackBar.open('Descripción actualizada', 'Cerrar', { duration: 2000 });
     } catch (error) {
-      console.error('Error actualizando descripción:', error);
+      // Error actualizando descripción
       this.snackBar.open('Error actualizando descripción', 'Cerrar', { duration: 3000 });
     }
   }

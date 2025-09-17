@@ -140,14 +140,14 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
   }
 
   ngOnInit(): void {
-    console.log('🚀 [NuevaActividad] Componente inicializado');
+    // Componente inicializado
     
     // Verificar estado de autenticación
     const currentUser = this.authService.getCurrentUser();
-    console.log('👤 [NuevaActividad] Usuario actual:', currentUser);
+    // Usuario actual
     
     if (!currentUser) {
-      console.warn('⚠️ [NuevaActividad] No hay usuario autenticado');
+      // No hay usuario autenticado
     }
     
     this.loadObrasAndFrente();
@@ -155,7 +155,7 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
 
   private async loadObrasAndFrente(): Promise<void> {
     try {
-      console.log('🔄 [NuevaActividad] Iniciando carga de frentes...');
+      // Iniciando carga de frentes
       
       // Forzar recarga de frentes desde el servicio
       await this.actividadesService.reloadUserFrente();
@@ -164,18 +164,17 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
       this.actividadesService.frentes$.pipe(
         takeUntil(this.destroy$)
       ).subscribe(frentes => {
-        console.log('📋 [NuevaActividad] Frentes recibidos:', frentes);
-        console.log('📊 [NuevaActividad] Cantidad de frentes:', frentes.length);
+        // Frentes recibidos
         
         this.frentes = frentes.map(f => ({
           value: f.id,
           label: f.nombre
         }));
         
-        console.log('✅ [NuevaActividad] Frentes mapeados para dropdown:', this.frentes);
+        // Frentes mapeados para dropdown
       });
     } catch (error) {
-       console.error('❌ [NuevaActividad] Error loading data:', error);
+       // Error loading data
      }
    }
 
@@ -214,7 +213,7 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
       // Buscar el elemento del mapa por ID
       const mapElement = document.getElementById('nueva-actividad-map');
       if (!mapElement) {
-        console.error('❌ [NuevaActividad] Elemento del mapa no encontrado');
+        // Elemento del mapa no encontrado
         return;
       }
 
@@ -248,9 +247,9 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
       });
 
       this.mapInitialized = true;
-      console.log('✅ [NuevaActividad] Mapa inicializado correctamente');
+      // Mapa inicializado correctamente
     } catch (error) {
-      console.error('❌ [NuevaActividad] Error al inicializar mapa:', error);
+      // Error al inicializar mapa
     }
   }
 
@@ -303,7 +302,7 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
       .addTo(this.map)
       .bindPopup(`Ubicación seleccionada<br>Lat: ${lat.toFixed(6)}<br>Lng: ${lng.toFixed(6)}`);
 
-    console.log('📍 [NuevaActividad] Ubicación actualizada:', { lat, lng });
+    // Ubicación actualizada
   }
 
   // Agregar marcador de punto inicial
@@ -356,7 +355,7 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
       // Calcular distancia en kilómetros
       this.totalDistance = this.startPoint.distanceTo(this.endPoint) / 1000;
       
-      console.log('📏 [CalculateRoute] Distancia calculada:', this.totalDistance, 'km');
+      // Distancia calculada
       
       // Remover línea anterior si existe
       if (this.routeLine) {
@@ -376,7 +375,7 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
       const kmInicio = 0;
       const kmFin = Number(this.totalDistance.toFixed(3));
       
-      console.log('📝 [CalculateRoute] Actualizando formulario - kmInicio:', kmInicio, 'kmFin:', kmFin);
+      // Actualizando formulario
       
       this.actividadForm.patchValue({
         kilometraje_inicio: kmInicio,
@@ -387,7 +386,7 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
       this.actividadForm.get('kilometraje_inicio')?.updateValueAndValidity();
       this.actividadForm.get('kilometraje_fin')?.updateValueAndValidity();
       
-      console.log('✅ [CalculateRoute] Formulario actualizado. Estado válido:', this.actividadForm.valid);
+      // Formulario actualizado
       
       // Ajustar vista para mostrar ambos puntos
       const bounds = L.latLngBounds([this.startPoint, this.endPoint]);
@@ -430,7 +429,7 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
       this.actividadForm.get('kilometraje_inicio')?.updateValueAndValidity();
       this.actividadForm.get('kilometraje_fin')?.updateValueAndValidity();
       
-      console.log('🧹 [ClearMapPoints] Campos limpiados. Estado del formulario:', this.actividadForm.valid);
+      // Campos limpiados
       
       this.snackBar.open('Puntos del mapa limpiados. Seleccione nuevamente el punto inicial.', 'Cerrar', {
         duration: 3000,
@@ -828,11 +827,11 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
     const kmInicio = this.actividadForm.get('kilometraje_inicio')?.value;
     const kmFin = this.actividadForm.get('kilometraje_fin')?.value;
     
-    console.log('🔍 [ValidateKilometrageRange] kmInicio:', kmInicio, 'kmFin:', kmFin);
+    // Validando kilometraje
     
     // Permitir valores null o undefined (campos opcionales)
     if (kmInicio === null || kmInicio === undefined || kmFin === null || kmFin === undefined) {
-      console.log('⚠️ [ValidateKilometrageRange] Valores null/undefined detectados');
+      // Valores null/undefined detectados
       return false;
     }
     
@@ -840,23 +839,23 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
     const kmInicioNum = Number(kmInicio);
     const kmFinNum = Number(kmFin);
     
-    console.log('🔢 [ValidateKilometrageRange] Convertidos - kmInicioNum:', kmInicioNum, 'kmFinNum:', kmFinNum);
+    // Valores convertidos a números
     
     // Validar que sean números válidos
     if (isNaN(kmInicioNum) || isNaN(kmFinNum)) {
-      console.log('❌ [ValidateKilometrageRange] Valores no son números válidos');
+      // Valores no son números válidos
       return false;
     }
     
     // Validar que inicio <= fin (permitir igualdad para puntos específicos)
     if (kmInicioNum > kmFinNum) {
-      console.log('❌ [ValidateKilometrageRange] Inicio mayor que fin');
+      // Inicio mayor que fin
       return false;
     }
     
     // Validar que ambos valores sean no negativos
     if (kmInicioNum < 0 || kmFinNum < 0) {
-      console.log('❌ [ValidateKilometrageRange] Valores negativos detectados');
+      // Valores negativos detectados
       return false;
     }
     
@@ -868,12 +867,12 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
       const frenteKmMax = 100;
       
       if (kmInicioNum < frenteKmMin || kmFinNum > frenteKmMax) {
-        console.log('❌ [ValidateKilometrageRange] Fuera del rango del frente');
+        // Fuera del rango del frente
         return false;
       }
     }
     
-    console.log('✅ [ValidateKilometrageRange] Validación exitosa');
+    // Validación exitosa
     return true;
   }
   
@@ -933,17 +932,17 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
     ).subscribe(frentes => {
       this.selectedFrente = frentes.find(f => f.id === frenteId);
       if (this.selectedFrente) {
-        console.log('🎯 [NuevaActividad] Frente seleccionado:', this.selectedFrente);
+        // Frente seleccionado
         this.updateKilometrageRange();
       }
     });
   }
 
   async onSubmit(): Promise<void> {
-    console.log('🚀 [OnSubmit] Iniciando proceso de creación de actividad');
-    console.log('📋 [OnSubmit] Estado del formulario - válido:', this.actividadForm.valid);
-    console.log('📋 [OnSubmit] Errores del formulario:', this.actividadForm.errors);
-    console.log('📋 [OnSubmit] Valores del formulario:', this.actividadForm.value);
+    // Iniciando proceso de creación de actividad
+    // Estado del formulario
+    // Errores del formulario
+    // Valores del formulario
     
     if (this.actividadForm.valid) {
       this.loading = true;
@@ -963,18 +962,18 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
           throw new Error('Usuario no autenticado');
         }
         
-        console.log('🔍 [OnSubmit] Validando rango de kilometraje...');
+        // Validando rango de kilometraje
         // Validar rango de kilometraje
         if (!this.validateKilometrageRange()) {
           throw new Error('El rango de kilometraje no es válido');
         }
-        console.log('✅ [OnSubmit] Rango de kilometraje válido');
+        // Rango de kilometraje válido
 
         // Validar que se hayan seleccionado ambos puntos
         if (!this.startPoint || !this.endPoint) {
           throw new Error('Debe seleccionar tanto el punto inicial como el punto final en el mapa');
         }
-        console.log('✅ [OnSubmit] Puntos del mapa válidos');
+        // Puntos del mapa válidos
 
         // Preparar datos para envío
         const actividadData = {
@@ -1011,7 +1010,7 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
         
         // Si hay tareas, crearlas después de crear la actividad
         if (this.tareasFormArray.length > 0 && response?.id) {
-          console.log('📝 [OnSubmit] Creando tareas para la actividad:', response.id);
+          // Creando tareas para la actividad
           try {
             for (let i = 0; i < this.tareasFormArray.length; i++) {
               const tareaControl = this.tareasFormArray.at(i);
@@ -1028,9 +1027,9 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
                 await this.actividadesService.createTarea(tareaData);
               }
             }
-            console.log('✅ [OnSubmit] Todas las tareas creadas exitosamente');
+            // Todas las tareas creadas exitosamente
           } catch (tareaError) {
-            console.error('❌ [OnSubmit] Error al crear tareas:', tareaError);
+            // Error al crear tareas
             this.snackBar.open('Actividad creada, pero hubo un error al crear algunas tareas', 'Cerrar', {
               duration: 5000,
               panelClass: ['warning-snackbar']
@@ -1110,7 +1109,7 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
       completada: [false]
     });
     this.tareasFormArray.push(nuevaTareaGroup);
-    console.log('✅ [AgregarTarea] Nueva tarea agregada. Total:', this.tareasFormArray.length);
+    // Nueva tarea agregada
   }
 
   eliminarTarea(index: number): void {
@@ -1120,7 +1119,7 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
       for (let i = 0; i < this.tareasFormArray.length; i++) {
         this.tareasFormArray.at(i).get('orden')?.setValue(i + 1);
       }
-      console.log('🗑️ [EliminarTarea] Tarea eliminada. Total:', this.tareasFormArray.length);
+      // Tarea eliminada
     }
   }
 }

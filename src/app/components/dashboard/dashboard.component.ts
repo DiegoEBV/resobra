@@ -37,7 +37,7 @@ import { RouterModule } from '@angular/router';
 import { Subject, takeUntil, combineLatest, take, timer } from 'rxjs';
 import { Chart, ChartConfiguration, ChartType, registerables } from 'chart.js';
 
-import { AuthService } from '../../services/auth.service';
+import { DirectAuthService } from '../../services/direct-auth.service';
 import { KpisService, DashboardKPIs, AlertaKPI } from '../../services/kpis.service';
 import { ActividadesService } from '../../services/actividades.service';
 import { DashboardService, DashboardStats as ServiceDashboardStats, DashboardCharts } from '../../services/dashboard.service';
@@ -126,7 +126,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   planificacionChartData: ChartData = { labels: [], datasets: [] };
 
   constructor(
-    private authService: AuthService,
+    private directAuthService: DirectAuthService,
     private kpisService: KpisService,
     private actividadesService: ActividadesService,
     private dashboardService: DashboardService,
@@ -173,15 +173,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
       });
     }
     
-    // Esperar a que el usuario esté autenticado antes de continuar
-    this.authService.currentUser$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(async (user) => {
-        if (user) {
-          console.log('✅ [Dashboard] Usuario autenticado, inicializando servicios...');
-          await this.initializeServices();
-        }
-      });
+    // Verificar si el usuario está autenticado
+    if (this.directAuthService.isAuthenticated()) {
+      console.log('✅ [Dashboard] Usuario autenticado, inicializando servicios...');
+      await this.initializeServices();
+    }
   }
 
   private async initializeServices(): Promise<void> {
@@ -243,8 +239,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     try {
       console.log('👤 [DashboardComponent] Cargando datos del usuario...');
       
-      // Obtener usuario actual
-      const user = this.authService.getCurrentUser();
+      // Obtener usuario actual del DirectAuthService
+      const user = this.directAuthService.getCurrentUser();
       if (user) {
         this.ngZone.run(() => {
           this.currentUser = user;
@@ -253,7 +249,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         console.log('✅ [DashboardComponent] Usuario actual cargado:', user.email);
         
         // Obtener perfil del usuario
-        const profile = this.authService.getCurrentProfile();
+        const profile = this.directAuthService.getCurrentProfile();
         if (profile) {
           this.ngZone.run(() => {
             this.userProfile = profile;
@@ -265,25 +261,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.loadRoleSpecificData();
         } else {
           console.warn('⚠️ [DashboardComponent] No se pudo cargar el perfil del usuario');
-          // Suscribirse a cambios en el perfil si no está disponible inmediatamente
-          this.authService.currentProfile$
-            .pipe(takeUntil(this.destroy$))
-            .subscribe({
-              next: (profile) => {
-                if (profile) {
-                  this.ngZone.run(() => {
-                    this.userProfile = profile;
-                    this.cdr.detectChanges();
-                  });
-                  console.log('🔄 [DashboardComponent] Perfil del usuario cargado desde observable:', profile.rol);
-                  this.loadRoleSpecificData();
-                }
-              },
-              error: (error) => {
-                console.error('❌ [DashboardComponent] Error en currentProfile$:', error);
-                this.loadFallbackUserData();
-              }
-            });
+          this.loadFallbackUserData();
         }
       } else {
         console.warn('⚠️ [DashboardComponent] No hay usuario autenticado - usando datos por defecto');
@@ -320,7 +298,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
    */
   private async loadRealDashboardDataSafely(): Promise<void> {
     try {
-      console.log('📊 [DashboardComponent] Cargando datos reales del dashboard...');
+      // Cargando datos reales del dashboard
       
       // Cargar datos usando el nuevo servicio
       await this.dashboardService.loadDashboardData();
@@ -352,9 +330,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
         }
       });
       
-      console.log('✅ [DashboardComponent] Datos reales del dashboard cargados');
+      // Datos reales del dashboard cargados
     } catch (error) {
-      console.error('❌ [DashboardComponent] Error cargando datos reales del dashboard:', error);
+      // Error cargando datos reales del dashboard
       // Fallback a datos de ejemplo si hay error
       await this.loadDashboardDataSafely();
     }
@@ -410,10 +388,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
       // Cargar estadísticas de actividades
       await this.loadActivityStatsSafely();
       
-      console.log('✅ [Dashboard] Datos del dashboard cargados exitosamente');
+      // Dashboard data loaded successfully
       
     } catch (error) {
-      console.error('❌ [Dashboard] Error loading dashboard data:', error);
+      // Error loading dashboard data
       this.loadFallbackData();
       throw error; // Re-lanzar el error para manejo en nivel superior
     }
@@ -941,7 +919,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Refrescar datos
   async refreshData(): Promise<void> {
     try {
-      console.log('🔄 [DashboardComponent] Refrescando datos...');
+      // Refrescando datos del dashboard
       this.isLoading = true;
       
       // Refrescar usando el nuevo servicio
@@ -950,9 +928,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
       // Refrescar KPIs como fallback
       await this.refreshKPIsData();
       
-      console.log('✅ [DashboardComponent] Datos refrescados exitosamente');
+      // Dashboard actualizado exitosamente
     } catch (error) {
-      console.error('❌ [DashboardComponent] Error refrescando datos:', error);
+      // Error refreshing dashboard
       // Fallback al método original
       await this.loadDashboardDataSafely();
     } finally {

@@ -106,7 +106,7 @@ export class KpisComponent implements OnInit {
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error loading KPIs:', error);
+        // Error loading KPIs
         this.showMessage('Error al cargar los KPIs');
         this.loading = false;
       }
@@ -119,7 +119,7 @@ export class KpisComponent implements OnInit {
         this.obras = obras;
       },
       error: (error) => {
-        console.error('Error loading obras:', error);
+        // Error loading obras
         this.showMessage('Error al cargar las obras');
       }
     });
@@ -133,7 +133,7 @@ export class KpisComponent implements OnInit {
         this.kpiForm.get('actividad_id')?.enable();
         this.kpiForm.patchValue({ actividad_id: '' });
       } catch (error) {
-        console.error('Error loading actividades:', error);
+        // Error loading actividades
         this.showMessage('Error al cargar las actividades');
         this.actividades = [];
         this.kpiForm.get('actividad_id')?.disable();
@@ -162,10 +162,10 @@ export class KpisComponent implements OnInit {
         
         // Validar duplicados antes de enviar (solo para nuevos KPIs)
         if (!this.editingKpi) {
-          console.log('Verificando duplicados para:', formData);
+          // Verificando duplicados
           const isDuplicate = await this.checkForDuplicateKPI(formData);
           if (isDuplicate) {
-            console.log('KPI duplicado detectado');
+            // KPI duplicado detectado
             this.showMessage('Ya existe un KPI para esta obra/actividad en la fecha seleccionada');
             this.loading = false;
             this.submitting = false;
@@ -205,7 +205,7 @@ export class KpisComponent implements OnInit {
         this.resetForm();
         // No necesitamos llamar loadKpis() - el observable se actualiza automáticamente
       } catch (error: any) {
-        console.error('Error saving KPI:', error);
+        // Error saving KPI
         
         // Manejo específico de errores de duplicación
         let errorMessage = 'Error al guardar el KPI';
@@ -225,7 +225,7 @@ export class KpisComponent implements OnInit {
         this.submitting = false;
       }
     } else if (this.submitting) {
-      console.log('Envío ya en progreso, ignorando clic adicional');
+      // Envío ya en progreso, ignorando clic adicional
     }
   }
 
@@ -265,7 +265,7 @@ export class KpisComponent implements OnInit {
       try {
         this.loading = true;
         if (kpi.id) {
-          console.log('Intentando eliminar KPI:', kpi.id);
+          // Intentando eliminar KPI
           await this.kpisService.deleteKPI(kpi.id);
           this.showMessage('KPI eliminado exitosamente');
           // No necesitamos llamar loadKpis() - el observable se actualiza automáticamente
@@ -273,7 +273,7 @@ export class KpisComponent implements OnInit {
           this.showMessage('Error: KPI sin ID válido');
         }
       } catch (error: any) {
-        console.error('Error deleting KPI:', error);
+        // Error deleting KPI
         
         // Proporcionar mensajes de error más específicos
         let errorMessage = 'Error al eliminar el KPI';
@@ -317,7 +317,7 @@ export class KpisComponent implements OnInit {
   async checkForDuplicateKPI(formData: any): Promise<boolean> {
     try {
       const fecha = formData.fecha instanceof Date ? formData.fecha.toISOString().split('T')[0] : formData.fecha;
-      console.log('Verificando duplicados - Fecha:', fecha, 'Obra:', formData.obra_id, 'Actividad:', formData.actividad_id);
+      // Verificando duplicados
       
       // Buscar KPIs existentes con la misma obra/actividad y fecha
       const existingKpis = this.kpis.filter(kpi => {
@@ -327,7 +327,7 @@ export class KpisComponent implements OnInit {
         if (!formData.actividad_id && !kpi.actividad_id) {
           const match = kpi.obra_id === formData.obra_id && kpiDate === fecha;
           if (match) {
-            console.log('Duplicado encontrado (obra):', kpi);
+            // Duplicado encontrado (obra)
           }
           return match;
         }
@@ -338,7 +338,7 @@ export class KpisComponent implements OnInit {
                        kpi.actividad_id === formData.actividad_id && 
                        kpiDate === fecha;
           if (match) {
-            console.log('Duplicado encontrado (actividad):', kpi);
+            // Duplicado encontrado (actividad)
           }
           return match;
         }
@@ -346,10 +346,10 @@ export class KpisComponent implements OnInit {
         return false;
       });
       
-      console.log('KPIs existentes encontrados:', existingKpis.length);
+      // KPIs existentes encontrados
       return existingKpis.length > 0;
     } catch (error) {
-      console.error('Error checking for duplicate KPI:', error);
+      // Error checking for duplicate KPI
       return false; // En caso de error, permitir el envío
     }
   }
@@ -462,7 +462,7 @@ export class KpisComponent implements OnInit {
 
   viewDetails(kpi: any) {
     // Implementar vista de detalles
-    console.log('Ver detalles de KPI:', kpi);
+    // Ver detalles de KPI
   }
 
   // Métodos de cálculos automáticos y sugerencias
@@ -585,7 +585,7 @@ Sugerencias automáticas:
       
       if (costProjection.alerta) {
         // Mostrar alerta de costo
-        console.warn('Alerta de costo:', costProjection.mensaje);
+        // Alerta de costo
       }
     }
   }

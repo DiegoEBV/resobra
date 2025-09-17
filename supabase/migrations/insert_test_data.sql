@@ -1,45 +1,37 @@
--- Insertar datos de prueba para obras y frentes
-
--- Insertar una obra de prueba
-INSERT INTO obras (id, nombre, descripcion, ubicacion, fecha_inicio, estado)
-VALUES (
-  gen_random_uuid(),
-  'Carretera Principal Km 0-20',
-  'Construcción y mejoramiento de carretera principal',
-  'Región Central',
-  '2024-01-01',
-  'activa'
-) ON CONFLICT (id) DO NOTHING;
-
--- Obtener el ID de la obra recién insertada
+-- Insertar datos de prueba para kilometros
+-- Primero obtenemos un frente existente
 DO $$
 DECLARE
-    obra_uuid UUID;
+    frente_id_var uuid;
 BEGIN
-    -- Obtener o crear la obra
-    SELECT id INTO obra_uuid FROM obras WHERE nombre = 'Carretera Principal Km 0-20' LIMIT 1;
+    -- Obtener el primer frente disponible
+    SELECT id INTO frente_id_var FROM frentes LIMIT 1;
     
-    IF obra_uuid IS NULL THEN
-        INSERT INTO obras (nombre, descripcion, ubicacion, fecha_inicio, estado)
-        VALUES (
-            'Carretera Principal Km 0-20',
-            'Construcción y mejoramiento de carretera principal',
-            'Región Central',
-            '2024-01-01',
-            'activa'
-        ) RETURNING id INTO obra_uuid;
+    -- Si existe un frente, insertar datos kilométricos de prueba
+    IF frente_id_var IS NOT NULL THEN
+        -- Insertar kilómetros de prueba (del 0 al 5)
+        INSERT INTO kilometros (frente_id, kilometro, estado, color, progreso_porcentaje, actividades_count)
+        VALUES 
+            (frente_id_var, 0, 'completado', '#10B981', 100, 3),
+            (frente_id_var, 1, 'en_progreso', '#F59E0B', 65, 2),
+            (frente_id_var, 2, 'en_progreso', '#F59E0B', 45, 1),
+            (frente_id_var, 3, 'no_iniciado', '#6B7280', 0, 0),
+            (frente_id_var, 4, 'no_iniciado', '#6B7280', 0, 0),
+            (frente_id_var, 5, 'con_observaciones', '#EF4444', 25, 1)
+        ON CONFLICT (frente_id, kilometro) DO UPDATE SET
+            estado = EXCLUDED.estado,
+            color = EXCLUDED.color,
+            progreso_porcentaje = EXCLUDED.progreso_porcentaje,
+            actividades_count = EXCLUDED.actividades_count;
+            
+        RAISE NOTICE 'Datos kilométricos insertados para frente: %', frente_id_var;
+    ELSE
+        RAISE NOTICE 'No se encontraron frentes para insertar datos kilométricos';
     END IF;
-    
-    -- Insertar frentes de trabajo
-    INSERT INTO frentes (obra_id, nombre, descripcion, estado)
-    VALUES 
-        (obra_uuid, 'Frente A - Km 0-5', 'Tramo inicial de la carretera', 'activo'),
-        (obra_uuid, 'Frente B - Km 5-10', 'Tramo intermedio de la carretera', 'activo'),
-        (obra_uuid, 'Frente C - Km 10-15', 'Tramo avanzado de la carretera', 'activo'),
-        (obra_uuid, 'Frente D - Km 15-20', 'Tramo final de la carretera', 'activo')
-    ON CONFLICT DO NOTHING;
 END $$;
 
--- Verificar que los datos se insertaron correctamente
-SELECT 'Obras insertadas:' as info, COUNT(*) as cantidad FROM obras;
-SELECT 'Frentes insertados:' as info, COUNT(*) as cantidad FROM frentes;
+-- Verificar los datos insertados
+SELECT k.*, f.nombre as frente_nombre 
+FROM kilometros k 
+JOIN frentes f ON k.frente_id = f.id 
+ORDER BY k.kilometro;
