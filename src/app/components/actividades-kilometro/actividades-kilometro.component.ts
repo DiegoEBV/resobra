@@ -16,7 +16,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { LocationSelectorDialogComponent } from '../location-selector-dialog/location-selector-dialog.component';
 import { ProgressUpdateDialogComponent } from '../progress-update-dialog/progress-update-dialog.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatChipsModule } from '@angular/material/chip';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -25,11 +25,26 @@ import { takeUntil } from 'rxjs/operators';
 
 import { ActividadesService } from '../../services/actividades.service';
 import { KilometrosService } from '../../services/kilometros.service';
-import { Actividad, Frente, Kilometro } from '../../models/actividades.model';
+import { Actividad, Frente, Kilometro } from '../../interfaces/database.interface';
 
 interface ActividadKilometro extends Actividad {
   kilometro?: number;
   progreso_porcentaje?: number;
+  nombre?: string;
+  descripcion?: string;
+  tipo?: string;
+  prioridad?: string;
+  estado: 'programado' | 'ejecucion' | 'finalizado';
+  fecha_inicio?: string;
+  fecha_fin_estimada?: string;
+  responsable?: string;
+  observaciones?: string;
+  ubicacion: {
+    lat: number;
+    lng: number;
+    direccion?: string;
+  };
+  id: string;
 }
 
 @Component({
@@ -182,7 +197,17 @@ export class ActividadesKilometroComponent implements OnInit, OnDestroy {
       
       // Cargar kilómetros del frente
       if (this.frente?.id) {
-        this.kilometros = await this.kilometrosService.getKilometrosByFrente(this.frente.id);
+        this.kilometrosService.getKilometrosByFrente(this.frente.id)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: (kilometros) => {
+              this.kilometros = kilometros;
+            },
+            error: (error) => {
+              console.error('Error loading kilometros:', error);
+              this.kilometros = [];
+            }
+          });
       }
       
     } catch (error) {
@@ -214,7 +239,7 @@ export class ActividadesKilometroComponent implements OnInit, OnDestroy {
       tipo: actividad.tipo,
       prioridad: actividad.prioridad,
       estado: actividad.estado,
-      fecha_inicio: new Date(actividad.fecha_inicio),
+      fecha_inicio: actividad.fecha_inicio ? new Date(actividad.fecha_inicio) : new Date(),
       fecha_fin_estimada: actividad.fecha_fin_estimada ? new Date(actividad.fecha_fin_estimada) : null,
       kilometro: actividad.kilometro,
       progreso_porcentaje: actividad.progreso_porcentaje || 0,

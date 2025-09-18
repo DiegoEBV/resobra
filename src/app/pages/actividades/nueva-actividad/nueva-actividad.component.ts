@@ -33,6 +33,7 @@ import * as L from 'leaflet';
 // Services
 import { ActividadesService } from '../../../services/actividades.service';
 import { AuthService } from '../../../services/auth.service';
+import { DirectAuthService } from '../../../services/direct-auth.service';
 import { MapService } from '../../../services/map.service';
 
 // Components
@@ -131,6 +132,7 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
     private fb: FormBuilder,
     private actividadesService: ActividadesService,
     private authService: AuthService,
+    private directAuthService: DirectAuthService,
     private router: Router,
     private snackBar: MatSnackBar,
     private mapService: MapService,
@@ -140,14 +142,18 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
   }
 
   ngOnInit(): void {
-    // Componente inicializado
+    console.log('🚀 NuevaActividadComponent.ngOnInit() - Componente inicializado');
     
-    // Verificar estado de autenticación
-    const currentUser = this.authService.getCurrentUser();
-    // Usuario actual
+    // Verificar estado de autenticación usando DirectAuthService
+    const currentUser = this.directAuthService.getCurrentUser();
+    console.log('👤 Usuario actual en ngOnInit:', {
+      hasUser: !!currentUser,
+      userId: currentUser?.id || 'null',
+      email: currentUser?.email || 'null'
+    });
     
     if (!currentUser) {
-      // No hay usuario autenticado
+      console.warn('⚠️ No hay usuario autenticado en ngOnInit');
     }
     
     this.loadObrasAndFrente();
@@ -939,28 +945,54 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
   }
 
   async onSubmit(): Promise<void> {
-    // Iniciando proceso de creación de actividad
-    // Estado del formulario
-    // Errores del formulario
-    // Valores del formulario
+    console.log('🚀 NuevaActividadComponent.onSubmit() iniciado');
+    console.log('📋 Estado del formulario:', {
+      valid: this.actividadForm.valid,
+      errors: this.actividadForm.errors,
+      loading: this.loading
+    });
     
     if (this.actividadForm.valid) {
       this.loading = true;
       
       const formData = this.actividadForm.value;
+      console.log('📊 Datos del formulario:', {
+        tipo: formData.tipo,
+        frente_trabajo: formData.frente_trabajo,
+        fecha_inicio: formData.fecha_inicio
+      });
       
       try {
         // Obtener el frente seleccionado para obtener la obra_id
+        console.log('🔍 Obteniendo frente seleccionado...');
         const frenteSeleccionado = await this.getFrenteById(formData.frente_trabajo);
         if (!frenteSeleccionado) {
+          console.error('❌ Frente no encontrado:', formData.frente_trabajo);
           throw new Error('Frente no encontrado');
         }
+        console.log('✅ Frente encontrado:', { id: frenteSeleccionado.id, obra_id: frenteSeleccionado.obra_id });
         
-        // Obtener el usuario actual
-        const currentUser = await this.authService.getCurrentUser();
+        // Obtener el usuario actual usando DirectAuthService
+        console.log('🔍 Obteniendo usuario actual desde DirectAuthService...');
+        const currentUser = this.directAuthService.getCurrentUser();
+        console.log('👤 Usuario desde DirectAuthService:', {
+          hasUser: !!currentUser,
+          userId: currentUser?.id || 'null',
+          userEmail: currentUser?.email || 'null',
+          isAuthenticated: this.directAuthService.isAuthenticated()
+        });
+        
         if (!currentUser) {
+          console.error('❌ Usuario no autenticado desde DirectAuthService');
+          console.log('🔍 Verificando estado de autenticación completo...');
+          console.log('📊 DirectAuthService state:', {
+            hasToken: !!this.directAuthService.getAccessToken(),
+            isAuthenticated: this.directAuthService.isAuthenticated()
+          });
           throw new Error('Usuario no autenticado');
         }
+        
+        console.log('✅ Usuario autenticado, preparando datos de actividad...');
         
         // Validando rango de kilometraje
         // Validar rango de kilometraje
@@ -1006,7 +1038,16 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
           progreso_inicial: formData.progreso_inicial || formData.progreso_general || 0
         };
       
+        console.log('🎯 Llamando a actividadesService.createActividad...');
+        console.log('📦 Datos de actividad preparados:', {
+          obra_id: actividadData.obra_id,
+          frente_id: actividadData.frente_id,
+          user_id: actividadData.user_id,
+          tipo_actividad: actividadData.tipo_actividad
+        });
+        
         const response = await this.actividadesService.createActividad(actividadData);
+        console.log('✅ Actividad creada exitosamente:', { id: response?.id });
         
         // Si hay tareas, crearlas después de crear la actividad
         if (this.tareasFormArray.length > 0 && response?.id) {

@@ -198,6 +198,30 @@
   font-weight: 600;
 }
 
+/* Estilos para el botón de recarga de obras */
+.no-obras-hint {
+  color: #f44336;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.flex {
+  display: flex;
+  flex-direction: column;
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.items-end {
+  align-items: flex-end;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
 .metric-warning {
   color: #ff9800;
   font-weight: 600;

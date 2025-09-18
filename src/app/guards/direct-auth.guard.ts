@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
-import { CanActivate, Router } from '@angular/router';
+import { CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot, UrlTree } from '@angular/router';
+import { Observable } from 'rxjs';
 import { DirectAuthService } from '../services/direct-auth.service';
 
 @Injectable({
@@ -12,18 +13,28 @@ export class DirectAuthGuard implements CanActivate {
     private router: Router
   ) {}
 
-  canActivate(): boolean {
-    console.log('🔒 DirectAuthGuard - Verificando autenticación...');
+  canActivate(
+    route: ActivatedRouteSnapshot,
+    state: RouterStateSnapshot): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
     
-    const isAuthenticated = this.directAuthService.isAuthenticated();
-    
-    if (!isAuthenticated) {
-      console.log('❌ DirectAuthGuard - Usuario no autenticado, redirigiendo a login');
-      this.router.navigate(['/login']);
+    try {
+      const user = this.directAuthService.getCurrentUser();
+      if (user) {
+        return true;
+      } else {
+        // Capturar la URL original y pasarla como parámetro returnUrl
+        console.log('🔒 Usuario no autenticado, redirigiendo al login con returnUrl:', state.url);
+        this.router.navigate(['/login'], { 
+          queryParams: { returnUrl: state.url } 
+        });
+        return false;
+      }
+    } catch (error: any) {
+      console.error('Error en DirectAuthGuard:', error);
+      this.router.navigate(['/login'], { 
+        queryParams: { returnUrl: state.url } 
+      });
       return false;
     }
-    
-    console.log('✅ DirectAuthGuard - Usuario autenticado, permitiendo acceso');
-    return true;
   }
 }

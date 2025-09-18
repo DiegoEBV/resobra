@@ -393,8 +393,34 @@ export class ActividadesService implements OnDestroy {
   // Crear nueva actividad
   async createActividad(actividad: Omit<Actividad, 'id' | 'created_at' | 'updated_at'>): Promise<Actividad> {
     try {
+      console.log('🚀 ActividadesService.createActividad() iniciado');
+      console.log('📊 Datos de actividad a crear:', {
+        obraId: actividad.obra_id,
+        frenteId: actividad.frente_id,
+        fecha: actividad.fecha,
+        tipoActividad: actividad.tipo_actividad
+      });
+      
+      console.log('🔍 Verificando autenticación antes de crear actividad...');
       const user = this.directAuthService.getCurrentUser();
-      if (!user) throw new Error('Usuario no autenticado');
+      
+      console.log('👤 Usuario obtenido:', {
+        hasUser: !!user,
+        userId: user?.id || 'null',
+        userEmail: user?.email || 'null'
+      });
+      
+      if (!user) {
+        console.error('❌ Error: Usuario no autenticado en createActividad');
+        console.log('🔍 Estado del DirectAuthService:', {
+          isAuthenticated: this.directAuthService.isAuthenticated(),
+          hasToken: !!sessionStorage.getItem('direct_auth_token'),
+          hasStoredUser: !!sessionStorage.getItem('direct_auth_user')
+        });
+        throw new Error('Usuario no autenticado');
+      }
+      
+      console.log('✅ Usuario autenticado, procediendo con la creación...');
 
       const actividadData = {
         ...actividad,
@@ -731,10 +757,94 @@ export class ActividadesService implements OnDestroy {
     }
   }
 
+  // Método auxiliar para actualizar automáticamente el estado de la actividad
+  private async updateActividadEstadoAutomatico(actividadId: string): Promise<void> {
+    try {
+      console.log(`[DEBUG] Iniciando actualización automática de estado para actividad: ${actividadId}`);
+      
+      // Obtener todas las tareas de la actividad
+      const { data: tareas, error: tareasError } = await this.supabase.client
+        .from('tareas')
+        .select('id, completada')
+        .eq('actividad_id', actividadId);
+
+      if (tareasError) {
+        console.error('[DEBUG] Error obteniendo tareas:', tareasError);
+        throw tareasError;
+      }
+
+      if (!tareas || tareas.length === 0) {
+        console.log('[DEBUG] No hay tareas para esta actividad');
+        return;
+      }
+
+      // Calcular estadísticas
+      const totalTareas = tareas.length;
+      const tareasCompletadas = tareas.filter(t => t.completada).length;
+      
+      console.log(`[DEBUG] Estadísticas - Total: ${totalTareas}, Completadas: ${tareasCompletadas}`);
+
+      // Determinar el nuevo estado
+      let nuevoEstado: string;
+      if (tareasCompletadas === 0) {
+        nuevoEstado = 'programado';
+      } else if (tareasCompletadas === totalTareas) {
+        nuevoEstado = 'finalizado';
+      } else {
+        nuevoEstado = 'ejecucion';
+      }
+
+      console.log(`[DEBUG] Nuevo estado calculado: ${nuevoEstado}`);
+
+      // Obtener el estado actual de la actividad
+      const { data: actividad, error: actividadError } = await this.supabase.client
+        .from('actividades')
+        .select('estado')
+        .eq('id', actividadId)
+        .single();
+
+      if (actividadError) {
+        console.error('[DEBUG] Error obteniendo actividad:', actividadError);
+        throw actividadError;
+      }
+
+      const estadoActual = actividad?.estado || 'programado';
+      console.log(`[DEBUG] Estado actual: ${estadoActual}`);
+
+      // Solo actualizar si el estado es diferente
+      if (estadoActual !== nuevoEstado) {
+        console.log(`[DEBUG] Actualizando estado de ${estadoActual} a ${nuevoEstado}`);
+        
+        const { error: updateError } = await this.supabase.client
+          .from('actividades')
+          .update({ 
+            estado: nuevoEstado,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', actividadId);
+
+        if (updateError) {
+          console.error('[DEBUG] Error actualizando estado:', updateError);
+          throw updateError;
+        }
+
+        console.log(`[DEBUG] Estado actualizado exitosamente a: ${nuevoEstado}`);
+        
+        // Recargar las actividades para reflejar el cambio en la interfaz
+        await this.loadUserActividades();
+      } else {
+        console.log('[DEBUG] El estado no necesita cambios');
+      }
+    } catch (error) {
+      console.error('[DEBUG] Error en updateActividadEstadoAutomatico:', error);
+      throw error;
+    }
+  }
+
   // Actualizar estado de tarea
   async updateTareaEstado(tareaId: string, completada: boolean): Promise<any> {
     try {
-      // Actualizando estado de tarea
+      console.log(`[DEBUG] Actualizando tarea ${tareaId} a completada: ${completada}`);
       
       // Primero obtener la actividad_id de la tarea
       const { data: tarea, error: tareaError } = await this.supabase.client
@@ -744,7 +854,7 @@ export class ActividadesService implements OnDestroy {
         .single();
 
       if (tareaError) {
-        // Error obteniendo tarea
+        console.error('[DEBUG] Error obteniendo tarea:', tareaError);
         throw tareaError;
       }
       
@@ -768,9 +878,11 @@ export class ActividadesService implements OnDestroy {
         .single();
 
       if (error) {
-        // Error actualizando tarea
+        console.error('[DEBUG] Error actualizando tarea:', error);
         throw error;
       }
+
+      console.log('[DEBUG] Tarea actualizada exitosamente');
 
       // Calcular y emitir el nuevo progreso
       const nuevoProgreso = await this.calcularProgresoActividad(tarea.actividad_id);
@@ -779,10 +891,13 @@ export class ActividadesService implements OnDestroy {
         progreso: nuevoProgreso
       });
 
-      // Tarea actualizada exitosamente
+      // NUEVA FUNCIONALIDAD: Actualizar automáticamente el estado de la actividad
+      await this.updateActividadEstadoAutomatico(tarea.actividad_id);
+
+      console.log('[DEBUG] Proceso completo de actualización de tarea finalizado');
       return data;
     } catch (error) {
-      // Error en updateTareaEstado
+      console.error('[DEBUG] Error en updateTareaEstado:', error);
       throw error;
     }
   }

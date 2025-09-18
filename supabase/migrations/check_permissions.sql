@@ -1,31 +1,27 @@
--- Verificar permisos actuales para las tablas
-SELECT grantee, table_name, privilege_type 
+-- Verificar permisos actuales para las tablas obras y user_obras
+SELECT 
+    grantee, 
+    table_name, 
+    privilege_type 
 FROM information_schema.role_table_grants 
 WHERE table_schema = 'public' 
-  AND grantee IN ('anon', 'authenticated') 
+    AND grantee IN ('anon', 'authenticated') 
+    AND table_name IN ('obras', 'user_obras')
 ORDER BY table_name, grantee;
 
--- Otorgar permisos básicos a las tablas principales si no existen
-GRANT SELECT ON actividades TO anon;
-GRANT SELECT ON actividades TO authenticated;
-GRANT ALL PRIVILEGES ON actividades TO authenticated;
-
+-- Otorgar permisos necesarios si no existen
 GRANT SELECT ON obras TO anon;
 GRANT SELECT ON obras TO authenticated;
-GRANT ALL PRIVILEGES ON obras TO authenticated;
+GRANT SELECT ON user_obras TO anon;
+GRANT SELECT ON user_obras TO authenticated;
 
-GRANT SELECT ON projects TO anon;
-GRANT SELECT ON projects TO authenticated;
-GRANT ALL PRIVILEGES ON projects TO authenticated;
-
-GRANT SELECT ON items TO anon;
-GRANT SELECT ON items TO authenticated;
-GRANT ALL PRIVILEGES ON items TO authenticated;
-
-GRANT SELECT ON reports TO anon;
-GRANT SELECT ON reports TO authenticated;
-GRANT ALL PRIVILEGES ON reports TO authenticated;
-
-GRANT SELECT ON users TO anon;
-GRANT SELECT ON users TO authenticated;
-GRANT ALL PRIVILEGES ON users TO authenticated;
+-- Verificar permisos después de otorgarlos
+SELECT 
+    grantee, 
+    table_name, 
+    privilege_type 
+FROM information_schema.role_table_grants 
+WHERE table_schema = 'public' 
+    AND grantee IN ('anon', 'authenticated') 
+    AND table_name IN ('obras', 'user_obras')
+ORDER BY table_name, grantee;

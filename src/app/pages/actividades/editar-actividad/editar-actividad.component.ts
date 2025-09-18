@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AbstractControl, FormBuilder, FormGroup, Validators, ValidationErrors, ReactiveFormsModule } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, FormArray, Validators, ValidationErrors, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, Observable, from, Subject } from 'rxjs';
 import { map, switchMap, takeUntil } from 'rxjs/operators';
@@ -21,6 +21,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatDialogModule } from '@angular/material/dialog';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterModule } from '@angular/router';
 
 // Leaflet
@@ -30,6 +32,7 @@ import * as L from 'leaflet';
 import { ActividadesService, Actividad, Frente } from '../../../services/actividades.service';
 import { AuthService } from '../../../services/auth.service';
 import { MapService } from '../../../services/map.service';
+import { TareasService } from '../../../services/tareas.service';
 
 // Components
 import { LocationSelectorDialogComponent } from '../../../components/location-selector-dialog/location-selector-dialog.component';
@@ -54,7 +57,9 @@ import { LocationSelectorDialogComponent } from '../../../components/location-se
     MatProgressSpinnerModule,
     MatSnackBarModule,
     MatSliderModule,
-    MatDialogModule
+    MatDialogModule,
+    MatExpansionModule,
+    MatTooltipModule
   ],
   templateUrl: './editar-actividad.component.html',
   styleUrls: ['./editar-actividad.component.css']
@@ -99,7 +104,8 @@ export class EditarActividadComponent implements OnInit, OnDestroy, AfterViewIni
     private route: ActivatedRoute,
     private snackBar: MatSnackBar,
     private mapService: MapService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private tareasService: TareasService
   ) {
     this.actividadForm = this.createForm();
   }
@@ -141,7 +147,8 @@ export class EditarActividadComponent implements OnInit, OnDestroy, AfterViewIni
       observaciones: [''],
       requiere_maquinaria: [false],
       requiere_materiales: [false],
-      es_critica: [false]
+      es_critica: [false],
+      tareas: this.fb.array([])
     });
   }
 
@@ -152,7 +159,7 @@ export class EditarActividadComponent implements OnInit, OnDestroy, AfterViewIni
       
       if (actividad) {
         this.actividad = actividad;
-        this.populateForm(actividad);
+        await this.populateForm(actividad);
         
         // Inicializar mapa con las coordenadas de la actividad
         if (actividad.ubicacion && this.mapContainer) {
@@ -172,7 +179,7 @@ export class EditarActividadComponent implements OnInit, OnDestroy, AfterViewIni
     }
   }
 
-  private populateForm(actividad: Actividad): void {
+  private async populateForm(actividad: Actividad): Promise<void> {
     this.actividadForm.patchValue({
       tipo_actividad: actividad.tipo_actividad,
       estado: actividad.estado,
@@ -192,6 +199,34 @@ export class EditarActividadComponent implements OnInit, OnDestroy, AfterViewIni
 
     if (actividad.ubicacion) {
       this.selectedLocation = { lat: actividad.ubicacion.lat, lng: actividad.ubicacion.lng };
+    }
+
+    // Cargar tareas existentes
+    await this.loadTareas(actividad.id!);
+  }
+
+  private async loadTareas(actividadId: string): Promise<void> {
+    try {
+      const tareas = await this.tareasService.getTareasByActividad(actividadId);
+      
+      // Limpiar el FormArray actual
+      while (this.tareasFormArray.length !== 0) {
+        this.tareasFormArray.removeAt(0);
+      }
+      
+      // Agregar las tareas existentes al FormArray
+      tareas.forEach(tarea => {
+        const tareaForm = this.fb.group({
+          id: [tarea.id],
+          nombre: [tarea.nombre, [Validators.required, Validators.minLength(3)]],
+          descripcion: [tarea.descripcion || ''],
+          orden: [tarea.orden],
+          completada: [tarea.completada || false]
+        });
+        this.tareasFormArray.push(tareaForm);
+      });
+    } catch (error) {
+      console.error('Error al cargar tareas:', error);
     }
   }
 
@@ -291,6 +326,9 @@ export class EditarActividadComponent implements OnInit, OnDestroy, AfterViewIni
 
         await this.actividadesService.updateActividad(this.actividadId, actividadData);
         
+        // Guardar tareas
+        await this.saveTareas();
+        
         this.snackBar.open('Actividad actualizada exitosamente', 'Cerrar', {
           duration: 3000,
           panelClass: ['success-snackbar']
@@ -336,4 +374,54 @@ export class EditarActividadComponent implements OnInit, OnDestroy, AfterViewIni
   get frente_id() { return this.actividadForm.get('frente_id'); }
   get responsable() { return this.actividadForm.get('responsable'); }
   get observaciones() { return this.actividadForm.get('observaciones'); }
+  
+  // Getter para tareas
+  get tareasFormArray(): FormArray {
+    return this.actividadForm.get('tareas') as FormArray;
+  }
+
+  private async saveTareas(): Promise<void> {
+    try {
+      const tareasFormValue = this.tareasFormArray.value;
+      
+      for (const tareaData of tareasFormValue) {
+        const tareaToSave = {
+          ...tareaData,
+          actividad_id: this.actividadId
+        };
+        
+        if (tareaData.id) {
+          // Actualizar tarea existente
+          await this.tareasService.updateTarea(tareaData.id, tareaToSave);
+        } else {
+          // Crear nueva tarea
+          await this.tareasService.createTarea(tareaToSave);
+        }
+      }
+    } catch (error) {
+      console.error('Error al guardar tareas:', error);
+      throw error;
+    }
+  }
+
+  // Métodos para manejar tareas
+  agregarTarea(): void {
+    const tareaForm = this.fb.group({
+      nombre: ['', [Validators.required, Validators.minLength(3)]],
+      descripcion: [''],
+      orden: [this.tareasFormArray.length + 1],
+      completada: [false]
+    });
+    
+    this.tareasFormArray.push(tareaForm);
+  }
+
+  eliminarTarea(index: number): void {
+    this.tareasFormArray.removeAt(index);
+    
+    // Reordenar las tareas restantes
+    for (let i = 0; i < this.tareasFormArray.length; i++) {
+      this.tareasFormArray.at(i).patchValue({ orden: i + 1 });
+    }
+  }
 }
