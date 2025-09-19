@@ -217,6 +217,102 @@
       </mat-card-content>
     </mat-card>
 
+    <!-- Tareas de la Actividad -->
+    <mat-card class="form-section">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>task</mat-icon>
+          Tareas de la Actividad
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="tareas-container">
+          <div class="tareas-header">
+            <button mat-raised-button 
+                    type="button" 
+                    color="primary" 
+                    (click)="agregarTarea()"
+                    class="add-task-button">
+              <mat-icon>add</mat-icon>
+              Agregar Tarea
+            </button>
+          </div>
+
+          <div class="tareas-list" *ngIf="tareasFormArray.length > 0">
+            <mat-expansion-panel 
+              *ngFor="let tareaControl of tareasFormArray.controls; let i = index" 
+              class="tarea-panel"
+              [formGroup]="$any(tareaControl)">
+              
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  <mat-icon>task_alt</mat-icon>
+                  <span class="tarea-title">
+                    {{ tareaControl.get('nombre')?.value || 'Nueva Tarea' }}
+                  </span>
+                  <span class="tarea-order">#{{ i + 1 }}</span>
+                </mat-panel-title>
+                <mat-panel-description>
+                  <span class="tarea-status" 
+                        [class.completed]="tareaControl.get('completada')?.value">
+                    {{ tareaControl.get('completada')?.value ? 'Completada' : 'Pendiente' }}
+                  </span>
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+
+              <div class="tarea-content">
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Nombre de la Tarea</mat-label>
+                    <input matInput 
+                           formControlName="nombre" 
+                           placeholder="Ingrese el nombre de la tarea">
+                    <mat-icon matSuffix>title</mat-icon>
+                    <mat-error *ngIf="tareaControl.get('nombre')?.hasError('required')">
+                      El nombre de la tarea es requerido
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Descripción</mat-label>
+                    <textarea matInput 
+                              formControlName="descripcion" 
+                              rows="3"
+                              placeholder="Descripción detallada de la tarea..."></textarea>
+                    <mat-icon matSuffix>description</mat-icon>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row tarea-actions">
+                  <mat-checkbox formControlName="completada" class="completed-checkbox">
+                    <mat-icon>check_circle</mat-icon>
+                    Tarea Completada
+                  </mat-checkbox>
+
+                  <button mat-icon-button 
+                          type="button" 
+                          color="warn" 
+                          (click)="eliminarTarea(i)"
+                          class="delete-task-button"
+                          matTooltip="Eliminar tarea">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </mat-expansion-panel>
+          </div>
+
+          <div class="no-tareas" *ngIf="tareasFormArray.length === 0">
+            <mat-icon>task</mat-icon>
+            <p>No hay tareas agregadas</p>
+            <small>Haga clic en "Agregar Tarea" para comenzar</small>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
     <!-- Botones de Acción -->
     <div class="actions-container">
       <button mat-stroked-button 

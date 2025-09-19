@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { MatTableDataSource } from '@angular/material/table';
 import { KpisService, KPI } from '../../services/kpis.service';
 import { AuthService } from '../../services/auth.service';
+import { DirectAuthService } from '../../services/direct-auth.service';
 import { ObrasService } from '../../services/obras.service';
 import { Obra } from '../../interfaces/database.interface';
 import { MatCardModule } from '@angular/material/card';
@@ -56,6 +57,7 @@ export class KpisComponent implements OnInit {
     private fb: FormBuilder,
     private kpisService: KpisService,
     private obrasService: ObrasService,
+    public directAuthService: DirectAuthService,
     private snackBar: MatSnackBar
   ) {
     this.initializeForm();
@@ -92,6 +94,17 @@ export class KpisComponent implements OnInit {
   }
 
   ngOnInit() {
+    // Verificar autenticación al cargar el componente
+    const currentUser = this.directAuthService.getCurrentUser();
+    if (!currentUser) {
+      this.showMessage('Debe iniciar sesión para acceder a los KPIs. Redirigiendo al login...');
+      // Opcional: redirigir al login después de un breve delay
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 2000);
+      return;
+    }
+
     this.loadObras();
     this.setupKpisSubscription();
   }
@@ -153,6 +166,19 @@ export class KpisComponent implements OnInit {
 
   async onSubmit() {
     if (this.kpiForm.valid && !this.submitting) {
+      // Verificar autenticación antes de proceder
+      const currentUser = this.directAuthService.getCurrentUser();
+      if (!currentUser) {
+        this.showMessage('Debe iniciar sesión para crear KPIs. Por favor, inicie sesión e intente nuevamente.');
+        return;
+      }
+
+      const token = this.directAuthService.getAccessToken();
+      if (!token) {
+        this.showMessage('Token de autenticación no válido. Por favor, inicie sesión nuevamente.');
+        return;
+      }
+
       try {
         this.loading = true;
         this.submitting = true;
@@ -191,7 +217,9 @@ export class KpisComponent implements OnInit {
           clima_condiciones: formData.clima_condiciones,
           observaciones_tecnicas: formData.observaciones_tecnicas,
           estado: formData.estado,
-          metricas_adicionales: formData.metricas_adicionales ? { notas: formData.metricas_adicionales } : null
+          metricas_adicionales: formData.metricas_adicionales ? { notas: formData.metricas_adicionales } : null,
+          // Campo requerido para RLS policies
+          created_by: currentUser.id
         };
         
         if (this.editingKpi && this.editingKpi.id) {

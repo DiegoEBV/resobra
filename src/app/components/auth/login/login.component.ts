@@ -111,8 +111,7 @@ export class LoginComponent implements OnInit {
     switch (error.message) {
       case 'Invalid login credentials':
         return 'Credenciales inválidas. Verifique su email y contraseña.';
-      case 'Email not confirmed':
-        return 'Por favor confirme su email antes de iniciar sesión.';
+
       case 'Too many requests':
         return 'Demasiados intentos. Intente nuevamente más tarde.';
       default:

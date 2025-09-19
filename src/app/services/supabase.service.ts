@@ -9,15 +9,16 @@ export class SupabaseService {
   private supabase: SupabaseClient;
 
   constructor() {
-    // Crear cliente Supabase completamente sin autenticación para evitar locks
+    // Crear cliente Supabase con configuración actualizada del environment
     this.supabase = createClient(
       environment.supabase.url,
       environment.supabase.anonKey,
       {
         auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-          detectSessionInUrl: false,
+          // Usar configuración del environment si existe, sino usar valores por defecto
+          autoRefreshToken: environment.supabase.auth?.autoRefreshToken ?? false,
+          persistSession: environment.supabase.auth?.persistSession ?? false,
+          detectSessionInUrl: environment.supabase.auth?.detectSessionInUrl ?? false,
           storageKey: 'sb-data-only-token',
           storage: {
             getItem: () => null,
@@ -63,5 +64,17 @@ export class SupabaseService {
   async getCurrentUser() {
     const { data: { user } } = await this.supabase.auth.getUser();
     return user;
+  }
+
+  // Set session with access token
+  async setSession(accessToken: string, refreshToken?: string): Promise<void> {
+    try {
+      await this.supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken || ''
+      });
+    } catch (error) {
+      console.error('Error setting session:', error);
+    }
   }
 }

@@ -174,8 +174,7 @@ export class LoginComponent {
             // Manejar errores específicos de Supabase
             if (error.message && error.message.includes('Invalid login credentials')) {
               errorMessage = 'Credenciales inválidas. Por favor verifique su email y contraseña.';
-            } else if (error.message && error.message.includes('Email not confirmed')) {
-              errorMessage = 'La cuenta no ha sido confirmada. Por favor contacte al administrador.';
+
             } else if (error.message) {
               errorMessage = error.message;
             }

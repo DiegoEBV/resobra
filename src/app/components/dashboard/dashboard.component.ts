@@ -117,7 +117,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private activityChart: Chart | null = null;
   private costChart: Chart | null = null;
   private planificacionChart: Chart | null = null;
-  
+  private campoChart: Chart | null = null;
+  private evaluacionChart: Chart | null = null;
+  private obrasChart: Chart | null = null;
+
   // Datos para gráficos
   progressChartData: ChartData = { labels: [], datasets: [] };
   kpiChartData: ChartData = { labels: [], datasets: [] };
@@ -156,13 +159,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       });
       
-      // Pequeña pausa para asegurar que el DOM esté listo antes de crear gráficos
-      timer(100).subscribe(() => {
+      // Esperar a que el DOM esté completamente renderizado antes de crear gráficos
+      setTimeout(() => {
         this.ngZone.run(() => {
-          this.updateCharts();
+          this.initializeCharts();
           this.cdr.detectChanges();
         });
-      });
+      }, 500);
       
     } catch (error) {
       console.error('❌ [DashboardComponent] Error crítico inicializando dashboard:', error);
@@ -170,6 +173,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.isLoading = false;
         this.loadFallbackData(); // Cargar datos de respaldo
         this.cdr.detectChanges();
+        // Inicializar gráficos con datos de fallback
+        setTimeout(() => this.initializeCharts(), 500);
       });
     }
     
@@ -216,11 +221,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     try {
       console.log('🔄 Refrescando datos de KPIs desde Supabase...');
       
-      // Primero calcular KPIs automáticos basándose en datos de obras
-      console.log('Calculando KPIs automáticos basándose en datos de obras...');
-      await this.kpisService.calculateAllAutomaticKPIs();
-      
-      // Luego refrescar los datos
+      // Solo refrescar los datos existentes, no calcular automáticamente
       await this.kpisService.refresh();
       console.log('✅ Datos de KPIs actualizados correctamente');
     } catch (error) {
@@ -298,7 +299,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
    */
   private async loadRealDashboardDataSafely(): Promise<void> {
     try {
-      // Cargando datos reales del dashboard
+      console.log('📊 [Dashboard] Cargando datos reales del dashboard...');
       
       // Cargar datos usando el nuevo servicio
       await this.dashboardService.loadDashboardData();
@@ -320,19 +321,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.dashboardService.charts$.subscribe({
         next: (charts) => {
           this.ngZone.run(() => {
+            console.log('📈 [Dashboard] Datos de gráficos recibidos:', charts);
             this.updateChartsFromService(charts);
+            // Recrear gráficos con nuevos datos
+            setTimeout(() => this.initializeCharts(), 100);
             this.cdr.detectChanges();
           });
         },
         error: (error) => {
           console.error('❌ [DashboardComponent] Error en charts$:', error);
           this.loadFallbackCharts();
+          setTimeout(() => this.initializeCharts(), 100);
         }
       });
       
-      // Datos reales del dashboard cargados
+      console.log('✅ [Dashboard] Datos reales del dashboard cargados');
     } catch (error) {
-      // Error cargando datos reales del dashboard
+      console.error('❌ [Dashboard] Error cargando datos reales del dashboard:', error);
       // Fallback a datos de ejemplo si hay error
       await this.loadDashboardDataSafely();
     }
@@ -527,27 +532,46 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Actualizar gráficos
-  private updateCharts(): void {
-    // Usar NgZone y setTimeout para asegurar que el DOM esté listo
-    this.ngZone.runOutsideAngular(() => {
-      setTimeout(() => {
-        this.ngZone.run(() => {
+  // Inicializar todos los gráficos
+  private initializeCharts(): void {
+    console.log('📊 [Dashboard] Inicializando gráficos...');
+    
+    // Destruir gráficos existentes primero
+    this.destroyCharts();
+    
+    // Esperar un momento para que el DOM se actualice
+    setTimeout(() => {
+      try {
+        // Gráficos específicos por rol
+        if (this.userProfile?.rol === 'residente') {
+          this.createCampoChart();
+          this.createEvaluacionChart();
           this.createProgressChart();
-          this.createKPIChart();
-          this.createActivityChart();
+        } else if (this.userProfile?.rol === 'logistica') {
+          this.createObrasChart();
           this.createCostChart();
           this.createPlanificacionChart();
-          this.cdr.detectChanges();
-        });
-      }, 200); // Aumentar el delay para asegurar que el DOM esté completamente listo
-    });
+        }
+        console.log('✅ [Dashboard] Gráficos inicializados correctamente');
+      } catch (error) {
+        console.error('❌ [Dashboard] Error inicializando gráficos:', error);
+      }
+    }, 100);
   }
 
-  // Crear gráfico de progreso
+  // Actualizar gráficos con nuevos datos
+  private updateCharts(): void {
+    console.log('🔄 [Dashboard] Actualizando gráficos...');
+    this.initializeCharts();
+  }
+
+  // Crear gráfico de progreso semanal
   private createProgressChart(): void {
-    const canvas = document.getElementById('progressChart') as HTMLCanvasElement;
-    if (!canvas) return;
+    const canvas = document.getElementById('progresoChart') as HTMLCanvasElement;
+    if (!canvas) {
+      console.warn('⚠️ [Dashboard] Canvas progresoChart no encontrado');
+      return;
+    }
 
     if (this.progressChart) {
       this.progressChart.destroy();
@@ -556,77 +580,31 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const completadas = this.stats.actividadesCompletadas;
-    const enProgreso = this.stats.actividadesEnProgreso;
-    const pendientes = this.stats.totalActividades - completadas - enProgreso;
-
-    this.progressChart = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: ['Completadas', 'En Progreso', 'Pendientes'],
+    // Usar datos reales si están disponibles, sino usar datos de ejemplo
+    let chartData = this.progressChartData;
+    
+    if (!chartData.labels.length) {
+      // Datos de ejemplo
+      const semanas = ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'];
+      const progreso = [15, 28, 42, 58, 75, 85];
+      
+      chartData = {
+        labels: semanas,
         datasets: [{
-          data: [completadas, enProgreso, pendientes],
-          backgroundColor: ['#4caf50', '#2196f3', '#ff9800'],
-          borderWidth: 2,
-          borderColor: '#fff'
+          label: 'Progreso de Obra (%)',
+          data: progreso,
+          borderColor: '#4caf50',
+          backgroundColor: 'rgba(76, 175, 80, 0.1)',
+          borderWidth: 3,
+          fill: true,
+          tension: 0.4
         }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: {
-              padding: 20,
-              usePointStyle: true
-            }
-          }
-        }
-      }
-    });
-  }
-
-  // Crear gráfico de KPIs
-  private createKPIChart(): void {
-    const canvas = document.getElementById('kpiChart') as HTMLCanvasElement;
-    if (!canvas || !this.dashboardKPIs) return;
-
-    if (this.kpiChart) {
-      this.kpiChart.destroy();
+      };
     }
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const kpisData = [
-      { nombre: 'Rendimiento', valor: this.dashboardKPIs.rendimiento.promedio, tendencia: this.dashboardKPIs.rendimiento.tendencia },
-      { nombre: 'Calidad', valor: this.dashboardKPIs.calidad.promedio, tendencia: this.dashboardKPIs.calidad.tendencia },
-      { nombre: 'Seguridad', valor: this.dashboardKPIs.seguridad.promedio, tendencia: this.dashboardKPIs.seguridad.tendencia },
-      { nombre: 'Costo', valor: this.dashboardKPIs.costo.promedio, tendencia: this.dashboardKPIs.costo.tendencia },
-      { nombre: 'Tiempo', valor: this.dashboardKPIs.tiempo.promedio, tendencia: this.dashboardKPIs.tiempo.tendencia }
-    ];
-    const labels = kpisData.map(k => k.nombre);
-    const valores = kpisData.map(k => k.valor);
-    const colores = kpisData.map(k => {
-      if (k.valor >= 90) return '#4caf50';
-      if (k.valor >= 70) return '#2196f3';
-      if (k.valor >= 50) return '#ff9800';
-      return '#f44336';
-    });
-
-    this.kpiChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Cumplimiento (%)',
-          data: valores,
-          backgroundColor: colores,
-          borderColor: colores,
-          borderWidth: 1
-        }]
-      },
+    this.progressChart = new Chart(ctx, {
+      type: 'line',
+      data: chartData,
       options: {
         responsive: true,
         maintainAspectRatio: false,
@@ -648,12 +626,74 @@ export class DashboardComponent implements OnInit, OnDestroy {
         }
       }
     });
+    
+    console.log('✅ [Dashboard] Gráfico de progreso creado');
   }
 
-  // Crear gráfico de actividades por día
+  // Crear gráfico de KPIs
+  private createKPIChart(): void {
+    const canvas = document.getElementById('kpiChart') as HTMLCanvasElement;
+    if (!canvas) {
+      console.warn('⚠️ [Dashboard] Canvas kpiChart no encontrado');
+      return;
+    }
+
+    if (this.kpiChart) {
+      this.kpiChart.destroy();
+    }
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Usar datos reales si están disponibles, sino usar datos de ejemplo
+    let chartData = this.kpiChartData;
+    
+    if (!chartData.labels.length) {
+      // Datos de ejemplo
+      const categorias = ['Calidad', 'Tiempo', 'Costo', 'Seguridad'];
+      const valores = [85, 78, 92, 88];
+      const colores = ['#4caf50', '#2196f3', '#ff9800', '#f44336'];
+      
+      chartData = {
+        labels: categorias,
+        datasets: [{
+          label: 'KPI (%)',
+          data: valores,
+          backgroundColor: colores,
+          borderColor: colores,
+          borderWidth: 1
+        }]
+      };
+    }
+
+    this.kpiChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 20,
+              usePointStyle: true
+            }
+          }
+        }
+      }
+    });
+    
+    console.log('✅ [Dashboard] Gráfico de KPIs creado');
+  }
+
+  // Crear gráfico de actividades
   private createActivityChart(): void {
-    const canvas = document.getElementById('activityChart') as HTMLCanvasElement;
-    if (!canvas) return;
+    const canvas = document.getElementById('actividadesChart') as HTMLCanvasElement;
+    if (!canvas) {
+      console.warn('⚠️ [Dashboard] Canvas actividadesChart no encontrado');
+      return;
+    }
 
     if (this.activityChart) {
       this.activityChart.destroy();
@@ -662,57 +702,69 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Generar datos de los últimos 7 días
-    const labels = [];
-    const data = [];
-    const today = new Date();
-
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - i);
-      labels.push(date.toLocaleDateString('es-ES', { weekday: 'short' }));
-      // Datos simulados - en producción vendrían de la base de datos
-      data.push(Math.floor(Math.random() * 10) + 1);
+    // Usar datos reales si están disponibles, sino usar datos de ejemplo
+    let chartData = this.activityChartData;
+    
+    if (!chartData.labels.length) {
+      // Datos de ejemplo
+      const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
+      const completadas = [12, 18, 25, 32, 28, 35];
+      const pendientes = [8, 12, 15, 18, 22, 15];
+      
+      chartData = {
+        labels: meses,
+        datasets: [
+          {
+            label: 'Completadas',
+            data: completadas,
+            backgroundColor: '#4caf50',
+            borderColor: '#4caf50',
+            borderWidth: 1
+          },
+          {
+            label: 'Pendientes',
+            data: pendientes,
+            backgroundColor: '#ff9800',
+            borderColor: '#ff9800',
+            borderWidth: 1
+          }
+        ]
+      };
     }
 
     this.activityChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Actividades',
-          data: data,
-          borderColor: '#2196f3',
-          backgroundColor: 'rgba(33, 150, 243, 0.1)',
-          borderWidth: 2,
-          fill: true,
-          tension: 0.4
-        }]
-      },
+      type: 'bar',
+      data: chartData,
       options: {
         responsive: true,
         maintainAspectRatio: false,
         scales: {
           y: {
-            beginAtZero: true,
-            ticks: {
-              stepSize: 1
-            }
+            beginAtZero: true
           }
         },
         plugins: {
           legend: {
-            display: false
+            position: 'top',
+            labels: {
+              padding: 20,
+              usePointStyle: true
+            }
           }
         }
       }
     });
+    
+    console.log('✅ [Dashboard] Gráfico de actividades creado');
   }
 
   // Crear gráfico de análisis de costos (Presupuesto vs Ejecutado)
   private createCostChart(): void {
     const canvas = document.getElementById('costosChart') as HTMLCanvasElement;
-    if (!canvas) return;
+    if (!canvas) {
+      console.warn('⚠️ [Dashboard] Canvas costosChart no encontrado');
+      return;
+    }
 
     if (this.costChart) {
       this.costChart.destroy();
@@ -721,17 +773,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // DATOS DE EJEMPLO - En producción estos datos deberían venir de:
-    // - Tabla de obras/proyectos con campos: presupuesto_inicial, monto_ejecutado
-    // - Tabla de partidas presupuestarias con seguimiento de gastos
-    // - Sistema de control de costos con reportes mensuales
-    const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
-    const presupuestado = [850000, 920000, 1100000, 1250000, 1400000, 1550000];
-    const ejecutado = [780000, 890000, 1050000, 1180000, 1320000, 1480000];
-
-    this.costChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
+    // Usar datos reales si están disponibles, sino usar datos de ejemplo
+    let chartData = this.costChartData;
+    
+    if (!chartData.labels.length) {
+      // Datos de ejemplo mejorados
+      const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
+      const presupuestado = [850000, 920000, 1100000, 1250000, 1400000, 1550000];
+      const ejecutado = [780000, 890000, 1050000, 1180000, 1320000, 1480000];
+      
+      chartData = {
         labels: meses,
         datasets: [
           {
@@ -749,13 +800,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
             borderWidth: 1
           }
         ]
-      },
+      };
+    }
+
+    this.costChart = new Chart(ctx, {
+      type: 'bar',
+      data: chartData,
       options: {
         responsive: true,
         maintainAspectRatio: false,
         scales: {
           y: {
             beginAtZero: true,
+            max: 100,
             ticks: {
               callback: function(value) {
                 return '$' + (Number(value) / 1000).toFixed(0) + 'K';
@@ -781,12 +838,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
         }
       }
     });
+    
+    console.log('✅ [Dashboard] Gráfico de costos creado');
   }
 
   // Crear gráfico de cronograma de proyectos (Planificación vs Ejecución mensual)
   private createPlanificacionChart(): void {
     const canvas = document.getElementById('planificacionChart') as HTMLCanvasElement;
-    if (!canvas) return;
+    if (!canvas) {
+      console.warn('⚠️ [Dashboard] Canvas planificacionChart no encontrado');
+      return;
+    }
 
     if (this.planificacionChart) {
       this.planificacionChart.destroy();
@@ -795,17 +857,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // DATOS DE EJEMPLO - En producción estos datos deberían venir de:
-    // - Tabla de actividades con campos: fecha_inicio_planificada, fecha_fin_planificada, fecha_inicio_real, fecha_fin_real
-    // - Cronograma maestro con hitos y fechas críticas
-    // - Sistema de seguimiento de avance físico vs programado
-    const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
-    const planificado = [15, 28, 42, 58, 75, 90];
-    const ejecutado = [12, 25, 38, 52, 68, 85];
-
-    this.planificacionChart = new Chart(ctx, {
-      type: 'line',
-      data: {
+    // Usar datos reales si están disponibles, sino usar datos de ejemplo
+    let chartData = this.planificacionChartData;
+    
+    if (!chartData.labels.length) {
+      // Datos de ejemplo mejorados
+      const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
+      const planificado = [15, 28, 42, 58, 75, 90];
+      const ejecutado = [12, 25, 38, 52, 68, 85];
+      
+      chartData = {
         labels: meses,
         datasets: [
           {
@@ -827,7 +888,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
             tension: 0.4
           }
         ]
-      },
+      };
+    }
+
+    this.planificacionChart = new Chart(ctx, {
+      type: 'line',
+      data: chartData,
       options: {
         responsive: true,
         maintainAspectRatio: false,
@@ -860,6 +926,209 @@ export class DashboardComponent implements OnInit, OnDestroy {
         }
       }
     });
+    
+    console.log('✅ [Dashboard] Gráfico de planificación creado');
+  }
+
+  // Crear gráfico de actividades de campo
+  private createCampoChart(): void {
+    const canvas = document.getElementById('campoChart') as HTMLCanvasElement;
+    if (!canvas) {
+      console.warn('⚠️ [Dashboard] Canvas campoChart no encontrado');
+      return;
+    }
+
+    if (this.campoChart) {
+      this.campoChart.destroy();
+    }
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Datos de ejemplo para actividades de campo
+    const chartData = {
+      labels: ['Excavación', 'Cimentación', 'Estructura', 'Acabados'],
+      datasets: [{
+        label: 'Actividades Completadas',
+        data: [12, 8, 15, 6],
+        backgroundColor: [
+          'rgba(76, 175, 80, 0.8)',
+          'rgba(33, 150, 243, 0.8)',
+          'rgba(255, 152, 0, 0.8)',
+          'rgba(156, 39, 176, 0.8)'
+        ],
+        borderColor: [
+          'rgba(76, 175, 80, 1)',
+          'rgba(33, 150, 243, 1)',
+          'rgba(255, 152, 0, 1)',
+          'rgba(156, 39, 176, 1)'
+        ],
+        borderWidth: 2
+      }]
+    };
+
+    this.campoChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 20,
+              usePointStyle: true
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return context.label + ': ' + context.parsed + ' actividades';
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    console.log('✅ [Dashboard] Gráfico de campo creado');
+  }
+
+  // Crear gráfico de evaluaciones de personal
+  private createEvaluacionChart(): void {
+    const canvas = document.getElementById('evaluacionChart') as HTMLCanvasElement;
+    if (!canvas) {
+      console.warn('⚠️ [Dashboard] Canvas evaluacionChart no encontrado');
+      return;
+    }
+
+    if (this.evaluacionChart) {
+      this.evaluacionChart.destroy();
+    }
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Datos de ejemplo para evaluaciones
+    const chartData = {
+      labels: ['Excelente', 'Bueno', 'Regular', 'Deficiente'],
+      datasets: [{
+        label: 'Evaluaciones',
+        data: [25, 45, 20, 10],
+        backgroundColor: [
+          'rgba(76, 175, 80, 0.8)',
+          'rgba(33, 150, 243, 0.8)',
+          'rgba(255, 193, 7, 0.8)',
+          'rgba(244, 67, 54, 0.8)'
+        ],
+        borderColor: [
+          'rgba(76, 175, 80, 1)',
+          'rgba(33, 150, 243, 1)',
+          'rgba(255, 193, 7, 1)',
+          'rgba(244, 67, 54, 1)'
+        ],
+        borderWidth: 2
+      }]
+    };
+
+    this.evaluacionChart = new Chart(ctx, {
+      type: 'bar',
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return value + '%';
+              }
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return context.label + ': ' + context.parsed.y + '%';
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    console.log('✅ [Dashboard] Gráfico de evaluaciones creado');
+  }
+
+  // Crear gráfico de estado de actividades
+  private createObrasChart(): void {
+    const canvas = document.getElementById('obrasChart') as HTMLCanvasElement;
+    if (!canvas) {
+      console.warn('⚠️ [Dashboard] Canvas obrasChart no encontrado');
+      return;
+    }
+
+    if (this.obrasChart) {
+      this.obrasChart.destroy();
+    }
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Datos de ejemplo para estado de actividades
+    const chartData = {
+      labels: ['En Progreso', 'Completadas', 'Pausadas', 'Planificadas'],
+      datasets: [{
+        label: 'Actividades',
+        data: [8, 12, 3, 5],
+        backgroundColor: [
+          'rgba(33, 150, 243, 0.8)',
+          'rgba(76, 175, 80, 0.8)',
+          'rgba(255, 193, 7, 0.8)',
+          'rgba(156, 39, 176, 0.8)'
+        ],
+        borderColor: [
+          'rgba(33, 150, 243, 1)',
+          'rgba(76, 175, 80, 1)',
+          'rgba(255, 193, 7, 1)',
+          'rgba(156, 39, 176, 1)'
+        ],
+        borderWidth: 2
+      }]
+    };
+
+    this.obrasChart = new Chart(ctx, {
+      type: 'pie',
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 20,
+              usePointStyle: true
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return context.label + ': ' + context.parsed + ' actividades';
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    console.log('✅ [Dashboard] Gráfico de actividades creado');
   }
 
   // Destruir gráficos
@@ -883,6 +1152,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (this.planificacionChart) {
       this.planificacionChart.destroy();
       this.planificacionChart = null;
+    }
+    if (this.campoChart) {
+      this.campoChart.destroy();
+      this.campoChart = null;
+    }
+    if (this.evaluacionChart) {
+      this.evaluacionChart.destroy();
+      this.evaluacionChart = null;
+    }
+    if (this.obrasChart) {
+      this.obrasChart.destroy();
+      this.obrasChart = null;
     }
   }
 

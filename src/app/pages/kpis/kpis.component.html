@@ -2,6 +2,18 @@
   <div class="header">
     <h1>Gestión de KPIs</h1>
     <p>Ingrese los datos de rendimiento que alimentarán los gráficos del dashboard</p>
+    
+    <!-- Estado de autenticación -->
+    <div class="auth-status" *ngIf="!directAuthService.getCurrentUser()">
+      <mat-card class="warning-card">
+        <mat-card-content>
+          <div class="warning-content">
+            <mat-icon color="warn">warning</mat-icon>
+            <span>No está autenticado. Debe iniciar sesión para crear KPIs.</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
   </div>
 
   <!-- Formulario de KPIs -->

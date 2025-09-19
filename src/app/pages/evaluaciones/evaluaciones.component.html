@@ -23,39 +23,56 @@
         <div class="tab-content">
           <mat-card>
             <mat-card-header>
-              <mat-card-title>Crear Nueva Evaluación</mat-card-title>
-              <mat-card-subtitle>Complete el formulario para evaluar a un empleado</mat-card-subtitle>
+              <mat-card-title>Evaluación Integral de Desempeño</mat-card-title>
+              <mat-card-subtitle>Formulario completo para evaluación profesional del personal</mat-card-subtitle>
             </mat-card-header>
             
             <mat-card-content>
               <form [formGroup]="evaluacionForm" (ngSubmit)="onSubmitEvaluacion()">
+                
+                <!-- Sección 1: Información General -->
+                <div class="section-header">
+                  <mat-icon>person</mat-icon>
+                  <h3>Información General</h3>
+                </div>
+                
                 <div class="form-row">
                   <mat-form-field appearance="outline">
                     <mat-label>Empleado a Evaluar</mat-label>
                     <mat-select formControlName="evaluado_id" required>
                       <mat-option *ngFor="let empleado of empleados" [value]="empleado.id">
-                        {{empleado.nombre}} - {{empleado.puesto}}
+                        {{empleado.nombre}} - {{empleado.puesto}} ({{empleado.departamento}})
                       </mat-option>
                     </mat-select>
                     <mat-error>Seleccione un empleado</mat-error>
                   </mat-form-field>
 
                   <mat-form-field appearance="outline">
-                    <mat-label>Rúbrica de Evaluación</mat-label>
-                    <mat-select formControlName="rubrica_id" (selectionChange)="onRubricaChange()" required>
-                      <mat-option *ngFor="let rubrica of rubricas" [value]="rubrica.id">
-                        {{rubrica.nombre}} - {{rubrica.tipo_personal}}
-                      </mat-option>
+                    <mat-label>Tipo de Evaluación</mat-label>
+                    <mat-select formControlName="tipo_evaluacion" required>
+                      <mat-option value="desempeño">Evaluación de Desempeño</mat-option>
+                      <mat-option value="competencias">Evaluación de Competencias</mat-option>
+                      <mat-option value="360">Evaluación 360°</mat-option>
+                      <mat-option value="probatorio">Período Probatorio</mat-option>
+                      <mat-option value="promocion">Evaluación para Promoción</mat-option>
                     </mat-select>
-                    <mat-error>Seleccione una rúbrica</mat-error>
+                    <mat-error>Seleccione el tipo de evaluación</mat-error>
                   </mat-form-field>
                 </div>
 
                 <div class="form-row">
                   <mat-form-field appearance="outline">
                     <mat-label>Período de Evaluación</mat-label>
-                    <input matInput formControlName="periodo" placeholder="Ej: Q1 2024" required>
-                    <mat-error>Ingrese el período</mat-error>
+                    <mat-select formControlName="periodo" required>
+                      <mat-option value="Q1-2024">Primer Trimestre 2024</mat-option>
+                      <mat-option value="Q2-2024">Segundo Trimestre 2024</mat-option>
+                      <mat-option value="Q3-2024">Tercer Trimestre 2024</mat-option>
+                      <mat-option value="Q4-2024">Cuarto Trimestre 2024</mat-option>
+                      <mat-option value="S1-2024">Primer Semestre 2024</mat-option>
+                      <mat-option value="S2-2024">Segundo Semestre 2024</mat-option>
+                      <mat-option value="ANUAL-2024">Evaluación Anual 2024</mat-option>
+                    </mat-select>
+                    <mat-error>Seleccione el período</mat-error>
                   </mat-form-field>
 
                   <mat-form-field appearance="outline">
@@ -67,70 +84,417 @@
                   </mat-form-field>
                 </div>
 
-                <!-- Criterios de Evaluación -->
-                <div *ngIf="selectedRubrica" class="criterios-section">
-                  <h3>Criterios de Evaluación</h3>
-                  <div class="criterios-grid">
-                    <mat-card *ngFor="let criterio of selectedRubrica.criterios" class="criterio-card">
-                      <mat-card-header>
-                        <mat-card-title>{{criterio.nombre}}</mat-card-title>
-                        <mat-card-subtitle>Peso: {{criterio.peso}}%</mat-card-subtitle>
-                      </mat-card-header>
-                      
-                      <mat-card-content>
-                        <p>{{criterio.descripcion}}</p>
-                        
-                        <div class="calificacion-section">
-                          <label>Calificación (0-100):</label>
-                          <input type="range" 
-                            min="0" 
-                            max="100" 
-                            step="5"
-                            [value]="getCalificacion(criterio.id)"
-                            (input)="onCalificacionChange(criterio.id, $any($event.target).value || 0)"
-                            class="calificacion-slider">
-                          <div class="calificacion-display">
-                            <span class="puntos">{{getCalificacion(criterio.id)}} puntos</span>
-                          </div>
-                        </div>
-                      </mat-card-content>
-                    </mat-card>
-                  </div>
-                  
-                  <!-- Puntuación Total -->
-                  <div class="puntuacion-total">
-                    <mat-card>
-                      <mat-card-content>
-                        <h3>Puntuación Total</h3>
-                        <div class="total-score" [style.color]="getPuntuacionColor(getPuntuacionTotal())">
-                          {{getPuntuacionTotal()}} / 100
-                        </div>
-                      </mat-card-content>
-                    </mat-card>
+                <!-- Sección 2: Competencias Técnicas -->
+                <div class="section-header">
+                  <mat-icon>engineering</mat-icon>
+                  <h3>Competencias Técnicas</h3>
+                </div>
+
+                <div class="competencias-grid">
+                  <mat-card class="competencia-card">
+                    <mat-card-header>
+                      <mat-card-title>Conocimiento Técnico</mat-card-title>
+                      <mat-card-subtitle>Dominio de herramientas y procesos</mat-card-subtitle>
+                    </mat-card-header>
+                    <mat-card-content>
+                      <div class="rating-section">
+                        <label>Calificación:</label>
+                        <mat-slider min="1" max="5" step="0.5" discrete>
+                          <input matSliderThumb formControlName="conocimiento_tecnico">
+                        </mat-slider>
+                        <span class="rating-value">{{evaluacionForm.get('conocimiento_tecnico')?.value || 1}}/5</span>
+                      </div>
+                      <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Observaciones</mat-label>
+                        <textarea matInput formControlName="obs_conocimiento_tecnico" rows="2"></textarea>
+                      </mat-form-field>
+                    </mat-card-content>
+                  </mat-card>
+
+                  <mat-card class="competencia-card">
+                    <mat-card-header>
+                      <mat-card-title>Calidad del Trabajo</mat-card-title>
+                      <mat-card-subtitle>Precisión y estándares de calidad</mat-card-subtitle>
+                    </mat-card-header>
+                    <mat-card-content>
+                      <div class="rating-section">
+                        <label>Calificación:</label>
+                        <mat-slider min="1" max="5" step="0.5" discrete>
+                          <input matSliderThumb formControlName="calidad_trabajo">
+                        </mat-slider>
+                        <span class="rating-value">{{evaluacionForm.get('calidad_trabajo')?.value || 1}}/5</span>
+                      </div>
+                      <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Observaciones</mat-label>
+                        <textarea matInput formControlName="obs_calidad_trabajo" rows="2"></textarea>
+                      </mat-form-field>
+                    </mat-card-content>
+                  </mat-card>
+
+                  <mat-card class="competencia-card">
+                    <mat-card-header>
+                      <mat-card-title>Productividad</mat-card-title>
+                      <mat-card-subtitle>Eficiencia y cumplimiento de metas</mat-card-subtitle>
+                    </mat-card-header>
+                    <mat-card-content>
+                      <div class="rating-section">
+                        <label>Calificación:</label>
+                        <mat-slider min="1" max="5" step="0.5" discrete>
+                          <input matSliderThumb formControlName="productividad">
+                        </mat-slider>
+                        <span class="rating-value">{{evaluacionForm.get('productividad')?.value || 1}}/5</span>
+                      </div>
+                      <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Observaciones</mat-label>
+                        <textarea matInput formControlName="obs_productividad" rows="2"></textarea>
+                      </mat-form-field>
+                    </mat-card-content>
+                  </mat-card>
+
+                  <mat-card class="competencia-card">
+                    <mat-card-header>
+                      <mat-card-title>Seguridad Laboral</mat-card-title>
+                      <mat-card-subtitle>Cumplimiento de normas de seguridad</mat-card-subtitle>
+                    </mat-card-header>
+                    <mat-card-content>
+                      <div class="rating-section">
+                        <label>Calificación:</label>
+                        <mat-slider min="1" max="5" step="0.5" discrete>
+                          <input matSliderThumb formControlName="seguridad_laboral">
+                        </mat-slider>
+                        <span class="rating-value">{{evaluacionForm.get('seguridad_laboral')?.value || 1}}/5</span>
+                      </div>
+                      <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Observaciones</mat-label>
+                        <textarea matInput formControlName="obs_seguridad_laboral" rows="2"></textarea>
+                      </mat-form-field>
+                    </mat-card-content>
+                  </mat-card>
+                </div>
+
+                <!-- Sección 3: Competencias Interpersonales -->
+                <div class="section-header">
+                  <mat-icon>groups</mat-icon>
+                  <h3>Competencias Interpersonales</h3>
+                </div>
+
+                <div class="competencias-grid">
+                  <mat-card class="competencia-card">
+                    <mat-card-header>
+                      <mat-card-title>Trabajo en Equipo</mat-card-title>
+                      <mat-card-subtitle>Colaboración y cooperación</mat-card-subtitle>
+                    </mat-card-header>
+                    <mat-card-content>
+                      <div class="rating-section">
+                        <label>Calificación:</label>
+                        <mat-slider min="1" max="5" step="0.5" discrete>
+                          <input matSliderThumb formControlName="trabajo_equipo">
+                        </mat-slider>
+                        <span class="rating-value">{{evaluacionForm.get('trabajo_equipo')?.value || 1}}/5</span>
+                      </div>
+                      <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Observaciones</mat-label>
+                        <textarea matInput formControlName="obs_trabajo_equipo" rows="2"></textarea>
+                      </mat-form-field>
+                    </mat-card-content>
+                  </mat-card>
+
+                  <mat-card class="competencia-card">
+                    <mat-card-header>
+                      <mat-card-title>Comunicación</mat-card-title>
+                      <mat-card-subtitle>Claridad y efectividad comunicativa</mat-card-subtitle>
+                    </mat-card-header>
+                    <mat-card-content>
+                      <div class="rating-section">
+                        <label>Calificación:</label>
+                        <mat-slider min="1" max="5" step="0.5" discrete>
+                          <input matSliderThumb formControlName="comunicacion">
+                        </mat-slider>
+                        <span class="rating-value">{{evaluacionForm.get('comunicacion')?.value || 1}}/5</span>
+                      </div>
+                      <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Observaciones</mat-label>
+                        <textarea matInput formControlName="obs_comunicacion" rows="2"></textarea>
+                      </mat-form-field>
+                    </mat-card-content>
+                  </mat-card>
+
+                  <mat-card class="competencia-card">
+                    <mat-card-header>
+                      <mat-card-title>Liderazgo</mat-card-title>
+                      <mat-card-subtitle>Capacidad de guiar y motivar</mat-card-subtitle>
+                    </mat-card-header>
+                    <mat-card-content>
+                      <div class="rating-section">
+                        <label>Calificación:</label>
+                        <mat-slider min="1" max="5" step="0.5" discrete>
+                          <input matSliderThumb formControlName="liderazgo">
+                        </mat-slider>
+                        <span class="rating-value">{{evaluacionForm.get('liderazgo')?.value || 1}}/5</span>
+                      </div>
+                      <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Observaciones</mat-label>
+                        <textarea matInput formControlName="obs_liderazgo" rows="2"></textarea>
+                      </mat-form-field>
+                    </mat-card-content>
+                  </mat-card>
+
+                  <mat-card class="competencia-card">
+                    <mat-card-header>
+                      <mat-card-title>Adaptabilidad</mat-card-title>
+                      <mat-card-subtitle>Flexibilidad ante cambios</mat-card-subtitle>
+                    </mat-card-header>
+                    <mat-card-content>
+                      <div class="rating-section">
+                        <label>Calificación:</label>
+                        <mat-slider min="1" max="5" step="0.5" discrete>
+                          <input matSliderThumb formControlName="adaptabilidad">
+                        </mat-slider>
+                        <span class="rating-value">{{evaluacionForm.get('adaptabilidad')?.value || 1}}/5</span>
+                      </div>
+                      <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Observaciones</mat-label>
+                        <textarea matInput formControlName="obs_adaptabilidad" rows="2"></textarea>
+                      </mat-form-field>
+                    </mat-card-content>
+                  </mat-card>
+                </div>
+
+                <!-- Sección 4: Competencias Organizacionales -->
+                <div class="section-header">
+                  <mat-icon>business</mat-icon>
+                  <h3>Competencias Organizacionales</h3>
+                </div>
+
+                <div class="competencias-grid">
+                  <mat-card class="competencia-card">
+                    <mat-card-header>
+                      <mat-card-title>Puntualidad y Asistencia</mat-card-title>
+                      <mat-card-subtitle>Cumplimiento de horarios</mat-card-subtitle>
+                    </mat-card-header>
+                    <mat-card-content>
+                      <div class="rating-section">
+                        <label>Calificación:</label>
+                        <mat-slider min="1" max="5" step="0.5" discrete>
+                          <input matSliderThumb formControlName="puntualidad">
+                        </mat-slider>
+                        <span class="rating-value">{{evaluacionForm.get('puntualidad')?.value || 1}}/5</span>
+                      </div>
+                      <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Observaciones</mat-label>
+                        <textarea matInput formControlName="obs_puntualidad" rows="2"></textarea>
+                      </mat-form-field>
+                    </mat-card-content>
+                  </mat-card>
+
+                  <mat-card class="competencia-card">
+                    <mat-card-header>
+                      <mat-card-title>Iniciativa</mat-card-title>
+                      <mat-card-subtitle>Proactividad y propuestas de mejora</mat-card-subtitle>
+                    </mat-card-header>
+                    <mat-card-content>
+                      <div class="rating-section">
+                        <label>Calificación:</label>
+                        <mat-slider min="1" max="5" step="0.5" discrete>
+                          <input matSliderThumb formControlName="iniciativa">
+                        </mat-slider>
+                        <span class="rating-value">{{evaluacionForm.get('iniciativa')?.value || 1}}/5</span>
+                      </div>
+                      <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Observaciones</mat-label>
+                        <textarea matInput formControlName="obs_iniciativa" rows="2"></textarea>
+                      </mat-form-field>
+                    </mat-card-content>
+                  </mat-card>
+
+                  <mat-card class="competencia-card">
+                    <mat-card-header>
+                      <mat-card-title>Compromiso Organizacional</mat-card-title>
+                      <mat-card-subtitle>Identificación con la empresa</mat-card-subtitle>
+                    </mat-card-header>
+                    <mat-card-content>
+                      <div class="rating-section">
+                        <label>Calificación:</label>
+                        <mat-slider min="1" max="5" step="0.5" discrete>
+                          <input matSliderThumb formControlName="compromiso">
+                        </mat-slider>
+                        <span class="rating-value">{{evaluacionForm.get('compromiso')?.value || 1}}/5</span>
+                      </div>
+                      <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Observaciones</mat-label>
+                        <textarea matInput formControlName="obs_compromiso" rows="2"></textarea>
+                      </mat-form-field>
+                    </mat-card-content>
+                  </mat-card>
+
+                  <mat-card class="competencia-card">
+                    <mat-card-header>
+                      <mat-card-title>Resolución de Problemas</mat-card-title>
+                      <mat-card-subtitle>Capacidad analítica y solución de conflictos</mat-card-subtitle>
+                    </mat-card-header>
+                    <mat-card-content>
+                      <div class="rating-section">
+                        <label>Calificación:</label>
+                        <mat-slider min="1" max="5" step="0.5" discrete>
+                          <input matSliderThumb formControlName="resolucion_problemas">
+                        </mat-slider>
+                        <span class="rating-value">{{evaluacionForm.get('resolucion_problemas')?.value || 1}}/5</span>
+                      </div>
+                      <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Observaciones</mat-label>
+                        <textarea matInput formControlName="obs_resolucion_problemas" rows="2"></textarea>
+                      </mat-form-field>
+                    </mat-card-content>
+                  </mat-card>
+                </div>
+
+                <!-- Sección 5: Objetivos y Metas -->
+                <div class="section-header">
+                  <mat-icon>flag</mat-icon>
+                  <h3>Cumplimiento de Objetivos</h3>
+                </div>
+
+                <div class="objetivos-section">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Objetivos Cumplidos</mat-label>
+                    <textarea matInput formControlName="objetivos_cumplidos" rows="3" 
+                             placeholder="Describa los objetivos principales que el empleado ha cumplido durante el período evaluado..."></textarea>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Objetivos Pendientes</mat-label>
+                    <textarea matInput formControlName="objetivos_pendientes" rows="3" 
+                             placeholder="Describa los objetivos que aún están en proceso o pendientes de cumplimiento..."></textarea>
+                  </mat-form-field>
+
+                  <div class="form-row">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Porcentaje de Cumplimiento</mat-label>
+                      <mat-select formControlName="porcentaje_cumplimiento">
+                        <mat-option value="90-100">90% - 100% (Excelente)</mat-option>
+                        <mat-option value="80-89">80% - 89% (Muy Bueno)</mat-option>
+                        <mat-option value="70-79">70% - 79% (Bueno)</mat-option>
+                        <mat-option value="60-69">60% - 69% (Regular)</mat-option>
+                        <mat-option value="0-59">0% - 59% (Deficiente)</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                      <mat-label>Calificación General</mat-label>
+                      <mat-select formControlName="calificacion_general">
+                        <mat-option value="excelente">Excelente (4.5 - 5.0)</mat-option>
+                        <mat-option value="muy-bueno">Muy Bueno (4.0 - 4.4)</mat-option>
+                        <mat-option value="bueno">Bueno (3.5 - 3.9)</mat-option>
+                        <mat-option value="regular">Regular (3.0 - 3.4)</mat-option>
+                        <mat-option value="deficiente">Deficiente (1.0 - 2.9)</mat-option>
+                      </mat-select>
+                    </mat-form-field>
                   </div>
                 </div>
 
+                <!-- Sección 6: Plan de Desarrollo -->
+                <div class="section-header">
+                  <mat-icon>trending_up</mat-icon>
+                  <h3>Plan de Desarrollo</h3>
+                </div>
+
+                <div class="desarrollo-section">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Fortalezas Identificadas</mat-label>
+                    <textarea matInput formControlName="fortalezas" rows="3" 
+                             placeholder="Describa las principales fortalezas y competencias destacadas del empleado..."></textarea>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Áreas de Mejora</mat-label>
+                    <textarea matInput formControlName="areas_mejora" rows="3" 
+                             placeholder="Identifique las áreas que requieren desarrollo o mejora..."></textarea>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Recomendaciones de Capacitación</mat-label>
+                    <textarea matInput formControlName="recomendaciones_capacitacion" rows="3" 
+                             placeholder="Sugiera cursos, talleres o capacitaciones específicas..."></textarea>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Objetivos para el Próximo Período</mat-label>
+                    <textarea matInput formControlName="objetivos_proximos" rows="3" 
+                             placeholder="Establezca metas y objetivos específicos para el siguiente período de evaluación..."></textarea>
+                  </mat-form-field>
+                </div>
+
+                <!-- Sección 7: Comentarios Finales -->
+                <div class="section-header">
+                  <mat-icon>comment</mat-icon>
+                  <h3>Comentarios y Observaciones</h3>
+                </div>
+
                 <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Comentarios Generales</mat-label>
+                  <mat-label>Comentarios Generales del Evaluador</mat-label>
                   <textarea matInput formControlName="comentarios_generales" rows="4" 
-                           placeholder="Observaciones adicionales sobre el desempeño..."></textarea>
+                           placeholder="Proporcione comentarios adicionales, observaciones generales o cualquier información relevante sobre el desempeño del empleado..."></textarea>
                 </mat-form-field>
 
-                <mat-form-field appearance="outline">
-                  <mat-label>Estado</mat-label>
-                  <mat-select formControlName="estado">
-                    <mat-option *ngFor="let estado of estadosEvaluacion" [value]="estado.value">
-                      {{estado.label}}
-                    </mat-option>
-                  </mat-select>
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Comentarios del Empleado (Opcional)</mat-label>
+                  <textarea matInput formControlName="comentarios_empleado" rows="3" 
+                           placeholder="Espacio para que el empleado agregue sus propios comentarios o perspectivas..."></textarea>
                 </mat-form-field>
 
+                <!-- Estado y Acciones -->
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Estado de la Evaluación</mat-label>
+                    <mat-select formControlName="estado">
+                      <mat-option value="borrador">Borrador</mat-option>
+                      <mat-option value="completada">Completada</mat-option>
+                      <mat-option value="revisada">Revisada</mat-option>
+                      <mat-option value="aprobada">Aprobada</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Requiere Seguimiento</mat-label>
+                    <mat-select formControlName="requiere_seguimiento">
+                      <mat-option value="no">No</mat-option>
+                      <mat-option value="si">Sí</mat-option>
+                      <mat-option value="urgente">Urgente</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+
+                <!-- Puntuación Total Calculada -->
+                <div class="puntuacion-total-section">
+                  <mat-card class="total-score-card">
+                    <mat-card-content>
+                      <div class="score-display">
+                        <h3>Puntuación Total</h3>
+                        <div class="total-score" [style.color]="getPuntuacionColor(getPuntuacionTotal())">
+                          {{getPuntuacionTotal().toFixed(1)}} / 5.0
+                        </div>
+                        <div class="score-description">
+                          {{getDescripcionPuntuacion(getPuntuacionTotal())}}
+                        </div>
+                      </div>
+                    </mat-card-content>
+                  </mat-card>
+                </div>
+
+                <!-- Botones de Acción -->
                 <div class="form-actions">
-                  <button mat-button type="button" (click)="resetForm()">Limpiar</button>
-                  <button mat-raised-button color="primary" type="submit" 
-                          [disabled]="!evaluacionForm.valid || !selectedRubrica || loading">
+                  <button mat-button type="button" (click)="resetForm()">
+                    <mat-icon>clear</mat-icon>
+                    Limpiar Formulario
+                  </button>
+                  <button mat-button type="button" (click)="guardarBorrador()" [disabled]="loading">
                     <mat-icon>save</mat-icon>
-                    Guardar Evaluación
+                    Guardar Borrador
+                  </button>
+                  <button mat-raised-button color="primary" type="submit" 
+                          [disabled]="!evaluacionForm.valid || loading">
+                    <mat-icon>check_circle</mat-icon>
+                    Completar Evaluación
                   </button>
                 </div>
               </form>
@@ -167,6 +531,11 @@
                     <td mat-cell *matCellDef="let evaluacion">{{evaluacion.evaluado_nombre}}</td>
                   </ng-container>
 
+                  <ng-container matColumnDef="tipo_evaluacion">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Tipo</th>
+                    <td mat-cell *matCellDef="let evaluacion">{{evaluacion.tipo_evaluacion}}</td>
+                  </ng-container>
+
                   <ng-container matColumnDef="periodo">
                     <th mat-header-cell *matHeaderCellDef mat-sort-header>Período</th>
                     <td mat-cell *matCellDef="let evaluacion">{{evaluacion.periodo}}</td>
@@ -176,8 +545,18 @@
                     <th mat-header-cell *matHeaderCellDef mat-sort-header>Puntuación</th>
                     <td mat-cell *matCellDef="let evaluacion">
                       <span [style.color]="getPuntuacionColor(evaluacion.puntuacion_total)">
-                        {{evaluacion.puntuacion_total}}/100
+                        {{evaluacion.puntuacion_total}}/5.0
                       </span>
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="calificacion_general">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Calificación</th>
+                    <td mat-cell *matCellDef="let evaluacion">
+                      <mat-chip [style.background-color]="getCalificacionColor(evaluacion.calificacion_general)" 
+                               [style.color]="'white'">
+                        {{getCalificacionLabel(evaluacion.calificacion_general)}}
+                      </mat-chip>
                     </td>
                   </ng-container>
 
@@ -199,14 +578,15 @@
                   <ng-container matColumnDef="acciones">
                     <th mat-header-cell *matHeaderCellDef>Acciones</th>
                     <td mat-cell *matCellDef="let evaluacion">
-                      <button mat-icon-button color="primary" 
-                              matTooltip="Ver detalles">
+                      <button mat-icon-button (click)="verDetalleEvaluacion(evaluacion)" matTooltip="Ver detalle">
                         <mat-icon>visibility</mat-icon>
                       </button>
-                      <button mat-icon-button color="accent" 
-                              matTooltip="Editar"
-                              *ngIf="evaluacion.estado === 'borrador'">
+                      <button mat-icon-button (click)="editarEvaluacion(evaluacion)" matTooltip="Editar" 
+                              [disabled]="evaluacion.estado === 'aprobada'">
                         <mat-icon>edit</mat-icon>
+                      </button>
+                      <button mat-icon-button (click)="generarReporte(evaluacion)" matTooltip="Generar reporte">
+                        <mat-icon>print</mat-icon>
                       </button>
                     </td>
                   </ng-container>
@@ -214,12 +594,9 @@
                   <tr mat-header-row *matHeaderRowDef="evaluacionesColumns"></tr>
                   <tr mat-row *matRowDef="let row; columns: evaluacionesColumns;"></tr>
                 </table>
-
-                <mat-paginator [pageSizeOptions]="[5, 10, 20]" 
-                              showFirstLastButtons 
-                              aria-label="Seleccionar página de evaluaciones">
-                </mat-paginator>
               </div>
+
+              <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
             </mat-card-content>
           </mat-card>
         </div>
@@ -252,7 +629,7 @@
                     <th mat-header-cell *matHeaderCellDef mat-sort-header>Promedio</th>
                     <td mat-cell *matCellDef="let resumen">
                       <span [style.color]="getPuntuacionColor(resumen.promedio_general)">
-                        {{resumen.promedio_general | number:'1.1-1'}}
+                        {{resumen.promedio_general}}/5.0
                       </span>
                     </td>
                   </ng-container>
@@ -268,25 +645,13 @@
                   </ng-container>
 
                   <ng-container matColumnDef="tendencia">
-                    <th mat-header-cell *matHeaderCellDef>Tendencia</th>
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Tendencia</th>
                     <td mat-cell *matCellDef="let resumen">
-                      <mat-icon [style.color]="getTendenciaColor(resumen.tendencia)">
-                        {{getTendenciaIcon(resumen.tendencia)}}
-                      </mat-icon>
-                    </td>
-                  </ng-container>
-
-                  <ng-container matColumnDef="acciones">
-                    <th mat-header-cell *matHeaderCellDef>Acciones</th>
-                    <td mat-cell *matCellDef="let resumen">
-                      <button mat-icon-button color="primary" 
-                              matTooltip="Ver historial completo">
-                        <mat-icon>history</mat-icon>
-                      </button>
-                      <button mat-icon-button color="accent" 
-                              matTooltip="Nueva evaluación">
-                        <mat-icon>add_circle</mat-icon>
-                      </button>
+                      <mat-chip [style.background-color]="getTendenciaColor(resumen.tendencia)" 
+                               [style.color]="'white'">
+                        <mat-icon>{{getTendenciaIcon(resumen.tendencia)}}</mat-icon>
+                        {{getTendenciaLabel(resumen.tendencia)}}
+                      </mat-chip>
                     </td>
                   </ng-container>
 
