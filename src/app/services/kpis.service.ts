@@ -104,15 +104,21 @@ export class KpisService {
   // Método de inicialización explícita que debe llamarse después de la autenticación
   async initialize(): Promise<void> {
     try {
-      // Iniciando carga de datos
+      console.log('🔄 KpisService - Iniciando carga de datos...');
       
       const user = this.directAuthService.getCurrentUser();
       if (!user) {
-        // No hay usuario autenticado - no se pueden cargar KPIs
+        console.log('❌ No hay usuario autenticado - no se pueden cargar KPIs');
         return;
       }
+      console.log('✅ Usuario autenticado para inicialización:', user.id);
 
-      // Usuario autenticado
+      const token = this.directAuthService.getAccessToken();
+      if (token) {
+        // Configurar sesión global antes de cargar datos
+        await this.supabase.setSession(token);
+        console.log('✅ Sesión global configurada');
+      }
       
       // Cargar datos en paralelo
       await Promise.all([
@@ -122,9 +128,9 @@ export class KpisService {
       ]);
       
       this.isInitialized = true;
-      // Inicialización completada
-    } catch (error) {
-      // Error en inicialización
+      console.log('✅ Inicialización completada');
+    } catch (error: any) {
+      console.error('❌ Error en inicialización:', error);
       throw error;
     }
   }
@@ -137,19 +143,22 @@ export class KpisService {
   // Cargar KPIs del usuario
   async loadUserKPIs(): Promise<void> {
     try {
-      // Iniciando carga de KPIs de usuario
+      console.log('🔄 KpisService - Cargando KPIs del usuario...');
       
       const user = this.directAuthService.getCurrentUser();
       if (!user) {
-        // No hay usuario autenticado para cargar KPIs
+        console.error('❌ Usuario no autenticado');
         return;
       }
-
-      // Cargando KPIs para usuario
+      console.log('✅ Usuario autenticado:', user.id);
 
       // Obtener token de autenticación
       const token = this.directAuthService.getAccessToken();
       if (!token) throw new Error('Token de autenticación no disponible');
+      
+      // Configurar sesión si hay token disponible
+      await this.supabase.setSession(token);
+      console.log('✅ Sesión configurada para carga de KPIs');
 
       // Obtener obras asignadas al usuario
       // Obteniendo obras del usuario
@@ -245,19 +254,25 @@ export class KpisService {
   // Cargar KPIs para dashboard
   private async loadDashboardKPIs(): Promise<void> {
     try {
-      // Iniciando carga de KPIs para dashboard
+      console.log('🔄 KpisService - Cargando KPIs para dashboard...');
       
       const user = await this.directAuthService.getCurrentUser();
       if (!user) {
-        // No hay usuario autenticado para cargar dashboard KPIs
+        console.log('❌ No hay usuario autenticado para cargar dashboard KPIs');
         return;
       }
-
-      // Cargando dashboard KPIs para usuario
+      console.log('✅ Usuario autenticado para dashboard:', user.id);
 
       // Obtener token de autenticación
       const token = this.directAuthService.getAccessToken();
-      if (!token) throw new Error('Token de autenticación no disponible');
+      if (!token) {
+        console.error('❌ Token de autenticación no disponible');
+        throw new Error('Token de autenticación no disponible');
+      }
+      
+      // Configurar sesión antes de las consultas
+      await this.supabase.setSession(token);
+      console.log('✅ Sesión configurada para dashboard KPIs');
 
       // Obtener obras asignadas al usuario
       // Obteniendo obras del usuario
@@ -422,19 +437,25 @@ export class KpisService {
   // Cargar alertas
   private async loadAlertas(): Promise<void> {
     try {
-      // Iniciando carga de alertas
+      console.log('🔄 KpisService - Cargando alertas...');
       
       const user = await this.directAuthService.getCurrentUser();
       if (!user) {
-        // No hay usuario autenticado para cargar alertas
+        console.log('❌ No hay usuario autenticado para cargar alertas');
         return;
       }
-
-      // Cargando alertas para usuario
+      console.log('✅ Usuario autenticado para alertas:', user.id);
 
       // Obtener token de autenticación
       const token = this.directAuthService.getAccessToken();
-      if (!token) throw new Error('Token de autenticación no disponible');
+      if (!token) {
+        console.error('❌ Token de autenticación no disponible');
+        throw new Error('Token de autenticación no disponible');
+      }
+      
+      // Configurar sesión antes de las consultas
+      await this.supabase.setSession(token);
+      console.log('✅ Sesión configurada para alertas');
 
       // Obtener obras asignadas al usuario
       // Obteniendo obras del usuario para alertas
@@ -546,17 +567,35 @@ export class KpisService {
   // Crear nuevo KPI
   async createKPI(kpi: Omit<KPI, 'id' | 'calculated_at'>): Promise<KPI> {
     try {
-      const user = await this.directAuthService.getCurrentUser();
-      if (!user) throw new Error('Usuario no autenticado');
+      console.log('🔄 KpisService - Iniciando creación de KPI...');
+      
+      const user = this.directAuthService.getCurrentUser();
+      if (!user) {
+        console.error('❌ Usuario no autenticado');
+        throw new Error('Usuario no autenticado');
+      }
+      console.log('✅ Usuario autenticado:', user.id);
 
       const token = this.directAuthService.getAccessToken();
-      if (!token) throw new Error('Token de autenticación no disponible');
+      if (!token) {
+        console.error('❌ Token de autenticación no disponible');
+        throw new Error('Token de autenticación no disponible');
+      }
+      console.log('✅ Token disponible:', token.substring(0, 20) + '...');
+
+      // CRÍTICO: Configurar la sesión en el cliente Supabase antes de la petición
+      console.log('🔧 Configurando sesión en cliente Supabase...');
+      await this.supabase.setSession(token);
+      console.log('✅ Sesión configurada');
 
       const kpiData = {
         ...kpi,
-        calculated_at: new Date().toISOString()
+        calculated_at: new Date().toISOString(),
+        created_by: user.id
       };
-
+      
+      console.log('📤 Enviando datos KPI:', kpiData);
+      
       const { data, error } = await this.supabase.client
         .from('kpis')
         .insert([kpiData])
@@ -567,14 +606,19 @@ export class KpisService {
         `)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error en inserción:', error);
+        throw error;
+      }
+      
+      console.log('✅ KPI creado exitosamente:', data);
 
       // Actualizar listas locales
       await this.refresh();
       
       return data;
-    } catch (error) {
-      // Error creating KPI
+    } catch (error: any) {
+      console.error('❌ Error creating KPI:', error);
       throw error;
     }
   }
@@ -582,13 +626,23 @@ export class KpisService {
   // Actualizar KPI
   async updateKPI(id: string, updates: Partial<KPI>): Promise<KPI> {
     try {
+      console.log('🔄 KpisService - Actualizando KPI:', id);
+      
       const token = this.directAuthService.getAccessToken();
-      if (!token) throw new Error('Token de autenticación no disponible');
+      if (!token) {
+        console.error('❌ Token de autenticación no disponible');
+        throw new Error('Token de autenticación no disponible');
+      }
+
+      // Configurar sesión antes de la petición
+      await this.supabase.setSession(token);
 
       const updateData = {
         ...updates,
         updated_at: new Date().toISOString()
       };
+
+      console.log('📤 Actualizando con datos:', updateData);
 
       const { data, error } = await this.supabase.client
         .from('kpis')
@@ -601,7 +655,12 @@ export class KpisService {
         `)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error actualizando KPI:', error);
+        throw error;
+      }
+      
+      console.log('✅ KPI actualizado exitosamente:', data);
 
       // Registrar en historial si hay cambios en métricas
       if (updates.avance_fisico !== undefined) {
@@ -621,8 +680,11 @@ export class KpisService {
   // Eliminar KPI
   async deleteKPI(id: string): Promise<void> {
     try {
+      console.log('🔄 KpisService - Eliminando KPI:', id);
+      
       // Validar que el ID no esté vacío o sea inválido
       if (!id || typeof id !== 'string' || id.trim() === '') {
+        console.error('❌ ID de KPI inválido o vacío');
         throw new Error('ID de KPI inválido o vacío');
       }
 
@@ -630,7 +692,13 @@ export class KpisService {
       
       // Verificar que el KPI existe antes de intentar eliminarlo
       const token = this.directAuthService.getAccessToken();
-      if (!token) throw new Error('Token de autenticación no disponible');
+      if (!token) {
+        console.error('❌ Token de autenticación no disponible');
+        throw new Error('Token de autenticación no disponible');
+      }
+
+      // Configurar sesión antes de la petición
+      await this.supabase.setSession(token);
 
       const { data: existingKPI, error: checkError } = await this.supabase.client
         .from('kpis')
@@ -639,7 +707,7 @@ export class KpisService {
         .single();
 
       if (checkError) {
-        // Error verificando KPI
+        console.error('❌ Error verificando KPI:', checkError);
         if (checkError.code === 'PGRST116') {
           throw new Error('KPI no encontrado - puede haber sido eliminado previamente');
         }
@@ -647,16 +715,20 @@ export class KpisService {
       }
 
       if (!existingKPI) {
+        console.error('❌ El KPI no existe o ya fue eliminado');
         throw new Error('El KPI no existe o ya fue eliminado');
       }
 
-      // KPI encontrado
+      console.log('✅ KPI encontrado:', existingKPI.id);
 
       // Verificar permisos del usuario
       const user = await this.directAuthService.getCurrentUser();
       if (!user) {
+        console.error('❌ Usuario no autenticado');
         throw new Error('Usuario no autenticado');
       }
+
+      console.log('✅ Usuario autenticado:', user.id);
 
       // Intentar eliminar el KPI
       const { error } = await this.supabase.client
@@ -665,19 +737,19 @@ export class KpisService {
         .eq('id', id.trim());
 
       if (error) {
-        // Error en eliminación
+        console.error('❌ Error en eliminación:', error);
         if (error.code === '42501') {
           throw new Error('No tiene permisos para eliminar este KPI');
         }
         throw new Error(`Error al eliminar KPI: ${error.message}`);
       }
 
-      // KPI eliminado exitosamente
+      console.log('✅ KPI eliminado exitosamente');
 
       // Actualizar listas locales
       await this.refresh();
     } catch (error: any) {
-      // Error deleting KPI
+      console.error('❌ Error deleting KPI:', error);
       throw error;
     }
   }
@@ -1040,10 +1112,34 @@ export class KpisService {
 
   // Refrescar todos los datos
   async refresh(): Promise<void> {
-    await Promise.all([
-      this.loadUserKPIs(),
-      this.loadDashboardKPIs(),
-      this.loadAlertas()
-    ]);
+    try {
+      console.log('🔄 Iniciando refresh de datos KPI');
+      
+      const user = await this.directAuthService.getCurrentUser();
+      if (!user) {
+        console.error('❌ Usuario no autenticado para refresh');
+        return;
+      }
+
+      const token = this.directAuthService.getAccessToken();
+      if (!token) {
+        console.error('❌ Token no disponible para refresh');
+        return;
+      }
+
+      console.log('🔐 Configurando sesión Supabase para refresh');
+      await this.supabase.setSession(token);
+
+      await Promise.all([
+        this.loadUserKPIs(),
+        this.loadDashboardKPIs(),
+        this.loadAlertas()
+      ]);
+      
+      console.log('✅ Refresh de datos KPI completado');
+    } catch (error) {
+      console.error('❌ Error en refresh de datos KPI:', error);
+      throw error;
+    }
   }
 }

@@ -143,6 +143,18 @@ export const routes: Routes = [
     title: 'Gestión de Usuarios'
   },
   {
+    path: 'usuarios/crear',
+    loadComponent: () => import('./pages/usuarios/crear-usuario.component').then(m => m.CrearUsuarioComponent),
+    canActivate: [DirectAuthGuard],
+    title: 'Crear Usuario'
+  },
+  {
+    path: 'usuarios/editar/:id',
+    loadComponent: () => import('./pages/usuarios/editar-usuario.component').then(m => m.EditarUsuarioComponent),
+    canActivate: [DirectAuthGuard],
+    title: 'Editar Usuario'
+  },
+  {
     path: 'kpis',
     loadComponent: () => import('./pages/kpis/kpis.component').then(m => m.KpisComponent),
     canActivate: [DirectAuthGuard],

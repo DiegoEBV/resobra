@@ -64,4 +64,16 @@ export class SupabaseService {
     const { data: { user } } = await this.supabase.auth.getUser();
     return user;
   }
+
+  // Set session with access token
+  async setSession(accessToken: string, refreshToken?: string): Promise<void> {
+    try {
+      await this.supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken || ''
+      });
+    } catch (error) {
+      console.error('Error setting session:', error);
+    }
+  }
 }
