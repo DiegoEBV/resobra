@@ -110,6 +110,41 @@ export class UsuariosService {
   }
 
   /**
+   * Obtiene las obras disponibles para asignar a usuarios
+   */
+  async getObrasDisponibles(): Promise<any[]> {
+    try {
+      console.log('Obteniendo obras disponibles...');
+      
+      // Configurar autenticación
+      const token = this.directAuthService.getAccessToken();
+      if (token) {
+        await this.supabase.auth.setSession({
+          access_token: token,
+          refresh_token: ''
+        });
+      }
+
+      const { data, error } = await this.supabase
+        .from('obras')
+        .select('id, nombre, descripcion, estado')
+        .order('nombre');
+
+      if (error) {
+        console.error('Error al obtener obras:', error);
+        throw error;
+      }
+
+      console.log('Obras obtenidas:', data?.length || 0);
+      return data || [];
+
+    } catch (error) {
+      console.error('Error en getObrasDisponibles:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Crea un nuevo usuario
    */
   async createUsuario(usuario: CrearUsuarioRequest): Promise<Usuario> {
@@ -185,6 +220,56 @@ export class UsuariosService {
           await this.supabase.auth.admin.deleteUser(authData.user.id);
         }
         throw error;
+      }
+
+      // Si se especificó una obra, crear la asignación en user_obras
+      if (usuario.obra_id && authData.user?.id) {
+        try {
+          console.log('Intentando asignar obra:', {
+            user_id: authData.user.id,
+            obra_id: usuario.obra_id,
+            rol_obra: usuario.rol
+          });
+
+          // Usar el service role key para la inserción en user_obras
+          const { error: obraError } = await this.supabase
+            .from('user_obras')
+            .insert({
+              user_id: authData.user.id,
+              obra_id: usuario.obra_id,
+              rol_obra: usuario.rol,
+              assigned_at: new Date().toISOString()
+            });
+
+          if (obraError) {
+            console.error('Error detallado al asignar obra al usuario:', {
+              error: obraError,
+              message: obraError.message,
+              details: obraError.details,
+              hint: obraError.hint,
+              code: obraError.code
+            });
+            // No lanzar error aquí, el usuario ya fue creado exitosamente
+            console.warn('Usuario creado pero no se pudo asignar la obra');
+          } else {
+            console.log('✅ Obra asignada exitosamente al usuario');
+            
+            // Verificar que se insertó correctamente
+            const { data: verification, error: verifyError } = await this.supabase
+              .from('user_obras')
+              .select('*')
+              .eq('user_id', authData.user.id)
+              .eq('obra_id', usuario.obra_id);
+            
+            if (verifyError) {
+              console.error('Error al verificar inserción:', verifyError);
+            } else {
+              console.log('✅ Verificación exitosa - Registro encontrado:', verification);
+            }
+          }
+        } catch (obraAssignError) {
+          console.error('Error en asignación de obra:', obraAssignError);
+        }
       }
 
       console.log('Usuario creado exitosamente:', data.id);

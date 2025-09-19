@@ -117,7 +117,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private activityChart: Chart | null = null;
   private costChart: Chart | null = null;
   private planificacionChart: Chart | null = null;
-  
+  private campoChart: Chart | null = null;
+  private evaluacionChart: Chart | null = null;
+  private obrasChart: Chart | null = null;
+
   // Datos para gráficos
   progressChartData: ChartData = { labels: [], datasets: [] };
   kpiChartData: ChartData = { labels: [], datasets: [] };
@@ -539,11 +542,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // Esperar un momento para que el DOM se actualice
     setTimeout(() => {
       try {
-        this.createProgressChart();
-        this.createKPIChart();
-        this.createActivityChart();
-        this.createCostChart();
-        this.createPlanificacionChart();
+        // Gráficos específicos por rol
+        if (this.userProfile?.rol === 'residente') {
+          this.createCampoChart();
+          this.createEvaluacionChart();
+          this.createProgressChart();
+        } else if (this.userProfile?.rol === 'logistica') {
+          this.createObrasChart();
+          this.createCostChart();
+          this.createPlanificacionChart();
+        }
         console.log('✅ [Dashboard] Gráficos inicializados correctamente');
       } catch (error) {
         console.error('❌ [Dashboard] Error inicializando gráficos:', error);
@@ -922,6 +930,207 @@ export class DashboardComponent implements OnInit, OnDestroy {
     console.log('✅ [Dashboard] Gráfico de planificación creado');
   }
 
+  // Crear gráfico de actividades de campo
+  private createCampoChart(): void {
+    const canvas = document.getElementById('campoChart') as HTMLCanvasElement;
+    if (!canvas) {
+      console.warn('⚠️ [Dashboard] Canvas campoChart no encontrado');
+      return;
+    }
+
+    if (this.campoChart) {
+      this.campoChart.destroy();
+    }
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Datos de ejemplo para actividades de campo
+    const chartData = {
+      labels: ['Excavación', 'Cimentación', 'Estructura', 'Acabados'],
+      datasets: [{
+        label: 'Actividades Completadas',
+        data: [12, 8, 15, 6],
+        backgroundColor: [
+          'rgba(76, 175, 80, 0.8)',
+          'rgba(33, 150, 243, 0.8)',
+          'rgba(255, 152, 0, 0.8)',
+          'rgba(156, 39, 176, 0.8)'
+        ],
+        borderColor: [
+          'rgba(76, 175, 80, 1)',
+          'rgba(33, 150, 243, 1)',
+          'rgba(255, 152, 0, 1)',
+          'rgba(156, 39, 176, 1)'
+        ],
+        borderWidth: 2
+      }]
+    };
+
+    this.campoChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 20,
+              usePointStyle: true
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return context.label + ': ' + context.parsed + ' actividades';
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    console.log('✅ [Dashboard] Gráfico de campo creado');
+  }
+
+  // Crear gráfico de evaluaciones de personal
+  private createEvaluacionChart(): void {
+    const canvas = document.getElementById('evaluacionChart') as HTMLCanvasElement;
+    if (!canvas) {
+      console.warn('⚠️ [Dashboard] Canvas evaluacionChart no encontrado');
+      return;
+    }
+
+    if (this.evaluacionChart) {
+      this.evaluacionChart.destroy();
+    }
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Datos de ejemplo para evaluaciones
+    const chartData = {
+      labels: ['Excelente', 'Bueno', 'Regular', 'Deficiente'],
+      datasets: [{
+        label: 'Evaluaciones',
+        data: [25, 45, 20, 10],
+        backgroundColor: [
+          'rgba(76, 175, 80, 0.8)',
+          'rgba(33, 150, 243, 0.8)',
+          'rgba(255, 193, 7, 0.8)',
+          'rgba(244, 67, 54, 0.8)'
+        ],
+        borderColor: [
+          'rgba(76, 175, 80, 1)',
+          'rgba(33, 150, 243, 1)',
+          'rgba(255, 193, 7, 1)',
+          'rgba(244, 67, 54, 1)'
+        ],
+        borderWidth: 2
+      }]
+    };
+
+    this.evaluacionChart = new Chart(ctx, {
+      type: 'bar',
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return value + '%';
+              }
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return context.label + ': ' + context.parsed.y + '%';
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    console.log('✅ [Dashboard] Gráfico de evaluaciones creado');
+  }
+
+  // Crear gráfico de estado de actividades
+  private createObrasChart(): void {
+    const canvas = document.getElementById('obrasChart') as HTMLCanvasElement;
+    if (!canvas) {
+      console.warn('⚠️ [Dashboard] Canvas obrasChart no encontrado');
+      return;
+    }
+
+    if (this.obrasChart) {
+      this.obrasChart.destroy();
+    }
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Datos de ejemplo para estado de actividades
+    const chartData = {
+      labels: ['En Progreso', 'Completadas', 'Pausadas', 'Planificadas'],
+      datasets: [{
+        label: 'Actividades',
+        data: [8, 12, 3, 5],
+        backgroundColor: [
+          'rgba(33, 150, 243, 0.8)',
+          'rgba(76, 175, 80, 0.8)',
+          'rgba(255, 193, 7, 0.8)',
+          'rgba(156, 39, 176, 0.8)'
+        ],
+        borderColor: [
+          'rgba(33, 150, 243, 1)',
+          'rgba(76, 175, 80, 1)',
+          'rgba(255, 193, 7, 1)',
+          'rgba(156, 39, 176, 1)'
+        ],
+        borderWidth: 2
+      }]
+    };
+
+    this.obrasChart = new Chart(ctx, {
+      type: 'pie',
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 20,
+              usePointStyle: true
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return context.label + ': ' + context.parsed + ' actividades';
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    console.log('✅ [Dashboard] Gráfico de actividades creado');
+  }
+
   // Destruir gráficos
   private destroyCharts(): void {
     if (this.progressChart) {
@@ -943,6 +1152,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (this.planificacionChart) {
       this.planificacionChart.destroy();
       this.planificacionChart = null;
+    }
+    if (this.campoChart) {
+      this.campoChart.destroy();
+      this.campoChart = null;
+    }
+    if (this.evaluacionChart) {
+      this.evaluacionChart.destroy();
+      this.evaluacionChart = null;
+    }
+    if (this.obrasChart) {
+      this.obrasChart.destroy();
+      this.obrasChart = null;
     }
   }
 

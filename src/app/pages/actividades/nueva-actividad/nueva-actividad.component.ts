@@ -35,6 +35,7 @@ import { ActividadesService } from '../../../services/actividades.service';
 import { AuthService } from '../../../services/auth.service';
 import { DirectAuthService } from '../../../services/direct-auth.service';
 import { MapService } from '../../../services/map.service';
+import { UsuariosService } from '../../../services/usuarios.service';
 
 // Components
 import { LocationSelectorDialogComponent } from '../../../components/location-selector-dialog/location-selector-dialog.component';
@@ -118,12 +119,8 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
     { value: 'critica', label: 'Crítica' }
   ];
   
-  responsables = [
-    { value: 'supervisor1', label: 'Juan Pérez - Supervisor' },
-    { value: 'ingeniero1', label: 'María García - Ingeniero' },
-    { value: 'capataz1', label: 'Carlos López - Capataz' },
-    { value: 'tecnico1', label: 'Ana Martínez - Técnico' }
-  ];
+  responsables: any[] = [];
+  usuarios: any[] = [];
   
   frentes: any[] = [];
   obras: any[] = [];
@@ -133,6 +130,7 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
     private actividadesService: ActividadesService,
     private authService: AuthService,
     private directAuthService: DirectAuthService,
+    private usuariosService: UsuariosService,
     private router: Router,
     private snackBar: MatSnackBar,
     private mapService: MapService,
@@ -157,6 +155,34 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
     }
     
     this.loadObrasAndFrente();
+    this.loadUsuarios();
+  }
+
+  private async loadUsuarios(): Promise<void> {
+    try {
+      console.log('🔄 Cargando usuarios para dropdown de responsables...');
+      
+      // Obtener usuarios activos
+      const usuarios = await this.usuariosService.getUsuarios({ activo: true });
+      
+      // Mapear usuarios para el dropdown
+      this.responsables = usuarios.map(usuario => ({
+        value: usuario.id,
+        label: `${usuario.nombre} - ${usuario.rol === 'residente' ? 'Residente' : 'Logística'}`
+      }));
+      
+      console.log('✅ Usuarios cargados:', this.responsables.length);
+      
+    } catch (error) {
+      console.error('❌ Error al cargar usuarios:', error);
+      this.snackBar.open('Error al cargar la lista de usuarios', 'Cerrar', {
+        duration: 3000,
+        panelClass: ['error-snackbar']
+      });
+      
+      // Fallback a lista vacía
+      this.responsables = [];
+    }
   }
 
   private async loadObrasAndFrente(): Promise<void> {
@@ -487,6 +513,9 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
       observaciones: [''],
       recursos_necesarios: [''],
       costo_estimado: [0, [Validators.min(0)]],
+      // Campos de configuración
+      requiere_evidencia: [false],
+      notificar_inicio: [false],
       // FormArray para las tareas
       tareas: this.fb.array([])
     }, {

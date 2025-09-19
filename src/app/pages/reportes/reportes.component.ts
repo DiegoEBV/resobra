@@ -200,72 +200,113 @@ export class ReportesComponent implements OnInit {
   }
 
   aplicarFiltros(): void {
+    console.log('Aplicando filtros:', this.filtros);
     this.cargarDatos();
-  }
-
-  cambiarPeriodoKPI(periodo: string): void {
-    this.periodoSeleccionado = periodo;
-    this.cargarReporteKPIs();
-  }
-
-  exportarPDF(tipoReporte: string): void {
-    let datos: any[] = [];
-    let titulo = '';
-
-    switch (tipoReporte) {
-      case 'rendimiento':
-        datos = this.reportesRendimiento;
-        titulo = 'Reporte de Rendimiento';
-        break;
-      case 'personal':
-        datos = this.reportesPersonal;
-        titulo = 'Reporte de Personal';
-        break;
-      case 'actividades':
-        datos = this.reportesActividades;
-        titulo = 'Reporte de Actividades';
-        break;
-      case 'kpis':
-        if (this.reporteKPIs) {
-          datos = [this.reporteKPIs];
-          titulo = 'Reporte de KPIs Consolidados';
-        }
-        break;
-    }
-
-    if (!datos || datos.length === 0) {
-      this.snackBar.open('No hay datos para exportar', 'Cerrar', { duration: 3000 });
-      return;
-    }
-
-    this.reportesService.exportarPDF(tipoReporte, datos, titulo)
-      .then(() => {
-        this.snackBar.open('Reporte exportado correctamente', 'Cerrar', { duration: 3000 });
-      })
-      .catch(error => {
-        // Error al exportar PDF
-        this.snackBar.open('Error al exportar reporte', 'Cerrar', { duration: 3000 });
-      });
   }
 
   limpiarFiltros(): void {
     this.filtros = {
       fecha_inicio: new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString(),
       fecha_fin: new Date().toISOString(),
-      tipo_reporte: this.filtros.tipo_reporte
+      tipo_reporte: 'rendimiento'
     };
+    console.log('Filtros limpiados');
     this.cargarDatos();
   }
 
-  // Métodos para formatear datos
+  onPeriodoChange(): void {
+    console.log('Periodo cambiado a:', this.periodoSeleccionado);
+    this.cargarReporteKPIs();
+  }
+
+  async exportarPDF(tipoReporte: string): Promise<void> {
+    try {
+      console.log(`Iniciando exportación PDF para: ${tipoReporte}`);
+      this.cargando = true;
+      
+      let datos: any[] = [];
+      let titulo = '';
+
+      switch (tipoReporte) {
+        case 'rendimiento':
+          datos = this.reportesRendimiento;
+          titulo = 'Reporte de Rendimiento';
+          break;
+        case 'personal':
+          datos = this.reportesPersonal;
+          titulo = 'Reporte de Personal';
+          break;
+        case 'actividades':
+          datos = this.reportesActividades;
+          titulo = 'Reporte de Actividades';
+          break;
+        case 'kpis':
+          datos = this.reporteKPIs ? [this.reporteKPIs] : [];
+          titulo = 'Reporte de KPIs';
+          break;
+        default:
+          throw new Error('Tipo de reporte no válido');
+      }
+
+      if (datos.length === 0) {
+        this.snackBar.open('No hay datos para exportar', 'Cerrar', { duration: 3000 });
+        return;
+      }
+
+      await this.reportesService.exportarPDF(tipoReporte, datos, titulo);
+      this.snackBar.open('PDF generado exitosamente', 'Cerrar', { duration: 3000 });
+    } catch (error: any) {
+      console.error('Error al exportar PDF:', error);
+      this.snackBar.open(`Error al generar PDF: ${error.message}`, 'Cerrar', { duration: 5000 });
+    } finally {
+      this.cargando = false;
+    }
+  }
+
   formatearPorcentaje(valor: number): string {
     return `${valor}%`;
   }
 
-  obtenerColorProgreso(valor: number): string {
-    if (valor < 30) return '#DC2626';
-    if (valor < 70) return '#F59E0B';
-    return '#10B981';
+  formatearFecha(fecha: string): string {
+    if (!fecha || fecha === 'Sin evaluaciones') return fecha;
+    try {
+      return new Date(fecha).toLocaleDateString('es-ES');
+    } catch {
+      return fecha;
+    }
+  }
+
+  formatearFortalezas(fortalezas: string[]): string {
+    return fortalezas.join(', ');
+  }
+
+  formatearAreasMejora(areas: string[]): string {
+    return areas.join(', ');
+  }
+
+  getTendenciaIcon(tendencia: string): string {
+    switch (tendencia) {
+      case 'subiendo': return 'trending_up';
+      case 'bajando': return 'trending_down';
+      default: return 'trending_flat';
+    }
+  }
+
+  getTendenciaColor(tendencia: string): string {
+    switch (tendencia) {
+      case 'subiendo': return 'success';
+      case 'bajando': return 'warn';
+      default: return 'primary';
+    }
+  }
+
+  // Métodos adicionales para el template
+  obtenerColorTendencia(tendencia: string): string {
+    switch (tendencia) {
+      case 'subiendo': return '#4caf50'; // Verde
+      case 'bajando': return '#f44336'; // Rojo
+      default: return '#2196f3'; // Azul
+    }
   }
 
   obtenerIconoTendencia(tendencia: string): string {
@@ -276,11 +317,15 @@ export class ReportesComponent implements OnInit {
     }
   }
 
-  obtenerColorTendencia(tendencia: string): string {
-    switch (tendencia) {
-      case 'subiendo': return '#10B981';
-      case 'bajando': return '#DC2626';
-      default: return '#6B7280';
-    }
+  obtenerColorProgreso(progreso: number): string {
+    if (progreso >= 80) return '#4caf50'; // Verde
+    if (progreso >= 60) return '#ff9800'; // Naranja
+    if (progreso >= 40) return '#ffc107'; // Amarillo
+    return '#f44336'; // Rojo
+  }
+
+  cambiarPeriodoKPI(periodo: string): void {
+    this.periodoSeleccionado = periodo;
+    this.onPeriodoChange();
   }
 }

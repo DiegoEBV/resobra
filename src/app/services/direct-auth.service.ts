@@ -29,15 +29,17 @@ export class DirectAuthService {
   private supabaseClient: SupabaseClient;
 
   constructor(private http: HttpClient) {
-    // Crear cliente Supabase sin locks
+    // Crear cliente Supabase con configuración actualizada del environment
     this.supabaseClient = createClient(
       environment.supabase.url,
       environment.supabase.anonKey,
       {
         auth: {
           storageKey: 'sb-direct-auth-token',
-          autoRefreshToken: false,
-          persistSession: false,
+          // Usar configuración del environment si existe, sino usar valores por defecto
+          autoRefreshToken: environment.supabase.auth?.autoRefreshToken ?? false,
+          persistSession: environment.supabase.auth?.persistSession ?? false,
+          detectSessionInUrl: environment.supabase.auth?.detectSessionInUrl ?? false,
           flowType: 'implicit'
         }
       }

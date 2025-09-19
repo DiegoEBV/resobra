@@ -107,6 +107,20 @@ import { CrearUsuarioRequest } from '../../interfaces/usuario.interface';
                   Seleccione un rol
                 </mat-error>
               </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Obra</mat-label>
+                <mat-select formControlName="obra_id" [class.error]="isFieldInvalid('obra_id')">
+                  <mat-option *ngFor="let obra of obrasDisponibles" [value]="obra.id">
+                    <mat-icon>business</mat-icon>
+                    {{ obra.nombre }}
+                  </mat-option>
+                </mat-select>
+                <mat-icon matSuffix>construction</mat-icon>
+                <mat-error *ngIf="usuarioForm.get('obra_id')?.hasError('required')">
+                  Seleccione una obra
+                </mat-error>
+              </mat-form-field>
             </div>
 
             <!-- Seguridad -->
@@ -205,9 +219,9 @@ import { CrearUsuarioRequest } from '../../interfaces/usuario.interface';
             <div class="info-text">
               <h4>Información importante</h4>
               <ul>
-                <li>El usuario recibirá un email de confirmación para activar su cuenta</li>
                 <li>La contraseña debe tener al menos 8 caracteres con mayúsculas, minúsculas y números</li>
                 <li>El rol determina los permisos y accesos del usuario en el sistema</li>
+                <li>La obra asignada define el proyecto en el que trabajará el usuario</li>
                 <li>Los usuarios se crean en estado activo por defecto</li>
               </ul>
             </div>
@@ -404,6 +418,8 @@ export class CrearUsuarioComponent implements OnInit {
   guardando = false;
   hidePassword = true;
   hideConfirmPassword = true;
+  obrasDisponibles: any[] = [];
+  cargandoObras = false;
 
   constructor(
     private fb: FormBuilder,
@@ -417,6 +433,8 @@ export class CrearUsuarioComponent implements OnInit {
   ngOnInit() {
     // Verificar permisos de residente
     this.verificarPermisos();
+    // Cargar obras disponibles
+    this.cargarObrasDisponibles();
   }
 
   private createForm(): FormGroup {
@@ -424,6 +442,7 @@ export class CrearUsuarioComponent implements OnInit {
       nombre: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
       rol: ['', Validators.required],
+      obra_id: [''],
       password: ['', [
         Validators.required,
         Validators.minLength(8),
@@ -458,6 +477,23 @@ export class CrearUsuarioComponent implements OnInit {
     }
   }
 
+  private async cargarObrasDisponibles() {
+    try {
+      this.cargandoObras = true;
+      
+      // Obtener obras desde el servicio de usuarios o crear un método específico
+      const obras = await this.usuariosService.getObrasDisponibles();
+      this.obrasDisponibles = obras;
+      
+      console.log('Obras cargadas:', this.obrasDisponibles);
+    } catch (error) {
+      console.error('Error al cargar obras:', error);
+      this.mostrarError('Error al cargar las obras disponibles');
+    } finally {
+      this.cargandoObras = false;
+    }
+  }
+
   async onSubmit() {
     if (this.usuarioForm.valid && !this.guardando) {
       try {
@@ -468,6 +504,7 @@ export class CrearUsuarioComponent implements OnInit {
           nombre: formData.nombre.trim(),
           email: formData.email.trim().toLowerCase(),
           rol: formData.rol,
+          obra_id: formData.obra_id,
           password: formData.password,
           confirmPassword: formData.confirmPassword
         };

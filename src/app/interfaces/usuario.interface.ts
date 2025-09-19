@@ -12,6 +12,7 @@ export interface CrearUsuarioRequest {
   email: string;
   nombre: string;
   rol: 'logistica' | 'residente';
+  obra_id?: string;
   password: string;
   confirmPassword?: string;
 }

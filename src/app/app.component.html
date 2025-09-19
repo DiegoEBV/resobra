@@ -75,16 +75,10 @@
           </div>
         </a>
 
-        <a routerLink="/usuarios" class="nav-item" routerLinkActive="active">
+        <a routerLink="/usuarios" class="nav-item" routerLinkActive="active" *ngIf="currentProfile?.rol === 'residente'">
           <div class="nav-link">
             <mat-icon>group</mat-icon>
             <span>Gestión de Usuarios</span>
-          </div>
-        </a>
-        <a routerLink="/perfil" class="nav-item" routerLinkActive="active">
-          <div class="nav-link">
-            <mat-icon>person</mat-icon>
-            <span>Perfil</span>
           </div>
         </a>
       </nav>
