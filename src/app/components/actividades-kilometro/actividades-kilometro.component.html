@@ -393,7 +393,7 @@
               
               <div class="detail-item" *ngIf="actividad.ubicacion?.lat && actividad.ubicacion?.lng">
                 <mat-icon>location_on</mat-icon>
-                <span>{{ actividad.ubicacion.direccion || 'Lat: ' + actividad.ubicacion.lat + ', Lng: ' + actividad.ubicacion.lng }}</span>
+                <span>{{ actividad.ubicacion.direccion || ('Lat: ' + actividad.ubicacion.lat + ', Lng: ' + actividad.ubicacion.lng) }}</span>
               </div>
             </div>
 

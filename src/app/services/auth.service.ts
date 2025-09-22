@@ -451,50 +451,9 @@ export class AuthService {
       } else {
         // Cargar el perfil recién creado
         await this.loadUserProfile(userId);
-        
-        // Asignar automáticamente la primera obra disponible al usuario
-        await this.assignDefaultObraToUser(userId, rol);
       }
     } catch (error) {
       // Error creating user profile
-    }
-  }
-
-  private async assignDefaultObraToUser(userId: string, rol: 'logistica' | 'residente') {
-    try {
-      console.log('🔄 Asignando obra automáticamente al usuario:', userId);
-      
-      // Obtener la primera obra disponible
-      const { data: obras, error: obrasError } = await this.supabase.db
-        .from('obras')
-        .select('id')
-        .limit(1);
-
-      if (obrasError || !obras || obras.length === 0) {
-        console.warn('⚠️ No hay obras disponibles para asignar');
-        return;
-      }
-
-      const obraId = obras[0].id;
-      console.log('🏗️ Asignando obra:', obraId, 'al usuario:', userId);
-
-      // Crear la asignación en user_obras
-      const { error: assignError } = await this.supabase.db
-        .from('user_obras')
-        .insert({
-          user_id: userId,
-          obra_id: obraId,
-          rol_obra: rol,
-          assigned_at: new Date().toISOString()
-        });
-
-      if (assignError) {
-        console.error('❌ Error al asignar obra automáticamente:', assignError);
-      } else {
-        console.log('✅ Obra asignada automáticamente exitosamente');
-      }
-    } catch (error) {
-      console.error('💥 Error en asignación automática de obra:', error);
     }
   }
 

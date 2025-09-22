@@ -53,7 +53,7 @@
               <mat-select formControlName="actividad_id">
                 <mat-option value="">-- Sin actividad específica --</mat-option>
                 <mat-option *ngFor="let actividad of actividades" [value]="actividad.id">
-                  {{ actividad.tipo_actividad }} - {{ actividad.ubicacion }}
+                  {{ actividad.tipo_actividad }} - {{ getUbicacionDisplay(actividad.ubicacion) }}
                 </mat-option>
               </mat-select>
               <mat-hint>Seleccione una actividad específica o deje vacío para KPI general de la obra</mat-hint>

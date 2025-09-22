@@ -40,9 +40,14 @@
             <div class="alert-description">Avance Físico: {{ alerta.avance_fisico }}% | Calidad: {{ alerta.calidad }}%</div>
             <div class="alert-time">{{ alerta.fecha | date:'short' }}</div>
           </div>
-          <button mat-icon-button (click)="resolveAlert(alerta)" class="resolve-btn">
-            <mat-icon>close</mat-icon>
-          </button>
+          <div class="alert-menu-actions">
+            <button mat-icon-button (click)="resolveAlert(alerta)" matTooltip="Ver detalles">
+              <mat-icon>visibility</mat-icon>
+            </button>
+            <button mat-icon-button (click)="deleteAlert(alerta)" matTooltip="Eliminar alerta" color="warn">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
         </div>
         
         <mat-divider *ngIf="alertas.length > 0"></mat-divider>
@@ -527,6 +532,9 @@
             <div class="alert-actions">
               <button mat-icon-button (click)="resolveAlert(alerta)" matTooltip="Ver detalles">
                 <mat-icon>visibility</mat-icon>
+              </button>
+              <button mat-icon-button (click)="deleteAlert(alerta)" matTooltip="Eliminar alerta" color="warn">
+                <mat-icon>delete</mat-icon>
               </button>
             </div>
           </div>

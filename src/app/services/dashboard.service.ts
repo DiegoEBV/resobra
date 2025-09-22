@@ -285,7 +285,10 @@ export class DashboardService {
 
       if (error) throw error;
 
+      console.log('KPIs stats data:', kpis);
+
       if (!kpis || kpis.length === 0) {
+        console.log('No KPIs found, returning empty stats');
         return {
           promedioKPIs: 0,
           kpisCriticos: 0,
@@ -325,13 +328,16 @@ export class DashboardService {
         else if (diferencia < -5) tendencia = 'bajando';
       }
 
-      return {
+      const stats = {
         promedioKPIs: Math.round(promedioGeneral),
         kpisCriticos,
         tendenciaGeneral: tendencia
       };
+
+      console.log('KPIs stats calculated:', stats);
+      return stats;
     } catch (error) {
-      // Datos de rendimiento cargados
+      console.error('Error obteniendo estadísticas de KPIs:', error);
       return {
         promedioKPIs: 0,
         kpisCriticos: 0,
@@ -350,7 +356,7 @@ export class DashboardService {
 
       const { data: actividades, error } = await this.supabase.client
         .from('actividades')
-        .select('id, estado')
+        .select('id, estado, progreso_porcentaje')
         .in('obra_id', obraIds);
 
       if (error) throw error;
@@ -359,13 +365,20 @@ export class DashboardService {
       const completadas = actividades?.filter(a => a.estado === 'finalizado').length || 0;
       const enProgreso = actividades?.filter(a => a.estado === 'ejecucion').length || 0;
 
+      console.log('📊 [DashboardService] Estadísticas de actividades:', {
+        total,
+        completadas,
+        enProgreso,
+        actividades: actividades?.map(a => ({ estado: a.estado, progreso: a.progreso_porcentaje }))
+      });
+
       return {
         actividadesTotales: total,
         actividadesCompletadas: completadas,
         actividadesEnProgreso: enProgreso
       };
     } catch (error) {
-      // Error loading recent activities
+      console.error('❌ [DashboardService] Error obteniendo estadísticas de actividades:', error);
       return {
         actividadesTotales: 0,
         actividadesCompletadas: 0,
@@ -389,16 +402,21 @@ export class DashboardService {
 
       if (error) throw error;
 
+      console.log('Obras stats data:', obras);
+
       const activas = obras?.filter(o => o.estado === 'activa').length || 0;
       const progresoPromedio = obras && obras.length > 0 ? 
         obras.reduce((sum, obra) => sum + (obra.progreso || 0), 0) / obras.length : 0;
 
-      return {
+      const stats = {
         obrasActivas: activas,
         progresoPromedio: Math.round(progresoPromedio)
       };
+
+      console.log('Obras stats calculated:', stats);
+      return stats;
     } catch (error) {
-      // Error obteniendo estadísticas de obras
+      console.error('Error obteniendo estadísticas de obras:', error);
       return {
         obrasActivas: 0,
         progresoPromedio: 0

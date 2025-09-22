@@ -103,6 +103,24 @@
   line-height: 24px;
 }
 
+.alert-menu-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.alert-menu-actions button {
+  color: #666;
+  transition: color 0.3s ease;
+}
+
+.alert-menu-actions button:hover {
+  color: #2196F3;
+}
+
+.alert-menu-actions button[color="warn"]:hover {
+  color: #f44336;
+}
+
 /* Loading */
 .loading-container {
   text-align: center;

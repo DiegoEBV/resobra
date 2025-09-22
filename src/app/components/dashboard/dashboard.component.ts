@@ -533,20 +533,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   // Inicializar todos los gráficos
-  private initializeCharts(): void {
+  private async initializeCharts(): Promise<void> {
     console.log('📊 [Dashboard] Inicializando gráficos...');
     
     // Destruir gráficos existentes primero
     this.destroyCharts();
     
     // Esperar un momento para que el DOM se actualice
-    setTimeout(() => {
+    setTimeout(async () => {
       try {
         // Gráficos específicos por rol
         if (this.userProfile?.rol === 'residente') {
           this.createCampoChart();
           this.createEvaluacionChart();
-          this.createProgressChart();
+          await this.createProgressChart();
         } else if (this.userProfile?.rol === 'logistica') {
           this.createObrasChart();
           this.createCostChart();
@@ -560,13 +560,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   // Actualizar gráficos con nuevos datos
-  private updateCharts(): void {
+  private async updateCharts(): Promise<void> {
     console.log('🔄 [Dashboard] Actualizando gráficos...');
-    this.initializeCharts();
+    await this.initializeCharts();
   }
 
   // Crear gráfico de progreso semanal
-  private createProgressChart(): void {
+  private async createProgressChart(): Promise<void> {
     const canvas = document.getElementById('progresoChart') as HTMLCanvasElement;
     if (!canvas) {
       console.warn('⚠️ [Dashboard] Canvas progresoChart no encontrado');
@@ -580,26 +580,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Usar datos reales si están disponibles, sino usar datos de ejemplo
-    let chartData = this.progressChartData;
+    // Obtener datos reales de progreso semanal
+    let chartData = await this.getProgresoSemanalData();
     
+    // Si no hay datos reales, usar datos basados en actividades actuales
     if (!chartData.labels.length) {
-      // Datos de ejemplo
-      const semanas = ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'];
-      const progreso = [15, 28, 42, 58, 75, 85];
-      
-      chartData = {
-        labels: semanas,
-        datasets: [{
-          label: 'Progreso de Obra (%)',
-          data: progreso,
-          borderColor: '#4caf50',
-          backgroundColor: 'rgba(76, 175, 80, 0.1)',
-          borderWidth: 3,
-          fill: true,
-          tension: 0.4
-        }]
-      };
+      chartData = await this.generateProgressFromActivities();
     }
 
     this.progressChart = new Chart(ctx, {
@@ -621,13 +607,135 @@ export class DashboardComponent implements OnInit, OnDestroy {
         },
         plugins: {
           legend: {
-            display: false
+            display: true,
+            position: 'top'
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return `${context.dataset.label}: ${context.parsed.y}%`;
+              }
+            }
           }
         }
       }
     });
     
-    console.log('✅ [Dashboard] Gráfico de progreso creado');
+    console.log('✅ [Dashboard] Gráfico de progreso semanal creado con datos reales');
+  }
+
+  // Obtener datos de progreso semanal desde el servicio
+  private async getProgresoSemanalData(): Promise<ChartData> {
+    try {
+      // Usar datos del servicio si están disponibles
+      if (this.progressChartData && this.progressChartData.labels.length > 0) {
+        return this.progressChartData;
+      }
+      
+      // Si no hay datos del servicio, generar desde actividades
+      return await this.generateProgressFromActivities();
+    } catch (error) {
+      console.error('❌ [Dashboard] Error obteniendo datos de progreso semanal:', error);
+      return await this.generateProgressFromActivities();
+    }
+  }
+
+  // Generar progreso semanal basado en actividades
+  private async generateProgressFromActivities(): Promise<ChartData> {
+    try {
+      const actividades = await this.actividadesService.actividades$.pipe(take(1)).toPromise();
+      
+      if (!actividades || actividades.length === 0) {
+        return {
+          labels: ['Sin datos'],
+          datasets: [{
+            label: 'Progreso de Obra (%)',
+            data: [0],
+            borderColor: '#4caf50',
+            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4
+          }]
+        };
+      }
+
+      // Generar últimas 8 semanas
+      const semanas = [];
+      const progresoData = [];
+      const fechaActual = new Date();
+      
+      for (let i = 7; i >= 0; i--) {
+        const fechaSemana = new Date(fechaActual);
+        fechaSemana.setDate(fechaActual.getDate() - (i * 7));
+        
+        const inicioSemana = new Date(fechaSemana);
+        inicioSemana.setDate(fechaSemana.getDate() - fechaSemana.getDay());
+        inicioSemana.setHours(0, 0, 0, 0);
+        
+        const finSemana = new Date(inicioSemana);
+        finSemana.setDate(inicioSemana.getDate() + 6);
+        finSemana.setHours(23, 59, 59, 999);
+        
+        // Etiqueta de la semana
+        const semanaLabel = `Sem ${8 - i}`;
+        semanas.push(semanaLabel);
+        
+        // Calcular progreso acumulado hasta esa semana
+        const actividadesHastaSemana = actividades.filter((actividad: any) => {
+          const fechaActividad = new Date(actividad.fecha_fin || actividad.updated_at || actividad.created_at);
+          return fechaActividad <= finSemana;
+        });
+        
+        const actividadesCompletadasHastaSemana = actividadesHastaSemana.filter((actividad: any) => 
+          actividad.estado === 'finalizado'
+        ).length;
+        
+        const progresoSemana = actividadesHastaSemana.length > 0 ? 
+          Math.round((actividadesCompletadasHastaSemana / actividades.length) * 100) : 0;
+        
+        progresoData.push(progresoSemana);
+      }
+
+      return {
+        labels: semanas,
+        datasets: [{
+          label: 'Progreso de Obra (%)',
+          data: progresoData,
+          borderColor: '#4caf50',
+          backgroundColor: 'rgba(76, 175, 80, 0.1)',
+          borderWidth: 3,
+          fill: true,
+          tension: 0.4
+        }]
+      };
+    } catch (error) {
+      console.error('❌ [Dashboard] Error generando progreso desde actividades:', error);
+      
+      // Fallback con datos de ejemplo basados en progreso actual
+      const progresoActual = this.getOverallProgress();
+      const semanas = ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6', 'Sem 7', 'Sem 8'];
+      const progreso = [];
+      
+      // Generar progresión realista hacia el progreso actual
+      for (let i = 0; i < 8; i++) {
+        const progresoSemana = Math.round((progresoActual / 8) * (i + 1));
+        progreso.push(Math.min(progresoSemana, progresoActual));
+      }
+      
+      return {
+        labels: semanas,
+        datasets: [{
+          label: 'Progreso de Obra (%)',
+          data: progreso,
+          borderColor: '#4caf50',
+          backgroundColor: 'rgba(76, 175, 80, 0.1)',
+          borderWidth: 3,
+          fill: true,
+          tension: 0.4
+        }]
+      };
+    }
   }
 
   // Crear gráfico de KPIs
@@ -1231,6 +1339,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
     console.log('Resolving alert:', alerta);
   }
 
+  // Eliminar alerta
+  deleteAlert(alerta: AlertaKPI): void {
+    // Implementar eliminación de alerta
+    console.log('Deleting alert:', alerta);
+    // Remover la alerta del array
+    this.alertas = this.alertas.filter(a => a !== alerta);
+    this.stats.alertasActivas = this.alertas.length;
+  }
+
   // Obtener porcentaje de progreso general
   getOverallProgress(): number {
     if (this.stats.totalActividades === 0) return 0;
@@ -1256,7 +1373,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
       actividadesEnProgreso: stats.actividadesEnProgreso || 0,
       progresoPromedio: stats.progresoPromedio || 0,
       alertasActivas: 0, // Se calculará desde KPIs
-      kpisCriticos: stats.kpisCriticos || 0
+      kpisCriticos: stats.kpisCriticos || 0,
+      // Propiedades específicas para residente
+      actividadesCampo: stats.actividadesTotales || 0,
+      evaluacionesPersonal: stats.totalEvaluaciones || 0,
+      progresoObra: Math.round(stats.progresoPromedio || 0),
+      incidentesSeguridad: 0, // Por ahora 0, se puede agregar después
+      // Propiedades específicas para logística
+      obrasActivas: stats.obrasActivas || 0,
+      presupuestoEjecutado: 0, // Por ahora 0, se puede agregar después
+      recursosAsignados: 0, // Por ahora 0, se puede agregar después
+      proyectosRetrasados: 0 // Por ahora 0, se puede agregar después
     };
     console.log('📊 Estadísticas actualizadas desde servicio:', this.stats);
   }
@@ -1274,13 +1401,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
      
      // Recrear gráficos con nuevos datos usando NgZone
      this.ngZone.runOutsideAngular(() => {
-       setTimeout(() => {
-         this.ngZone.run(() => {
+       setTimeout(async () => {
+         this.ngZone.run(async () => {
            this.destroyCharts();
            this.createActivityChart();
            this.createCostChart();
            this.createKPIChart();
-           this.createProgressChart();
+           await this.createProgressChart();
            this.createPlanificacionChart();
            this.cdr.detectChanges();
          });

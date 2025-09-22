@@ -287,7 +287,7 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
 
   // Manejar clics en el mapa para seleccionar puntos inicial y final
   private onMapClick(lat: number, lng: number): void {
-    if (this.isSelectingStartPoint) {
+    if (!this.startPoint) {
       // Seleccionar punto inicial
       this.startPoint = L.latLng(lat, lng);
       this.addStartMarker(this.startPoint);
@@ -297,7 +297,7 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
         duration: 3000,
         panelClass: ['success-snackbar']
       });
-    } else {
+    } else if (!this.endPoint) {
       // Seleccionar punto final
       this.endPoint = L.latLng(lat, lng);
       this.addEndMarker(this.endPoint);
@@ -309,9 +309,12 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
         duration: 3000,
         panelClass: ['success-snackbar']
       });
-      
-      // Resetear para permitir nueva selección
-      this.isSelectingStartPoint = true;
+    } else {
+      // Si ambos puntos ya están seleccionados, mostrar mensaje
+      this.snackBar.open('Ambos puntos ya están seleccionados. Use "Limpiar Puntos" para seleccionar nuevos puntos.', 'Cerrar', {
+        duration: 4000,
+        panelClass: ['info-snackbar']
+      });
     }
   }
 
@@ -460,8 +463,6 @@ export class NuevaActividadComponent implements OnInit, OnDestroy, AfterViewInit
       // Forzar actualización de validadores
       this.actividadForm.get('kilometraje_inicio')?.updateValueAndValidity();
       this.actividadForm.get('kilometraje_fin')?.updateValueAndValidity();
-      
-      // Campos limpiados
       
       this.snackBar.open('Puntos del mapa limpiados. Seleccione nuevamente el punto inicial.', 'Cerrar', {
         duration: 3000,
