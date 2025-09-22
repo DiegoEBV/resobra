@@ -1314,17 +1314,19 @@ this.showActividadDetails(actividad, progreso);
 });
 }
 
-// Determinar color del trazo basado en estado y progreso
+// Determinar color del trazo basado únicamente en el porcentaje de progreso
 private getActividadTraceColor(estado: string, progreso: number): string {
-if (estado === 'finalizado') {
-return '#22c55e'; // Verde - Finalizado
-} else if (estado === 'ejecucion') {
-if (progreso >= 75) return '#84cc16'; // Verde claro - Casi terminado
-if (progreso >= 50) return '#eab308'; // Amarillo - En progreso medio
-if (progreso >= 25) return '#f97316'; // Naranja - En progreso inicial
-return '#ef4444'; // Rojo - Recién iniciado
+// Sistema de colores basado en porcentaje de cumplimiento
+if (progreso === 0) {
+return '#ef4444'; // Rojo - No iniciado (0%)
+} else if (progreso >= 1 && progreso <= 50) {
+return '#eab308'; // Amarillo - Progreso inicial (1-50%)
+} else if (progreso >= 51 && progreso <= 80) {
+return '#f97316'; // Naranja - Progreso medio (51-80%)
+} else if (progreso >= 81 && progreso <= 100) {
+return '#22c55e'; // Verde - Progreso avanzado/completado (81-100%)
 } else {
-return '#6b7280'; // Gris - Programado
+return '#6b7280'; // Gris - Caso por defecto
 }
 }
 
