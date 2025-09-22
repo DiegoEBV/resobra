@@ -785,3 +785,38 @@ button:focus {
     transform: none;
   }
 }
+
+.no-results {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+.no-results mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 1rem;
+  color: #ccc;
+}
+
+.no-results p {
+  margin: 0.5rem 0;
+}
+
+.auth-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: #2196f3;
+  font-style: italic;
+  margin-top: 1rem;
+}
+
+.auth-message mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}

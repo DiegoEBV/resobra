@@ -45,6 +45,7 @@ export interface FrenteFormData {
 
 // Components
 import { FrenteFormComponent } from '../../components/frente-form/frente-form.component';
+import { DirectAuthService } from '../../services/direct-auth.service';
 
 @Component({
   selector: 'app-mapa',
@@ -77,6 +78,7 @@ export class MapaComponent implements OnInit, AfterViewInit, OnDestroy {
   private map!: L.Map;
   private markers: L.LayerGroup = new L.LayerGroup();
   private kilometroLayers: L.LayerGroup = new L.LayerGroup();
+  private actividadLayers: L.LayerGroup = new L.LayerGroup(); // Nueva capa para trazos de actividades
   
   // Estado del componente
   loading = true;
@@ -86,7 +88,8 @@ export class MapaComponent implements OnInit, AfterViewInit, OnDestroy {
   tempMarker: L.Marker | null = null;
   isDragMode = false;
   showKilometricView = false;
-  
+  showActividadTraces = true; // Nueva opción para mostrar trazos de actividades
+
   // Datos
   frentes: Frente[] = [];
   actividades: Actividad[] = [];
@@ -125,7 +128,8 @@ export class MapaComponent implements OnInit, AfterViewInit, OnDestroy {
     private kilometrosService: KilometrosService,
     private snackBar: MatSnackBar,
     private dialog: MatDialog,
-    private router: Router
+    private router: Router,
+    public directAuthService: DirectAuthService // Hacer público para usar en template
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -133,12 +137,41 @@ export class MapaComponent implements OnInit, AfterViewInit, OnDestroy {
     this.loading = true;
     
     try {
+      // Verificar autenticación antes de cargar datos
+      const user = this.directAuthService.getCurrentUser();
+      if (!user) {
+        console.warn('⚠️ [MapaComponent] Usuario no autenticado, mostrando mapa básico');
+        this.snackBar.open('Para ver los frentes y actividades, inicia sesión', 'Ir a Login', {
+          duration: 8000,
+          panelClass: ['warning-snackbar']
+        }).onAction().subscribe(() => {
+          this.router.navigate(['/login']);
+        });
+        this.initializeMap();
+        this.loading = false;
+        return;
+      }
+
       await this.loadData();
       this.initializeMap();
+      
+      // NUEVA FUNCIONALIDAD: Suscribirse a cambios de progreso de actividades
+      this.actividadesService.progresoUpdated$.pipe(
+        takeUntil(this.destroy$)
+      ).subscribe(({ actividadId, progreso }) => {
+        console.log(`[MAPA] Progreso actualizado para actividad ${actividadId}: ${progreso}%`);
+        // Recargar trazos de actividades para reflejar cambios
+        this.updateActividadTraces();
+      });
       
       // Cargar datos kilométricos si la vista está activada
       if (this.showKilometricView) {
         await this.loadKilometricData();
+      }
+
+      // Cargar trazos de actividades
+      if (this.showActividadTraces) {
+        await this.updateActividadTraces();
       }
     } catch (error) {
       console.error('❌ [MapaComponent] Error al inicializar:', error);
@@ -152,7 +185,12 @@ export class MapaComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    this.initializeMap();
+    // Esperar un tick para asegurar que el DOM esté completamente renderizado
+    setTimeout(() => {
+      if (!this.map) {
+        this.initializeMap();
+      }
+    }, 100);
   }
 
   ngOnDestroy(): void {
@@ -168,15 +206,21 @@ export class MapaComponent implements OnInit, AfterViewInit, OnDestroy {
       // [LoadData] Iniciando carga de datos del mapa
       this.loading = true;
       
+      // Verificar autenticación nuevamente
+      const user = this.directAuthService.getCurrentUser();
+      if (!user) {
+        console.warn('⚠️ [LoadData] Usuario no autenticado, no se pueden cargar datos');
+        return;
+      }
+      
       // Cargar frentes
       this.actividadesService.frentes$
         .pipe(takeUntil(this.destroy$))
         .subscribe(frentes => {
           // [LoadData] Frentes recibidos
+          console.log(`📍 [LoadData] ${frentes.length} frentes recibidos`);
           frentes.forEach(frente => {
-            // [LoadData] Frente details
-        // - ID, Ubicación, Coordenadas inicio/fin
-        // - KM inicial/final
+            console.log(`📍 [LoadData] Frente: ${frente.nombre} - Estado: ${frente.estado} - Coords: ${frente.ubicacion_lat}, ${frente.ubicacion_lng}`);
           });
           this.frentes = frentes;
           this.applyFilters();
@@ -188,70 +232,146 @@ export class MapaComponent implements OnInit, AfterViewInit, OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe(actividades => {
           // [LoadData] Actividades recibidas
+          console.log(`🔧 [LoadData] ${actividades.length} actividades recibidas`);
           this.actividades = actividades;
           this.updateMapMarkers();
         });
       
       // Refrescar datos
       // [LoadData] Refrescando datos del servicio
+      console.log('🔄 [LoadData] Refrescando datos del servicio...');
       await this.actividadesService.refresh();
-      // [LoadData] Datos del servicio refrescados
+      console.log('✅ [LoadData] Datos del servicio refrescados');
       
       // Cargar datos kilométricos
       // [LoadData] Iniciando carga de datos kilométricos
+      console.log('📏 [LoadData] Iniciando carga de datos kilométricos...');
       await this.loadKilometricData();
-      // [LoadData] Datos kilométricos cargados
+      console.log('✅ [LoadData] Datos kilométricos cargados');
       
     } catch (error) {
-      // [LoadData] Error loading map data
-      this.snackBar.open('Error al cargar los datos del mapa', 'Cerrar', {
+      console.error('❌ [LoadData] Error loading map data:', error);
+      this.snackBar.open('Error al cargar los datos del mapa. Verifica tu conexión e inicia sesión.', 'Cerrar', {
         duration: 5000,
         panelClass: ['error-snackbar']
       });
     } finally {
       this.loading = false;
-      // [LoadData] Carga de datos completada
+      console.log('✅ [LoadData] Carga de datos completada');
     }
   }
 
   private initializeMap(): void {
-    // Configurar iconos de Leaflet
-    const iconRetinaUrl = 'assets/marker-icon-2x.png';
-    const iconUrl = 'assets/marker-icon.png';
-    const shadowUrl = 'assets/marker-shadow.png';
-    const iconDefault = L.icon({
-      iconRetinaUrl,
-      iconUrl,
-      shadowUrl,
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      tooltipAnchor: [16, -28],
-      shadowSize: [41, 41]
-    });
-    L.Marker.prototype.options.icon = iconDefault;
-
-    // Inicializar mapa centrado en Colombia
-    this.map = L.map('map').setView([4.5709, -74.2973], 6);
-
-    // Agregar capa base
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 19
-    }).addTo(this.map);
-
-    // Agregar capas al mapa
-    this.markers.addTo(this.map);
-    this.kilometroLayers.addTo(this.map);
-
-    // Configurar eventos del mapa
-    this.map.on('click', (e: L.LeafletMouseEvent) => {
-      if (this.isCreatingFrente) {
-        this.handleMapClickForFrente(e);
-      } else {
-        this.selectedFrente = null;
+    try {
+      console.log('🗺️ [MapaComponent] Iniciando inicialización del mapa');
+      
+      // Verificar si el contenedor del mapa existe
+      const mapContainer = document.getElementById('map');
+      if (!mapContainer) {
+        console.error('❌ [MapaComponent] Contenedor del mapa no encontrado');
+        return;
       }
-    });
+
+      // Si el mapa ya existe, destruirlo primero
+      if (this.map) {
+        console.log('🗺️ [MapaComponent] Removiendo mapa existente');
+        this.map.remove();
+      }
+
+      // Configurar iconos de Leaflet con fallback
+      try {
+        delete (L.Icon.Default.prototype as any)._getIconUrl;
+        L.Icon.Default.mergeOptions({
+          iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+          iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          tooltipAnchor: [16, -28],
+          shadowSize: [41, 41]
+        });
+      } catch (iconError) {
+        console.warn('⚠️ [MapaComponent] Error configurando iconos, usando iconos por defecto:', iconError);
+      }
+
+      // Pequeña pausa adicional para asegurar que el contenedor esté listo
+      setTimeout(() => {
+        try {
+          // Inicializar mapa centrado en Colombia con configuración más robusta
+          this.map = L.map('map', {
+            center: [4.5709, -74.2973],
+            zoom: 6,
+            zoomControl: true,
+            attributionControl: true,
+            preferCanvas: false,
+            fadeAnimation: false, // Desactivar animaciones que pueden causar problemas
+            zoomAnimation: false,
+            markerZoomAnimation: false
+          });
+
+          // Agregar capa base con manejo de errores
+          const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19,
+            errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+          });
+
+          tileLayer.on('tileerror', (e) => {
+            console.warn('⚠️ [MapaComponent] Error cargando tile:', e);
+          });
+
+          tileLayer.addTo(this.map);
+
+          // Inicializar capas de grupo
+          this.markers = new L.LayerGroup();
+          this.kilometroLayers = new L.LayerGroup();
+          this.actividadLayers = new L.LayerGroup();
+
+          // Agregar capas al mapa
+          this.markers.addTo(this.map);
+          this.kilometroLayers.addTo(this.map);
+          this.actividadLayers.addTo(this.map);
+
+          // Configurar eventos del mapa
+          this.map.on('click', (e: L.LeafletMouseEvent) => {
+            if (this.isCreatingFrente) {
+              this.handleMapClickForFrente(e);
+            } else {
+              this.selectedFrente = null;
+            }
+          });
+
+          // Manejar errores del mapa
+          this.map.on('error', (e) => {
+            console.error('❌ [MapaComponent] Error del mapa:', e);
+          });
+
+          console.log('✅ [MapaComponent] Mapa inicializado correctamente');
+          
+          // Actualizar marcadores si hay datos disponibles
+          if (this.frentes && this.frentes.length > 0) {
+            this.updateMapMarkers();
+          }
+
+          // Actualizar trazos de actividades si están habilitados
+          if (this.showActividadTraces) {
+            this.updateActividadTraces();
+          }
+
+        } catch (mapCreationError) {
+          console.error('❌ [MapaComponent] Error creando instancia del mapa:', mapCreationError);
+          throw mapCreationError;
+        }
+      }, 50);
+
+    } catch (error) {
+      console.error('❌ [MapaComponent] Error crítico inicializando mapa:', error);
+      this.snackBar.open('Error al inicializar el mapa. Recarga la página.', 'Cerrar', {
+        duration: 5000,
+        panelClass: ['error-snackbar']
+      });
+    }
   }
 
   private updateMapMarkers(): void {
@@ -283,18 +403,18 @@ export class MapaComponent implements OnInit, AfterViewInit, OnDestroy {
     const actividadesFrente = this.actividades.filter(a => a.frente_id === frente.id);
     const actividadesActivas = actividadesFrente.filter(a => a.estado === 'ejecucion').length;
     
-    // Crear icono personalizado según el estado
+    // Crear icono personalizado usando CSS en lugar de mat-icon
     const iconColor = this.getFrenteIconColor(frente.estado);
     const customIcon = L.divIcon({
       html: `
-        <div class="custom-marker ${frente.estado}">
-          <mat-icon class="marker-icon">${this.getFrenteIcon(frente.estado)}</mat-icon>
-          ${actividadesActivas > 0 ? `<span class="activity-badge">${actividadesActivas}</span>` : ''}
+        <div class="custom-marker-container" style="background-color: ${iconColor}; border: 2px solid white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+          <span style="color: white; font-weight: bold; font-size: 12px;">${this.getFrenteIconText(frente.estado)}</span>
+          ${actividadesActivas > 0 ? `<div class="activity-badge" style="position: absolute; top: -5px; right: -5px; background: #ff4444; color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">${actividadesActivas}</div>` : ''}
         </div>
       `,
       className: 'custom-div-icon',
-      iconSize: [40, 40],
-      iconAnchor: [20, 40]
+      iconSize: [30, 30],
+      iconAnchor: [15, 15]
     });
 
     const marker = L.marker([frente.ubicacion_lat!, frente.ubicacion_lng!], { icon: customIcon });
@@ -346,6 +466,16 @@ export class MapaComponent implements OnInit, AfterViewInit, OnDestroy {
     return colors[estado as keyof typeof colors] || '#9e9e9e';
   }
 
+  getFrenteIconText(estado: string): string {
+    const icons = {
+      'activo': 'A',
+      'pausado': 'P',
+      'completado': 'C',
+      'planificado': 'PL'
+    };
+    return icons[estado as keyof typeof icons] || 'F';
+  }
+
   getFrenteIcon(estado: string): string {
     const icons = {
       'activo': 'construction',
@@ -360,13 +490,13 @@ export class MapaComponent implements OnInit, AfterViewInit, OnDestroy {
     const iconColor = this.getFrenteIconColor(estado);
     return L.divIcon({
       html: `
-        <div class="custom-marker ${estado}">
-          <mat-icon class="marker-icon">${this.getFrenteIcon(estado)}</mat-icon>
+        <div class="custom-marker-container" style="background-color: ${iconColor}; border: 2px solid white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+          <span style="color: white; font-weight: bold; font-size: 12px;">${this.getFrenteIconText(estado)}</span>
         </div>
       `,
       className: 'custom-div-icon',
-      iconSize: [40, 40],
-      iconAnchor: [20, 40]
+      iconSize: [30, 30],
+      iconAnchor: [15, 15]
     });
   }
 
@@ -730,11 +860,7 @@ export class MapaComponent implements OnInit, AfterViewInit, OnDestroy {
     return points;
   }
 
-  private interpolatePoint(start: [number, number], end: [number, number], progress: number): [number, number] {
-    const lat = start[0] + (end[0] - start[0]) * progress;
-    const lng = start[1] + (end[1] - start[1]) * progress;
-    return [lat, lng];
-  }
+  
 
   /**
    * Interpola puntos a lo largo de una curva definida por puntos de control intermedios
@@ -902,17 +1028,17 @@ export class MapaComponent implements OnInit, AfterViewInit, OnDestroy {
       this.map.removeLayer(this.tempMarker);
     }
 
-    // Crear marcador temporal
+    // Crear marcador temporal con icono simple
     this.tempMarker = L.marker([lat, lng], {
       icon: L.divIcon({
         html: `
-          <div class="temp-marker">
-            <mat-icon class="marker-icon">add_location</mat-icon>
+          <div style="background-color: #ff9800; border: 2px solid white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+            <span style="color: white; font-weight: bold; font-size: 14px;">+</span>
           </div>
         `,
         className: 'temp-div-icon',
-        iconSize: [40, 40],
-        iconAnchor: [20, 40]
+        iconSize: [30, 30],
+        iconAnchor: [15, 15]
       })
     }).addTo(this.map);
 
@@ -1006,7 +1132,7 @@ export class MapaComponent implements OnInit, AfterViewInit, OnDestroy {
           this.applyFilters();
         }
       } catch (error) {
-        // Error updating frente location
+        console.error('❌ [MapaComponent] Error updating frente location:', error);
         this.snackBar.open('Error al actualizar la ubicación', 'Cerrar', {
           duration: 5000,
           panelClass: ['error-snackbar']
@@ -1048,4 +1174,223 @@ export class MapaComponent implements OnInit, AfterViewInit, OnDestroy {
   navigateToFrentesManagement(): void {
     this.router.navigate(['/frentes']);
   }
+
+  // Nueva funcionalidad: Actualizar trazos de actividades
+  async updateActividadTraces(): Promise<void> {
+    console.log('🎯 [UpdateActividadTraces] Iniciando actualización de trazos de actividades');
+
+    if (!this.map || !this.showActividadTraces) {
+      console.log('🎯 [UpdateActividadTraces] Saliendo: mapa no existe o trazos desactivados');
+      return;
+    }
+
+    // Limpiar trazos existentes
+    this.actividadLayers.clearLayers();
+    console.log('🎯 [UpdateActividadTraces] Trazos existentes limpiados');
+
+    // Filtrar actividades que tienen puntos de inicio y final
+    const actividadesConTrazos = this.actividades.filter(actividad => 
+      actividad.ubicacion_inicio?.lat && actividad.ubicacion_inicio?.lng &&
+      actividad.ubicacion_fin?.lat && actividad.ubicacion_fin?.lng
+    );
+
+    console.log('🎯 [UpdateActividadTraces] Actividades con trazos:', actividadesConTrazos.length);
+
+    // Procesar cada actividad
+    for (const actividad of actividadesConTrazos) {
+      try {
+        // Calcular progreso basado en tareas
+        const progreso = await this.calcularProgresoActividad(actividad.id);
+
+        // Crear trazo de la actividad
+        await this.createActividadTrace(actividad, progreso);
+      } catch (error) {
+        console.error('❌ [UpdateActividadTraces] Error procesando actividad:', actividad.id, error);
+      }
+    }
+
+    console.log('✅ [UpdateActividadTraces] Trazos de actividades actualizados');
+  }
+
+  // Calcular progreso de actividad basado en tareas completadas
+  private async calcularProgresoActividad(actividadId: string): Promise<number> {
+try {
+const tareas = await this.actividadesService.getTareasByActividad(actividadId);
+
+if (tareas.length === 0) {
+return 0; // Sin tareas, progreso 0%
+}
+
+const tareasCompletadas = tareas.filter(tarea => tarea.completada).length;
+const progreso = Math.round((tareasCompletadas / tareas.length) * 100);
+
+console.log(`📊 [CalcProgreso] Actividad ${actividadId}: ${tareasCompletadas}/${tareas.length} tareas = ${progreso}%`);
+return progreso;
+} catch (error) {
+console.error('❌ [CalcProgreso] Error calculando progreso:', error);
+return 0;
+  }
+}
+
+// Crear trazo visual de una actividad
+private async createActividadTrace(actividad: Actividad, progreso: number): Promise<void> {
+if (!actividad.ubicacion_inicio || !actividad.ubicacion_fin) {
+return;
+}
+
+const startPoint = [actividad.ubicacion_inicio.lat, actividad.ubicacion_inicio.lng] as [number, number];
+const endPoint = [actividad.ubicacion_fin.lat, actividad.ubicacion_fin.lng] as [number, number];
+
+// Determinar color basado en progreso y estado
+const color = this.getActividadTraceColor(actividad.estado, progreso);
+const opacity = this.getActividadTraceOpacity(progreso);
+
+// Crear línea principal del trazo
+const mainLine = L.polyline([startPoint, endPoint], {
+color: color,
+weight: 6,
+opacity: opacity,
+dashArray: progreso < 100 ? '10, 5' : undefined // Línea punteada si no está completa
+});
+
+// Crear línea de progreso (parte completada)
+if (progreso > 0) {
+const progressPoint = this.interpolatePoint(startPoint, endPoint, progreso / 100);
+const progressLine = L.polyline([startPoint, progressPoint], {
+color: '#22c55e', // Verde para progreso completado
+weight: 8,
+opacity: 0.8
+});
+this.actividadLayers.addLayer(progressLine);
+}
+
+// Agregar línea principal
+this.actividadLayers.addLayer(mainLine);
+
+// Crear marcadores de inicio y fin
+const startMarker = L.circleMarker(startPoint, {
+radius: 8,
+fillColor: '#3b82f6',
+color: 'white',
+weight: 2,
+opacity: 1,
+fillOpacity: 0.8
+});
+
+const endMarker = L.circleMarker(endPoint, {
+radius: 8,
+fillColor: progreso >= 100 ? '#22c55e' : '#ef4444',
+color: 'white',
+weight: 2,
+opacity: 1,
+fillOpacity: 0.8
+});
+
+// Agregar tooltips informativos
+const tooltipContent = this.createActividadTooltip(actividad, progreso);
+mainLine.bindTooltip(tooltipContent, {
+permanent: false,
+direction: 'top',
+className: 'actividad-tooltip'
+});
+
+startMarker.bindTooltip('Inicio: ' + actividad.tipo_actividad, {
+permanent: false,
+direction: 'top'
+});
+
+endMarker.bindTooltip(`Fin: ${progreso}% completado`, {
+permanent: false,
+direction: 'top'
+});
+
+// Agregar marcadores a la capa
+this.actividadLayers.addLayer(startMarker);
+this.actividadLayers.addLayer(endMarker);
+
+// Evento click para mostrar detalles
+mainLine.on('click', () => {
+this.showActividadDetails(actividad, progreso);
+});
+}
+
+// Determinar color del trazo basado en estado y progreso
+private getActividadTraceColor(estado: string, progreso: number): string {
+if (estado === 'finalizado') {
+return '#22c55e'; // Verde - Finalizado
+} else if (estado === 'ejecucion') {
+if (progreso >= 75) return '#84cc16'; // Verde claro - Casi terminado
+if (progreso >= 50) return '#eab308'; // Amarillo - En progreso medio
+if (progreso >= 25) return '#f97316'; // Naranja - En progreso inicial
+return '#ef4444'; // Rojo - Recién iniciado
+} else {
+return '#6b7280'; // Gris - Programado
+}
+}
+
+// Determinar opacidad del trazo basado en progreso
+private getActividadTraceOpacity(progreso: number): number {
+return Math.max(0.4, progreso / 100 * 0.8 + 0.2);
+}
+
+// Interpolar punto entre inicio y fin basado en progreso
+private interpolatePoint(start: [number, number], end: [number, number], ratio: number): [number, number] {
+const lat = start[0] + (end[0] - start[0]) * ratio;
+const lng = start[1] + (end[1] - start[1]) * ratio;
+return [lat, lng];
+}
+
+// Crear contenido del tooltip para actividad
+private createActividadTooltip(actividad: Actividad, progreso: number): string {
+const estadoLabel = this.getEstadoLabel(actividad.estado);
+const fechaFormateada = new Date(actividad.fecha).toLocaleDateString('es-ES');
+
+return `
+<div class="actividad-tooltip-content">
+<h4>${actividad.tipo_actividad}</h4>
+<p><strong>Estado:</strong> ${estadoLabel}</p>
+<p><strong>Progreso:</strong> ${progreso}%</p>
+<p><strong>Fecha:</strong> ${fechaFormateada}</p>
+${actividad.responsable ? `<p><strong>Responsable:</strong> ${actividad.responsable}</p>` : ''}
+<p><em>Click para ver detalles</em></p>
+</div>
+`;
+}
+
+// Mostrar detalles de actividad
+private showActividadDetails(actividad: Actividad, progreso: number): void {
+const message = `
+Actividad: ${actividad.tipo_actividad}
+Estado: ${this.getEstadoLabel(actividad.estado)}
+Progreso: ${progreso}%
+Fecha: ${new Date(actividad.fecha).toLocaleDateString('es-ES')}
+${actividad.responsable ? `Responsable: ${actividad.responsable}` : ''}
+`;
+
+this.snackBar.open(message, 'Ver Detalles', {
+duration: 8000,
+panelClass: ['info-snackbar']
+});
+}
+
+// Toggle para mostrar/ocultar trazos de actividades
+async toggleActividadTraces(): Promise<void> {
+this.showActividadTraces = !this.showActividadTraces;
+
+if (this.showActividadTraces) {
+console.log('🎯 [ToggleTraces] Activando trazos de actividades');
+await this.updateActividadTraces();
+this.snackBar.open('Trazos de actividades activados', 'Cerrar', {
+duration: 3000,
+panelClass: ['success-snackbar']
+});
+} else {
+console.log('🎯 [ToggleTraces] Desactivando trazos de actividades');
+this.actividadLayers.clearLayers();
+this.snackBar.open('Trazos de actividades desactivados', 'Cerrar', {
+duration: 3000,
+panelClass: ['info-snackbar']
+});
+}
+}
 }

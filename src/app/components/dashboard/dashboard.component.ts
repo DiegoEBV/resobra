@@ -1339,6 +1339,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
     console.log('Resolving alert:', alerta);
   }
 
+  // Eliminar alerta
+  deleteAlert(alerta: AlertaKPI): void {
+    // Implementar eliminación de alerta
+    console.log('Deleting alert:', alerta);
+    // Remover la alerta del array
+    this.alertas = this.alertas.filter(a => a !== alerta);
+    this.stats.alertasActivas = this.alertas.length;
+  }
+
   // Obtener porcentaje de progreso general
   getOverallProgress(): number {
     if (this.stats.totalActividades === 0) return 0;

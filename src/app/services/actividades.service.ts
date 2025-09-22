@@ -325,7 +325,8 @@ export class ActividadesService implements OnDestroy {
           *,
           frente:frentes(*),
           evidencias(*),
-          recursos(*)
+          recursos(*),
+          responsable_usuario:users!actividades_user_id_fkey(id, nombre, email)
         `)
         .order('created_at', { ascending: false });
         
@@ -615,7 +616,7 @@ export class ActividadesService implements OnDestroy {
           recursos(*)
         `)
         .eq('frente_id', frenteId)
-        .order('fecha', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data || [];
@@ -642,7 +643,8 @@ export class ActividadesService implements OnDestroy {
           *,
           frente:frentes(*),
           evidencias(*),
-          recursos(*)
+          recursos(*),
+          responsable_usuario:users!actividades_user_id_fkey(id, nombre, email)
         `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
@@ -796,8 +798,9 @@ export class ActividadesService implements OnDestroy {
       // Calcular estadísticas
       const totalTareas = tareas.length;
       const tareasCompletadas = tareas.filter(t => t.completada).length;
+      const progresoActividad = Math.round((tareasCompletadas / totalTareas) * 100);
       
-      console.log(`[DEBUG] Estadísticas - Total: ${totalTareas}, Completadas: ${tareasCompletadas}`);
+      console.log(`[DEBUG] Estadísticas - Total: ${totalTareas}, Completadas: ${tareasCompletadas}, Progreso: ${progresoActividad}%`);
 
       // Determinar el nuevo estado
       let nuevoEstado: string;
@@ -814,7 +817,7 @@ export class ActividadesService implements OnDestroy {
       // Obtener el estado actual de la actividad
       const { data: actividad, error: actividadError } = await this.supabase.client
         .from('actividades')
-        .select('estado')
+        .select('estado, kilometro, frente_id, progreso_porcentaje')
         .eq('id', actividadId)
         .single();
 
@@ -826,14 +829,15 @@ export class ActividadesService implements OnDestroy {
       const estadoActual = actividad?.estado || 'programado';
       console.log(`[DEBUG] Estado actual: ${estadoActual}`);
 
-      // Solo actualizar si el estado es diferente
-      if (estadoActual !== nuevoEstado) {
-        console.log(`[DEBUG] Actualizando estado de ${estadoActual} a ${nuevoEstado}`);
+      // Solo actualizar si hay cambios en estado o progreso
+      if (estadoActual !== nuevoEstado || actividad?.progreso_porcentaje !== progresoActividad) {
+        console.log(`[DEBUG] Actualizando estado de ${estadoActual} a ${nuevoEstado} y progreso a ${progresoActividad}%`);
         
         const { error: updateError } = await this.supabase.client
           .from('actividades')
           .update({ 
             estado: nuevoEstado,
+            progreso_porcentaje: progresoActividad,
             updated_at: new Date().toISOString()
           })
           .eq('id', actividadId);
@@ -845,10 +849,21 @@ export class ActividadesService implements OnDestroy {
 
         console.log(`[DEBUG] Estado actualizado exitosamente a: ${nuevoEstado}`);
         
+        // Emitir evento de progreso actualizado
+        this.progresoUpdatedSubject.next({
+          actividadId: actividadId,
+          progreso: progresoActividad
+        });
+        
         // Recargar las actividades para reflejar el cambio en la interfaz
         await this.loadUserActividades();
       } else {
         console.log('[DEBUG] El estado no necesita cambios');
+      }
+
+      // NUEVA FUNCIONALIDAD: Actualizar estado del kilómetro si la actividad tiene kilometraje
+      if (actividad?.kilometro && actividad?.frente_id) {
+        await this.updateKilometroEstadoFromActividades(actividad.frente_id, actividad.kilometro);
       }
     } catch (error) {
       console.error('[DEBUG] Error en updateActividadEstadoAutomatico:', error);
@@ -856,7 +871,98 @@ export class ActividadesService implements OnDestroy {
     }
   }
 
-  // Actualizar estado de tarea
+  // NUEVA FUNCIONALIDAD: Actualizar estado de kilómetro basado en actividades
+  private async updateKilometroEstadoFromActividades(frenteId: string, kilometro: number): Promise<void> {
+    try {
+      console.log(`[DEBUG] Actualizando estado de kilómetro ${kilometro} en frente ${frenteId}`);
+      
+      // Obtener todas las actividades del kilómetro
+      const { data: actividades, error: actividadesError } = await this.supabase.client
+        .from('actividades')
+        .select('id, estado, progreso_porcentaje')
+        .eq('frente_id', frenteId)
+        .eq('kilometro', kilometro);
+
+      if (actividadesError) {
+        console.error('[DEBUG] Error obteniendo actividades del kilómetro:', actividadesError);
+        return;
+      }
+
+      if (!actividades || actividades.length === 0) {
+        console.log('[DEBUG] No hay actividades en este kilómetro');
+        return;
+      }
+
+      // Calcular progreso promedio del kilómetro
+      const progresoTotal = actividades.reduce((sum, act) => sum + (act.progreso_porcentaje || 0), 0);
+      const progresoPromedio = Math.round(progresoTotal / actividades.length);
+
+      // Determinar estado del kilómetro basado en las actividades
+      let estadoKilometro: string;
+      let colorKilometro: string;
+
+      const actividadesFinalizadas = actividades.filter(act => act.estado === 'finalizado').length;
+      const actividadesEnEjecucion = actividades.filter(act => act.estado === 'ejecucion').length;
+
+      if (actividadesFinalizadas === actividades.length) {
+        estadoKilometro = 'completado';
+        colorKilometro = '#4CAF50'; // Verde
+      } else if (actividadesEnEjecucion > 0 || actividadesFinalizadas > 0) {
+        estadoKilometro = 'en_progreso';
+        colorKilometro = '#2196F3'; // Azul
+      } else {
+        estadoKilometro = 'no_iniciado';
+        colorKilometro = '#9E9E9E'; // Gris
+      }
+
+      console.log(`[DEBUG] Kilómetro ${kilometro} - Estado: ${estadoKilometro}, Progreso: ${progresoPromedio}%, Color: ${colorKilometro}`);
+
+      // Buscar el kilómetro en la base de datos
+      const { data: kilometroData, error: kilometroError } = await this.supabase.client
+        .from('kilometros')
+        .select('id, estado, progreso_porcentaje')
+        .eq('frente_id', frenteId)
+        .eq('kilometro', kilometro)
+        .single();
+
+      if (kilometroError) {
+        console.error('[DEBUG] Error obteniendo kilómetro:', kilometroError);
+        return;
+      }
+
+      if (!kilometroData) {
+        console.log('[DEBUG] Kilómetro no encontrado en la base de datos');
+        return;
+      }
+
+      // Solo actualizar si hay cambios
+      if (kilometroData.estado !== estadoKilometro || kilometroData.progreso_porcentaje !== progresoPromedio) {
+        const { error: updateKmError } = await this.supabase.client
+          .from('kilometros')
+          .update({
+            estado: estadoKilometro,
+            progreso_porcentaje: progresoPromedio,
+            color: colorKilometro,
+            actividades_count: actividades.length,
+            fecha_ultima_actualizacion: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', kilometroData.id);
+
+        if (updateKmError) {
+          console.error('[DEBUG] Error actualizando kilómetro:', updateKmError);
+        } else {
+          console.log(`[DEBUG] Kilómetro ${kilometro} actualizado exitosamente`);
+        }
+      } else {
+        console.log(`[DEBUG] Kilómetro ${kilometro} no necesita actualización`);
+      }
+    } catch (error) {
+      console.error('[DEBUG] Error en updateKilometroEstadoFromActividades:', error);
+    }
+  }
+
+  // Actualizar tarea estado
   async updateTareaEstado(tareaId: string, completada: boolean): Promise<any> {
     try {
       console.log(`[DEBUG] Actualizando tarea ${tareaId} a completada: ${completada}`);

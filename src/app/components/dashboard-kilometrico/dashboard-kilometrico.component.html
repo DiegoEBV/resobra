@@ -102,6 +102,44 @@
       </mat-card>
     </div>
 
+    <!-- Mapa Kilométrico Visual -->
+    <mat-card class="map-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>map</mat-icon>
+          Vista Kilométrica del Mapa
+        </mat-card-title>
+        <mat-card-subtitle>Visualización de progreso por kilómetro en el mapa</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="map-container">
+          <div id="kilometricMap" class="kilometric-map"></div>
+          
+          <!-- Leyenda del mapa -->
+          <div class="map-legend">
+            <div class="legend-title">
+              <mat-icon>palette</mat-icon>
+              Leyenda de Estados
+            </div>
+            <div class="legend-items">
+              <div class="legend-item">
+                <div class="legend-color completado"></div>
+                <span>Completado (100%)</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-color en-progreso"></div>
+                <span>En Progreso (1-99%)</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-color pendiente"></div>
+                <span>Pendiente (0%)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
     <!-- Progreso general -->
     <mat-card class="progress-card">
       <mat-card-header>

@@ -413,7 +413,24 @@ export class KpisComponent implements OnInit {
   getActividadNombre(actividadId: string | null): string {
     if (!actividadId) return 'KPI General';
     const actividad = this.actividades.find(a => a.id === actividadId);
-    return actividad ? `${actividad.tipo_actividad} - ${actividad.ubicacion}` : 'Actividad no encontrada';
+    return actividad ? `${actividad.tipo_actividad} - ${this.getUbicacionDisplay(actividad.ubicacion)}` : 'Actividad no encontrada';
+  }
+
+  getUbicacionDisplay(ubicacion: any): string {
+    if (!ubicacion) return 'No especificada';
+    
+    // Si es un objeto con lat y lng
+    if (typeof ubicacion === 'object' && ubicacion.lat && ubicacion.lng) {
+      return ubicacion.direccion || `Lat: ${ubicacion.lat}, Lng: ${ubicacion.lng}`;
+    }
+    
+    // Si es una cadena de texto
+    if (typeof ubicacion === 'string') {
+      return ubicacion;
+    }
+    
+    // Si aparece como [object Object], devolver texto por defecto
+    return 'No especificada';
   }
 
   // Métodos para la tabla mejorada

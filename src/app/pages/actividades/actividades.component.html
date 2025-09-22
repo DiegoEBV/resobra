@@ -94,7 +94,7 @@
           <ng-container matColumnDef="fecha_inicio">
             <th mat-header-cell *matHeaderCellDef mat-sort-header>Fecha</th>
             <td mat-cell *matCellDef="let actividad">
-              {{ actividad.fecha_inicio | date:'dd/MM/yyyy' }}
+              {{ actividad.fecha || actividad.fecha_inicio | date:'dd/MM/yyyy' }}
             </td>
           </ng-container>
 
@@ -102,7 +102,12 @@
           <ng-container matColumnDef="ubicacion">
             <th mat-header-cell *matHeaderCellDef mat-sort-header>Ubicación</th>
             <td mat-cell *matCellDef="let actividad">
-              {{ actividad.ubicacion || 'No especificada' }}
+              <span *ngIf="actividad.ubicacion?.lat && actividad.ubicacion?.lng">
+                {{ actividad.ubicacion.direccion || ('Lat: ' + actividad.ubicacion.lat + ', Lng: ' + actividad.ubicacion.lng) }}
+              </span>
+              <span *ngIf="!actividad.ubicacion?.lat || !actividad.ubicacion?.lng">
+                No especificada
+              </span>
             </td>
           </ng-container>
 
@@ -110,7 +115,7 @@
           <ng-container matColumnDef="responsable">
             <th mat-header-cell *matHeaderCellDef mat-sort-header>Responsable</th>
             <td mat-cell *matCellDef="let actividad">
-              {{ actividad.responsable || 'No asignado' }}
+              {{ actividad.responsable_usuario?.nombre || actividad.responsable || 'Sin asignar' }}
             </td>
           </ng-container>
 

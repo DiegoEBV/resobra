@@ -10,13 +10,14 @@
           <h2 class="page-title">Mapa Interactivo de Frentes</h2>
         </div>
         <div class="toolbar-right">
+          
           <button mat-raised-button 
-                  [color]="showKilometricView ? 'accent' : 'basic'"
-                  (click)="toggleKilometricView()"
+                  [color]="showActividadTraces ? 'accent' : 'basic'"
+                  (click)="toggleActividadTraces()"
                   [disabled]="loading"
-                  matTooltip="Alternar vista kilométrica">
-            <mat-icon>{{ showKilometricView ? 'route' : 'timeline' }}</mat-icon>
-            {{ showKilometricView ? 'Vista Normal' : 'Vista Kilométrica' }}
+                  matTooltip="Mostrar/ocultar trazos de actividades">
+            <mat-icon>{{ showActividadTraces ? 'polyline' : 'timeline' }}</mat-icon>
+            {{ showActividadTraces ? 'Ocultar Trazos' : 'Mostrar Trazos' }}
           </button>
           
           <button mat-raised-button 
@@ -151,6 +152,10 @@
             <div *ngIf="!loading && filteredFrente.length === 0" class="no-results">
               <mat-icon>location_off</mat-icon>
               <p>No se encontraron frentes con los filtros aplicados</p>
+              <p *ngIf="!directAuthService.isAuthenticated()" class="auth-message">
+                <mat-icon>info</mat-icon>
+                Inicia sesión para ver los frentes y actividades
+              </p>
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -71,7 +71,7 @@ interface ProgresoKilometrico {
   templateUrl: './dashboard-kilometrico.component.html',
   styleUrls: ['./dashboard-kilometrico.component.css']
 })
-export class DashboardKilometricoComponent implements OnInit, OnDestroy {
+export class DashboardKilometricoComponent implements OnInit, OnDestroy, AfterViewInit {
   private destroy$ = new Subject<void>();
   
   // Estado de carga
@@ -120,10 +120,209 @@ export class DashboardKilometricoComponent implements OnInit, OnDestroy {
     this.loadDashboardData();
   }
 
+  ngAfterViewInit(): void {
+    // Inicializar el mapa kilométrico después de que la vista esté lista
+    setTimeout(() => {
+      this.initializeKilometricMap();
+    }, 500);
+  }
+
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
     this.destroyCharts();
+  }
+
+  private initializeKilometricMap(): void {
+    console.log('🗺️ [DashboardKilometrico] Inicializando mapa kilométrico visual');
+    const mapContainer = document.getElementById('kilometricMap');
+    if (!mapContainer) {
+      console.error('❌ [DashboardKilometrico] Contenedor del mapa no encontrado');
+      return;
+    }
+
+    // Limpiar contenido previo
+    mapContainer.innerHTML = '';
+    
+    // Crear visualización de segmentos kilométricos
+    this.createKilometricVisualization(mapContainer);
+  }
+
+  private createKilometricVisualization(container: HTMLElement): void {
+    console.log('🎨 [DashboardKilometrico] Creando visualización kilométrica');
+    
+    if (this.progresoKilometrico.length === 0) {
+      container.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #666;">
+          <mat-icon style="font-size: 48px; margin-bottom: 16px;">straighten</mat-icon>
+          <p>No hay kilómetros para mostrar</p>
+          <p style="font-size: 14px; opacity: 0.7;">Los kilómetros aparecerán aquí cuando se registren actividades</p>
+        </div>
+      `;
+      return;
+    }
+
+    // Crear contenedor para los segmentos
+    const segmentsContainer = document.createElement('div');
+    segmentsContainer.style.cssText = `
+      position: relative;
+      width: 100%;
+      height: 100%;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    `;
+
+    // Calcular dimensiones para la visualización
+    const containerWidth = container.clientWidth - 40; // Padding
+    const segmentHeight = 30;
+    const segmentSpacing = 10;
+    const totalSegments = this.progresoKilometrico.length;
+    
+    // Ordenar kilómetros por número
+    const sortedKilometros = [...this.progresoKilometrico].sort((a, b) => a.kilometro - b.kilometro);
+    
+    // Crear segmentos visuales
+    sortedKilometros.forEach((km, index) => {
+      const segment = this.createKilometricSegment(km, index, containerWidth, segmentHeight);
+      segmentsContainer.appendChild(segment);
+    });
+
+    container.appendChild(segmentsContainer);
+    console.log('✅ [DashboardKilometrico] Visualización kilométrica creada con', totalSegments, 'segmentos');
+  }
+
+  private createKilometricSegment(km: ProgresoKilometrico, index: number, containerWidth: number, segmentHeight: number): HTMLElement {
+    const segment = document.createElement('div');
+    
+    // Determinar clase de estado basada en el progreso
+    let estadoClass = 'pendiente';
+    if (km.progreso >= 100) {
+      estadoClass = 'completado';
+    } else if (km.progreso > 0) {
+      estadoClass = 'en-progreso';
+    }
+
+    // Calcular posición y tamaño
+    const segmentWidth = Math.max(containerWidth * 0.8, 200); // Mínimo 200px
+    const yPosition = index * (segmentHeight + 10);
+
+    segment.className = `km-segment ${estadoClass}`;
+    segment.style.cssText = `
+      position: absolute;
+      top: ${yPosition}px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: ${segmentWidth}px;
+      height: ${segmentHeight}px;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      color: white;
+      font-weight: 600;
+      font-size: 14px;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    `;
+
+    // Contenido del segmento
+    segment.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span>KM ${km.kilometro}</span>
+        <span style="font-size: 12px; opacity: 0.9;">${km.frente}</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span>${km.progreso}%</span>
+        <span style="font-size: 12px; opacity: 0.9;">${km.actividades} act.</span>
+      </div>
+    `;
+
+    // Agregar barra de progreso interna
+    const progressBar = document.createElement('div');
+    progressBar.style.cssText = `
+      position: absolute;
+      bottom: 2px;
+      left: 2px;
+      right: 2px;
+      height: 4px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 2px;
+      overflow: hidden;
+    `;
+
+    const progressFill = document.createElement('div');
+    progressFill.style.cssText = `
+      height: 100%;
+      width: ${km.progreso}%;
+      background: rgba(255,255,255,0.8);
+      border-radius: 2px;
+      transition: width 0.5s ease;
+    `;
+
+    progressBar.appendChild(progressFill);
+    segment.appendChild(progressBar);
+
+    // Eventos de interacción
+    segment.addEventListener('mouseenter', (e) => {
+      segment.style.transform = 'translateX(-50%) translateY(-2px)';
+      segment.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+      this.showKilometricTooltip(e, km);
+    });
+
+    segment.addEventListener('mouseleave', () => {
+      segment.style.transform = 'translateX(-50%)';
+      segment.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+      this.hideKilometricTooltip();
+    });
+
+    segment.addEventListener('click', () => {
+      this.viewKilometroDetails(km.kilometro);
+    });
+
+    return segment;
+  }
+
+  private showKilometricTooltip(event: MouseEvent, km: ProgresoKilometrico): void {
+    const tooltip = document.createElement('div');
+    tooltip.className = 'km-tooltip';
+    tooltip.innerHTML = `
+      <div><strong>Kilómetro ${km.kilometro}</strong></div>
+      <div>Frente: ${km.frente}</div>
+      <div>Progreso: ${km.progreso}%</div>
+      <div>Actividades: ${km.actividades}</div>
+      <div>Estado: ${this.getEstadoLabel(km.estado)}</div>
+    `;
+
+    document.body.appendChild(tooltip);
+
+    const updateTooltipPosition = (e: MouseEvent) => {
+      tooltip.style.left = (e.clientX + 10) + 'px';
+      tooltip.style.top = (e.clientY - 10) + 'px';
+    };
+
+    updateTooltipPosition(event);
+    
+    // Actualizar posición del tooltip al mover el mouse
+    const mouseMoveHandler = (e: MouseEvent) => updateTooltipPosition(e);
+    document.addEventListener('mousemove', mouseMoveHandler);
+    
+    // Limpiar el event listener cuando se oculte el tooltip
+    tooltip.addEventListener('remove', () => {
+      document.removeEventListener('mousemove', mouseMoveHandler);
+    });
+  }
+
+  private hideKilometricTooltip(): void {
+    const tooltip = document.querySelector('.km-tooltip');
+    if (tooltip) {
+      tooltip.dispatchEvent(new Event('remove'));
+      tooltip.remove();
+    }
   }
 
   private async loadDashboardData(): Promise<void> {
@@ -145,6 +344,8 @@ export class DashboardKilometricoComponent implements OnInit, OnDestroy {
       // Crear gráficos después de cargar los datos
       setTimeout(() => {
         this.createCharts();
+        // Actualizar visualización kilométrica después de cargar datos
+        this.initializeKilometricMap();
       }, 100);
       
     } catch (error) {
