@@ -41,6 +41,8 @@ import { DirectAuthService } from '../../services/direct-auth.service';
 import { KpisService, DashboardKPIs, AlertaKPI } from '../../services/kpis.service';
 import { ActividadesService } from '../../services/actividades.service';
 import { DashboardService, DashboardStats as ServiceDashboardStats, DashboardCharts } from '../../services/dashboard.service';
+import { MatDialog } from '@angular/material/dialog';
+import { AlertDetailModalComponent } from '../alert-detail-modal/alert-detail-modal.component';
 
 Chart.register(...registerables);
 
@@ -77,12 +79,12 @@ interface ChartData {
     MatButtonModule,
     MatIconModule,
     MatProgressBarModule,
-     MatChipsModule,
-     MatDividerModule,
-     MatMenuModule,
-     MatTooltipModule,
-     MatBadgeModule,
-     RouterModule
+    MatChipsModule,
+    MatDividerModule,
+    MatMenuModule,
+    MatTooltipModule,
+    MatBadgeModule,
+    RouterModule
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
@@ -134,7 +136,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private actividadesService: ActividadesService,
     private dashboardService: DashboardService,
     private cdr: ChangeDetectorRef,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private dialog: MatDialog
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -1335,8 +1338,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // Resolver alerta
   resolveAlert(alerta: AlertaKPI): void {
-    // Implementar resolución de alerta
-    console.log('Resolving alert:', alerta);
+    console.log('Abriendo modal de detalle para alerta:', alerta);
+    
+    const dialogRef = this.dialog.open(AlertDetailModalComponent, {
+      width: '600px',
+      data: { alerta: alerta }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result && result.action === 'delete') {
+        this.deleteAlert(result.alerta);
+      }
+    });
   }
 
   // Eliminar alerta
