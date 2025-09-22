@@ -17,12 +17,27 @@ export interface Actividad {
     lng: number;
     direccion?: string;
   };
+  // Coordenadas específicas de inicio y fin
+  ubicacion_inicio?: {
+    lat: number;
+    lng: number;
+    direccion?: string;
+  };
+  ubicacion_fin?: {
+    lat: number;
+    lng: number;
+    direccion?: string;
+  };
   responsable?: string;
   estado: 'programado' | 'ejecucion' | 'finalizado';
   observaciones?: string;
   // Campos kilométricos
   kilometro?: number;
   progreso_porcentaje?: number;
+  kilometraje_inicio?: number;
+  kilometraje_fin?: number;
+  distancia_total?: number;
+  progreso_inicial?: number;
   // Campos de configuración
   requiere_maquinaria?: boolean;
   requiere_materiales?: boolean;

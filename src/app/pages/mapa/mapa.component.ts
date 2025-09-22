@@ -128,8 +128,27 @@ export class MapaComponent implements OnInit, AfterViewInit, OnDestroy {
     private router: Router
   ) {}
 
-  ngOnInit(): void {
-    this.loadData();
+  async ngOnInit(): Promise<void> {
+    console.log('🗺️ [MapaComponent] Inicializando componente de mapa');
+    this.loading = true;
+    
+    try {
+      await this.loadData();
+      this.initializeMap();
+      
+      // Cargar datos kilométricos si la vista está activada
+      if (this.showKilometricView) {
+        await this.loadKilometricData();
+      }
+    } catch (error) {
+      console.error('❌ [MapaComponent] Error al inicializar:', error);
+      this.snackBar.open('Error al cargar los datos del mapa', 'Cerrar', {
+        duration: 5000,
+        panelClass: ['error-snackbar']
+      });
+    } finally {
+      this.loading = false;
+    }
   }
 
   ngAfterViewInit(): void {
@@ -440,37 +459,40 @@ export class MapaComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   // Métodos kilométricos
-  private async loadKilometricData(): Promise<void> {
+  async loadKilometricData(): Promise<void> {
+    console.log('📊 [MapaComponent] Cargando datos kilométricos');
+    console.log('📊 [MapaComponent] Frentes disponibles:', this.frentes.length);
+    
     try {
-      // [LoadKilometricData] Iniciando carga de datos kilométricos
-      
-      // Cargar configuración de estados
-      this.estadosConfig = await this.kilometrosService.getEstadosConfig().toPromise() || [];
-      // [LoadKilometricData] Estados config cargados
-      
-      // Cargar kilómetros para todos los frentes
-      this.kilometros = [];
-      // [LoadKilometricData] Frentes disponibles
-      
-      for (const frente of this.frentes) {
-        // [LoadKilometricData] Cargando kilómetros para frente
-        // [LoadKilometricData] Coordenadas inicio/fin
-        // [LoadKilometricData] KM inicial/final
-        
-        const kilometrosFrente = await this.kilometrosService.getKilometrosByFrente(frente.id).toPromise() || [];
-        // [LoadKilometricData] Kilómetros encontrados
-        this.kilometros.push(...kilometrosFrente);
-      }
-      
-      // [LoadKilometricData] Total kilómetros cargados
-      
-      // Actualizar visualización si está en modo kilométrico
-      if (this.showKilometricView) {
-        // [LoadKilometricData] Actualizando visualización kilométrica
-        this.updateKilometricVisualization();
-      }
+      // Obtener todos los kilómetros
+      this.kilometrosService.getKilometros().subscribe({
+        next: (kilometros) => {
+          console.log('📊 [MapaComponent] Kilómetros cargados:', kilometros.length);
+          console.log('📊 [MapaComponent] Datos kilómetros:', kilometros);
+          this.kilometros = kilometros;
+          
+          // Verificar si hay kilómetros con colores válidos
+          const kilometrosConColor = kilometros.filter(k => k.color && k.color !== '#6B7280');
+          console.log('📊 [MapaComponent] Kilómetros con color específico:', kilometrosConColor.length);
+          
+          // Si la vista kilométrica está activada, actualizar visualización
+          if (this.showKilometricView) {
+            console.log('📊 [MapaComponent] Vista kilométrica activa, actualizando visualización');
+            this.updateKilometricVisualization();
+          } else {
+            console.log('📊 [MapaComponent] Vista kilométrica no activa');
+          }
+        },
+        error: (error) => {
+          console.error('❌ [MapaComponent] Error al cargar kilómetros:', error);
+          this.snackBar.open('Error al cargar datos kilométricos', 'Cerrar', {
+            duration: 5000,
+            panelClass: ['error-snackbar']
+          });
+        }
+      });
     } catch (error) {
-      // [LoadKilometricData] Error loading kilometric data
+      console.error('❌ [MapaComponent] Error en loadKilometricData:', error);
     }
   }
 
@@ -501,38 +523,45 @@ export class MapaComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private updateKilometricVisualization(): void {
-    // [UpdateKilometricVisualization] Iniciando actualización de visualización
-    // [UpdateKilometricVisualization] Map exists and show kilometric view
+    console.log('🗺️ [UpdateKilometricVisualization] Iniciando actualización de visualización');
+    console.log('🗺️ [UpdateKilometricVisualization] Map exists:', !!this.map);
+    console.log('🗺️ [UpdateKilometricVisualization] Show kilometric view:', this.showKilometricView);
+    console.log('🗺️ [UpdateKilometricVisualization] Kilómetros disponibles:', this.kilometros.length);
     
     if (!this.map || !this.showKilometricView) {
-      // [UpdateKilometricVisualization] Saliendo: mapa no existe o vista kilométrica desactivada
+      console.log('🗺️ [UpdateKilometricVisualization] Saliendo: mapa no existe o vista kilométrica desactivada');
       return;
     }
 
     // Limpiar capas kilométricas existentes
     this.kilometroLayers.clearLayers();
-    // [UpdateKilometricVisualization] Capas kilométricas limpiadas
+    console.log('🗺️ [UpdateKilometricVisualization] Capas kilométricas limpiadas');
 
     // Agrupar kilómetros por frente
     const kilometrosByFrente = this.groupKilometrosByFrente();
-    // [UpdateKilometricVisualization] Kilómetros agrupados por frente
+    console.log('🗺️ [UpdateKilometricVisualization] Kilómetros agrupados por frente:', Object.keys(kilometrosByFrente).length);
 
     // Crear visualización para cada frente
     Object.entries(kilometrosByFrente).forEach(([frenteId, kilometros]) => {
       const frente = this.frentes.find(f => f.id === frenteId);
-      // [UpdateKilometricVisualization] Procesando frente
-        // [UpdateKilometricVisualization] Coordenadas inicio/fin
-        // [UpdateKilometricVisualization] Kilómetros en frente
+      console.log('🗺️ [UpdateKilometricVisualization] Procesando frente:', frenteId);
+      console.log('🗺️ [UpdateKilometricVisualization] Frente encontrado:', !!frente);
+      
+      if (frente) {
+        console.log('🗺️ [UpdateKilometricVisualization] Coordenadas inicio:', frente.coordenadas_inicio);
+        console.log('🗺️ [UpdateKilometricVisualization] Coordenadas fin:', frente.coordenadas_fin);
+        console.log('🗺️ [UpdateKilometricVisualization] Kilómetros en frente:', kilometros.length);
+      }
       
       if (frente && frente.coordenadas_inicio && frente.coordenadas_fin) {
-        // [UpdateKilometricVisualization] Creando ruta kilométrica
+        console.log('🗺️ [UpdateKilometricVisualization] Creando ruta kilométrica para frente:', frente.nombre);
         this.createKilometricRoute(frente, kilometros);
       } else {
-        // [UpdateKilometricVisualization] Frente no tiene coordenadas completas
+        console.log('🗺️ [UpdateKilometricVisualization] Frente no tiene coordenadas completas:', frente?.nombre || 'Frente no encontrado');
       }
     });
     
-    // [UpdateKilometricVisualization] Visualización kilométrica completada
+    console.log('🗺️ [UpdateKilometricVisualization] Visualización kilométrica completada');
   }
 
   private groupKilometrosByFrente(): { [frenteId: string]: Kilometro[] } {
